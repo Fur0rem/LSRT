@@ -20,8 +20,8 @@ jobs:
 
       - name: Format files
         run: |
-          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-format -i
-          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-tidy -fix
+          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-format -i -style=file src/*.c
+          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-tidy -fix --config-file=.clang-tidy src/*.c
 
       - name: Commit changes
         run: |
