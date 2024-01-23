@@ -27,7 +27,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -am "Apply code formatting" --no-verify
+          git commit --amend "Apply code formatting" --no-verify
 
       - name: Push changes
         uses: ad-m/github-push-action@master
