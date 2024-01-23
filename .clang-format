@@ -1,0 +1,15 @@
+---
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+PointerAlignment: Left
+AllowShortIfStatementsOnASingleLine: false
+SpaceAfterCStyleCast: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  BeforeElse: true
+ColumnLimit: 90
+IndentCaseLabels: true
+AllowShortEnumsOnASingleLine: false
+---
+

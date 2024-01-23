@@ -1,0 +1,35 @@
+name: Format Files
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Clang tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format clang-tidy
+
+      - name: Format files
+        run: |
+          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-format -i
+          git diff --name-only --diff-filter=d origin/main...HEAD | xargs clang-tidy -fix
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Apply code formatting" --no-verify
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
