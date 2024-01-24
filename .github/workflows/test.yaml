@@ -29,7 +29,7 @@ jobs:
           for test in test/bin/*; do
             valgrind --leak-check=full --error-exitcode=1 --show-leak-kinds=all --errors-for-leak-kinds=all $test
             if [ $? -ne 0 ]; then
-              $error=1
+              error=1
             fi
           done
           exit $error
