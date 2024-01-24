@@ -20,6 +20,7 @@ jobs:
 
       - name: Compile Tests
         run: |
+          mkdir test/bin
           make test
 
       - name: Run Tests
