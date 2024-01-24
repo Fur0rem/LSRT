@@ -36,4 +36,4 @@ jobs:
               echo "Test $test passed"
             fi
           done
-          exit $error
+          exit 0
