@@ -22,6 +22,6 @@ $(DEBUG) :   $(SRCS) main.c
 test: $(TEST)
 $(TEST): $(SRCS) $(wildcard test/*.c)
 	for file in $(wildcard test/*.c); do \
-		$(CC) $(CFLAGS) $$file $(SRCS) -o test/bin/$(basename $(notdir $^)) 
+		$(CC) $(CFLAGS) $$file $(SRCS) -o test/bin/$$(basename $$file .c); \
 	done
 
