@@ -7,7 +7,7 @@ on:
 
 jobs:
   format:
-    runs-on: debian-stable
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
