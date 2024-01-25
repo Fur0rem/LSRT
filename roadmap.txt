@@ -1,0 +1,39 @@
+
+todo : 
+
+
+1 ere etape : implementation du programme en C
+	
+	1.1)
+		- Fonctions de manipulation de LS de bases (init / free / append ) 
+			-> choix de structure (listes d'adj VS matrice creuse d'adj)
+		- Fonction de Read / Write LS 
+
+		- Tests des fonctions de base
+	1.2) 
+		- script python de génération de LS 
+
+	2) 
+		- implementation de l'algorithme de mesure 
+			- implementation de Bellman Ford / Floyd Warshall 
+				-> cela risque de prendre du temps; il faudra
+				   implementer beaucoup de code auxiliaire 
+
+2 e etape : implementation de scripts Python permettant d'evaluer 
+la mesure : 
+
+	2.1) 
+		- scripts d'executions du programme 
+		- script d'analyse / plot d'execution 
+
+
+
+fichiers c qui existeront probablement 
+-> 1/2 fichier de LS 
+-> 1/2 fichier de structures utilitaires pour le calcul (tas, pile,...) 
+
+-> 1 fichier d'algorithme 
+	
+
+
+
