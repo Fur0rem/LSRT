@@ -1,8 +1,6 @@
-#ifndef MISC_H 
-#define MISc_H 
+#ifndef MISC_H
+#define MISc_H
 
+#include "common.h"
 
-#include "common.h" 
-
-
-#endif 
+#endif
