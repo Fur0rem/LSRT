@@ -1,5 +1,5 @@
 #ifndef MISC_H
-#define MISc_H
+#define MISC_H
 
 #include "common.h"
 
