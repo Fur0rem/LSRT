@@ -1,0 +1,101 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\title{Compte rendu de la réunion du 26 Janvier}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Organisation des futures réunions}
+\begin{itemize}
+	\item Quelqu'un rappelle l'ordre du jour
+	\item Chacun dit ce qu'il a fait depuis la dernière fois + questions
+	\item Discussion des sujets de la réunion
+\end{itemize}
+
+\section*{Sur le code}
+\begin{itemize}
+	\item Pas de norme spécifique
+	\item Valeurs renvoyées passées par paramètre, retour utilisé pour renvoyer un code d'erreur (ou pas d'erreur)
+	\item Code lisible (pas de code sur une ligne ou autre)
+	\item Optimisation/vitesse de calcule n'est pas l'objectif (inutile de passer 80h à optimiser pour gagner 2 minutes de calcul)
+\end{itemize}
+
+\section*{Sur les graphes}
+\begin{itemize}
+	\item Récupérés avec OSMnx
+	\item Orientés (à cause des sens interdits)
+	\item Faire attention aux rues parallèles
+	\item On préfère avoir plus d'information pour l'implémentation \\
+	On a envisagé des matrices creuses (facilite le parallélisme) mais elles prennent de la place pour rien
+\end{itemize}
+
+\section*{Distance temporelle}
+\begin{itemize}
+	\item La littérature s'intéresse au plus court chemin entre deux nœuds dans l'entièreté de l'existence du graphe \\
+	cf Présentation de Clémence
+	\item On veut tout les chemins
+	\item La definition de distance n'est pas sure (arriver en avance rajoute-il du temps) \\
+	Les deux sont pertinents et on peu essayer l'une ou l'autre ou les deux
+	\begin{itemize}
+		\item[$\rightarrow$] Peut être essayer avec l'attente (ie : attendre le temps nécessaire quand on arrive en "avance")
+	\end{itemize}
+	\item Chemins de l'ordre de la centaine ou du millier de liens
+\end{itemize}
+
+\section*{Algos de parcours}
+\begin{itemize}
+	\item Plusieurs algorithmes de plus court chemin
+	\item Algos de Clémence peu adaptés à notre cas (peu de liens dans le sien)
+	\item Dans notre cas, plusieurs situations se répètent
+	\item Idée d'algorithme : Floyd–Warshall/Bellman–Ford
+	\begin{itemize}
+		\item Programmation dynamique (conserve les résultats pour ne pas à avoir à les recalculer)
+	\end{itemize}
+	\item Problèmes
+	\begin{itemize}
+		\item N'utilise pas les hypothèses que l'on a (ce que l'on sait sur $L$) \\
+		Les trajets de chacun des couples de nœuds (bien qu'elles doivent avoir été calculées au préalable) \\
+		Si aucun lien entre le départ et l'arrivée ne change, le trajet ne change pas.
+		\item Regarde entre deux composantes connexes (qui n'ont donc pas de trajet de l'une vers l'autre)
+	\end{itemize}
+\end{itemize}
+
+\section*{Algos d'attaque}
+\begin{itemize}
+	\item Sur papier, bloquer statiquement un endroit serait intéressant, mais on est obligé de bouger dans la vraie vie, d'où l'intéret de penser à des attaques dynamiques
+	\item Les algos d'attaque n'existent pas : il faut se baser sur des algos non temporels %%% ?
+	\begin{itemize}
+		\item retirer en se basant sur le nombre de degrés : Ne marche pas sur une ville
+		\item retirer par betweeness centrality réitérée : C'est un algorithme déterministe, il donne toujours la même réponse
+	\end{itemize}
+	\item Ce qu'il faudrait faire: On se donne un "budget" (nombre de liens à retirer) et créer un algo qui retire différent lieux avec ce budget
+	\item Plusieurs options possibles pour générer des attaques à comparer  :
+	\begin{itemize}
+		\item Retirer des liens en suivant "une trajectoire" \\
+	  	ie retirer les voisins a chaque fois
+	  	\item Retirer au hasard (benchmark)
+	  	\item Retirer "statiquement" des nœuds par betweeness centrality (mesure de bencharck)
+	  	\item Avec un certain cout : comparer avec des vraies attaques 
+	  	\begin{itemize}
+	  		\item À partir d'un trajet connu (vraie manifestation)
+	  		\item Quels liens retirés pendant une manifestation ?  
+	  	\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+\section*{Autres remarques}
+\begin{itemize}
+	\item Pas de GPU sur les serveurs de l'équipe \\
+	Plutôt sur les serveurs de calcul
+	\item Retirer le bon nombre de liens et regarder l'évolution de la taille de la plus grande composante connexe
+	\begin{itemize}
+		\item Trop : Casse la ville
+		\item Pas assez : Fait un plateau (change peu)
+	\end{itemize}
+\end{itemize}
+
+\end{document}
