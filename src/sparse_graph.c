@@ -71,14 +71,89 @@ err_code set_link(SPARSE_GRAPH * sg, LINK l, uint32_t weight){
     return ERR_OK;
 }//not tested 
 
-
-
 extern err_code write_graph(FILE * flux_dest, SPARSE_GRAPH * graph_source){
+    if(! (flux_dest && graph_source)) return ERR_NULL;
 
+    fprintf(flux_dest, "%u %u\n", graph_source->size_elems_arr, graph_source->size_row_arr);
+    
+    for(uint32_t i = 0 ; i < graph_source->size_elems_arr; i++){
+        fprintf(flux_dest, "%u ", graph_source->elems[i]);
+    }
+    fprintf(flux_dest, "\n");
+    for(uint32_t i = 0 ; i < graph_source->size_elems_arr; i++){
+        fprintf(flux_dest, "%u ", graph_source->col_index[i]);
+    }
+    fprintf(flux_dest, "\n");
+    for(uint32_t i = 0 ; i < graph_source->size_row_arr; i++){
+        fprintf(flux_dest, "%u ", graph_source->row_index[i]);
+    }
+    fprintf(flux_dest, "\n");
     return ERR_OK;
-}//not done
+}//not tested
 
-extern err_code read_graph(FILE * flux_source, SPARSE_GRAPH * graph_dest){
+static void skip_char(char c, char ** buff){
+    while(**buff == c && **buff != '\0') (*buff)++;
+}//static helper ; doesn't check for shit.
+
+
+static void fill_arr(char * str_source, uint32_t * arr_dest, uint32_t arr_size){
+
+    uint32_t cpt = 0; 
+
+    char * start ,*end ; 
+    start = end = str_source ;
+
+    do{ 
+        start = end ; 
+
+        uint32_t parsed_num = strtol(start, &end, 10); //parses a number
+        if(start != end){
+            arr_dest[cpt] = parsed_num ;
+        }
+
+        skip_char(' ', &start); //goes to the next non space (next number)
+        
+        cpt++;
+    }while(cpt < arr_size && start != end);
+}//not tested; static helper ; doesn't check for shit
+//prolly wrong
+
+err_code read_graph(FILE * flux_source, SPARSE_GRAPH * graph_dest){
+    if(! (flux_source && graph_dest)) return ERR_NULL;
+
+    char buff[256]; 
+    fgets(buff, 256, flux_source);
+    skip_char(' ', (char**)&buff);
+
+    char * end = (char*)&buff;
+    char * start = (char*)&buff;
+    
+    uint32_t size_elems_arr = 0;
+    size_elems_arr = strtol(start, &end,10);
+    if(start == end ){
+        return ERR_VAL;
+    }
+    start = end ; 
+
+    uint32_t size_row_arr = 0;
+    size_row_arr = strtol(start, &end,10);
+    if(start == end ){
+        return ERR_VAL;
+    }
+    start = end ;
+
+    err_code failure = init_graph(graph_dest, size_elems_arr, size_row_arr); 
+    if(failure) return failure;
+
+    if(!fgets(buff, 256, flux_source)) return ERR_FORMAT;
+    fill_arr(buff, graph_dest->elems, size_elems_arr); 
+
+    if(!fgets(buff, 256, flux_source)) return ERR_FORMAT;
+    fill_arr(buff, graph_dest->col_index, size_elems_arr); 
+
+    if(!fgets(buff, 256, flux_source)) return ERR_FORMAT;
+    fill_arr(buff, graph_dest->row_index, size_row_arr);
 
     return ERR_OK; 
-}//not done
+}//not tested; 100% wrong 
+

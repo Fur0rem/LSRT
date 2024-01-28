@@ -1,5 +1,5 @@
-TARGET := ../edgerunner
-DEBUG := ../edgerunner_dbg
+TARGET := ../lsrt
+DEBUG := ../lsrt_debug
 
 TEST := ../test
 TEST_DBG := ../test_dbg
@@ -24,4 +24,7 @@ $(TEST): $(SRCS) $(wildcard test/*.c)
 	for file in $(wildcard test/*.c); do \
 		$(CC) $(CFLAGS) $$file $(SRCS) -o test/bin/$$(basename $$file .c); \
 	done
+
+clean: 
+	rm -f lsrt lsrt_debug test/bin/*
 
