@@ -14,12 +14,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-typedef uint8_t err_code; 
+typedef uint8_t err_code;
 
-enum errors{ 
-	ERR_OK = 0 , ERR_NULL, ERR_ALLOC, ERR_VAL, ERR_FORMAT,
+enum Errors {
+	ErrOk = 0,
+	ErrNull,
+	ErrAlloc,
+	ErrVal,
+	ErrFormat,
 };
-
 
 #define debug
 
