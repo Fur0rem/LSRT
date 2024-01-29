@@ -1,0 +1,1 @@
+#define Err(type) struct { type value; char *message; }
