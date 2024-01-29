@@ -19,7 +19,7 @@ int main(int argc, char ** argv){
 
     int64_t ret;
     declare_link(l); 
-    l.col = 15; 
+    l.col = 2; 
     l.row = 1; 
     get_link(&ret, &sg, l);
     

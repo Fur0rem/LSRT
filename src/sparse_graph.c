@@ -20,9 +20,11 @@ err_code init_graph(SPARSE_GRAPH* spg, uint32_t sea, uint32_t sra) {
 	if (!spg->row_index) {
 		return ERR_ALLOC;
 	}
+	spg->size_elems_arr = sea ; 
+	spg->size_row_arr = sra ; 
 
 	return ERR_OK;
-} // not tested
+} // tested ; seems ok
 
 void free_graph(SPARSE_GRAPH* spg) {
 	if (spg) {
@@ -38,29 +40,40 @@ void free_graph(SPARSE_GRAPH* spg) {
 		spg->elems = spg->col_index = spg->row_index = NULL;
 		spg->size_row_arr = spg->size_elems_arr = 0;
 	}
-} // not tested
+} // tested ; ok 
 
-err_code get_link(int64_t* ret, SPARSE_GRAPH* spg, LINK lnk) {
-	if (!ret || !spg) {
+
+err_code get_link( int64_t * ret, SPARSE_GRAPH * spg , LINK lnk){
+    if(!ret || !spg){ 
 		return ERR_NULL;
 	}
-	if (spg->size_row_arr + 1 < lnk.row) {
-		return ERR_VAL;
+    if(spg->size_row_arr - 1 < lnk.row ) {
+		*ret = -1; 
+		return ERR_OK;
+	}
+    if(spg->size_elems_arr - 1 < lnk.col )  {
+		*ret = -1; 
+		return ERR_OK;
 	}
 
-	int64_t row_start = spg->row_index[lnk.row];
-	int64_t row_end = spg->row_index[lnk.row + 1];
+    int64_t row_start = spg->row_index[lnk.row];
+    int64_t row_end ;
+    if(spg->size_row_arr - 1 == lnk.row ){
+        row_end = spg->size_elems_arr ;
+    }else{
+        row_end = spg->row_index[lnk.row + 1 ];
+    }
+    
+    for(uint32_t i = row_start ; i < row_end ; i++){
+        if(spg->col_index[i] == lnk.col ){
+            *ret = spg->elems[i] ;
+            return ERR_OK ;
+        }
+    }
+    *ret = -1 ;
+    return ERR_OK ;
+}//tested ; seems ok
 
-	for (uint32_t i = row_start; i < row_end; i++) {
-		if (spg->col_index[i] == lnk.col) {
-			*ret = spg->elems[i];
-			return ERR_OK;
-		}
-	}
-
-	*ret = -1;
-	return ERR_OK;
-} // not tested
 
 err_code link_exists(bool* ret, SPARSE_GRAPH* spg, LINK lnk) {
 
@@ -72,27 +85,29 @@ err_code link_exists(bool* ret, SPARSE_GRAPH* spg, LINK lnk) {
 
 	*ret = (tmp != -1);
 	return ERR_OK;
-} // not tested ;
+} // tested ok if get_link is ok
 
 err_code set_link(SPARSE_GRAPH* spg, LINK lnk, uint32_t weight) {
-	if (!spg) {
+	if(!spg){ 
 		return ERR_NULL;
 	}
-	if (spg->size_row_arr + 1 < lnk.row) {
-		return ERR_VAL;
-	}
+    
 
-	int64_t row_start = spg->row_index[lnk.row];
-	int64_t row_end = spg->row_index[lnk.row + 1];
-
-	for (uint32_t i = row_start; i < row_end; i++) {
-		if (spg->col_index[i] == lnk.col) {
-			spg->elems[i] = weight;
-			return ERR_OK;
-		}
-	}
-
-	return ERR_OK;
+    int64_t row_start = spg->row_index[lnk.row];
+    int64_t row_end ;
+    if(spg->size_row_arr - 1 == lnk.row ){
+        row_end = spg->size_elems_arr ;
+    }else{
+        row_end = spg->row_index[lnk.row + 1 ];
+    }
+    
+    for(uint32_t i = row_start ; i < row_end ; i++){
+        if(spg->col_index[i] == lnk.col ){
+            spg->elems[i] = weight ;
+            return ERR_OK ;
+        }
+    }
+    return ERR_OK ;
 } // not tested
 
 extern err_code write_graph(FILE* flux_dest, SPARSE_GRAPH* graph_source) {
