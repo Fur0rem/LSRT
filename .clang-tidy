@@ -10,13 +10,13 @@ Checks: "
   "
 
 CheckOptions:
-  - { key: readability-identifier-naming.EnumConstantCase, value: CamelCase }
-  - { key: readability-identifier-naming.EnumCase, value: CamelCase }
-  - { key: readability-identifier-naming.UnionCase, value: CamelCase }
+  - { key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE }
+  - { key: readability-identifier-naming.EnumCase, value: UPPER_CASE }
+  - { key: readability-identifier-naming.UnionCase, value: UPPER_CASE }
 
   - { key: readability-identifier-naming.VariableCase, value: lower_case }
   - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
   - { key: readability-identifier-naming.GlobalConstantCase, value: UPPER_CASE }
-  - { key: readability-identifier-naming.GlobalVariableCase, value: camelBack }
+  - { key: readability-identifier-naming.GlobalVariableCase, value: lower_case }
 
   - { key: readability-identifier-naming.FunctionCase, value: lower_case }

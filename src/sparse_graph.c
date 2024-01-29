@@ -3,25 +3,25 @@
 err_code init_graph(SPARSE_GRAPH* sg, uint32_t sea, uint32_t sra) {
 
 	if (!sg) {
-		return ErrNull;
+		return ERR_NULL;
 	}
 
 	sg->elems = calloc(sea, sizeof(uint32_t));
 	if (!sg->elems) {
-		return ErrAlloc;
+		return ERR_ALLOC;
 	}
 
 	sg->col_index = calloc(sea, sizeof(uint32_t));
 	if (!sg->col_index) {
-		return ErrAlloc;
+		return ERR_ALLOC;
 	}
 
 	sg->row_index = calloc(sra, sizeof(uint32_t));
 	if (!sg->row_index) {
-		return ErrAlloc;
+		return ERR_ALLOC;
 	}
 
-	return ErrOk;
+	return ERR_OK;
 } // not tested
 
 void free_graph(SPARSE_GRAPH* sg) {
@@ -42,10 +42,10 @@ void free_graph(SPARSE_GRAPH* sg) {
 
 err_code get_link(int64_t* ret, SPARSE_GRAPH* sg, LINK l) {
 	if (!ret || !sg) {
-		return ErrNull;
+		return ERR_NULL;
 	}
 	if (sg->size_row_arr + 1 < l.row) {
-		return ErrVal;
+		return ERR_VAL;
 	}
 
 	int64_t row_start = sg->row_index[l.row];
@@ -54,12 +54,12 @@ err_code get_link(int64_t* ret, SPARSE_GRAPH* sg, LINK l) {
 	for (uint32_t i = row_start; i < row_end; i++) {
 		if (sg->col_index[i] == l.col) {
 			*ret = sg->elems[i];
-			return ErrOk;
+			return ERR_OK;
 		}
 	}
 
 	*ret = -1;
-	return ErrOk;
+	return ERR_OK;
 } // not tested
 
 err_code link_exists(bool* ret, SPARSE_GRAPH* sg, LINK l) {
@@ -71,15 +71,15 @@ err_code link_exists(bool* ret, SPARSE_GRAPH* sg, LINK l) {
 	}
 
 	*ret = (tmp != -1);
-	return ErrOk;
+	return ERR_OK;
 } // not tested ;
 
 err_code set_link(SPARSE_GRAPH* sg, LINK l, uint32_t weight) {
 	if (!sg) {
-		return ErrNull;
+		return ERR_NULL;
 	}
 	if (sg->size_row_arr + 1 < l.row) {
-		return ErrVal;
+		return ERR_VAL;
 	}
 
 	int64_t row_start = sg->row_index[l.row];
@@ -88,17 +88,17 @@ err_code set_link(SPARSE_GRAPH* sg, LINK l, uint32_t weight) {
 	for (uint32_t i = row_start; i < row_end; i++) {
 		if (sg->col_index[i] == l.col) {
 			sg->elems[i] = weight;
-			return ErrOk;
+			return ERR_OK;
 		}
 	}
 
-	return ErrOk;
+	return ERR_OK;
 } // not tested
 
 extern err_code write_graph(FILE* flux_dest, SPARSE_GRAPH* graph_source) {
 	if (!(flux_dest && graph_source)) {
-		return ErrNull;
-}
+		return ERR_NULL;
+	}
 
 	fprintf(flux_dest, "%u %u\n", graph_source->size_elems_arr,
 			graph_source->size_row_arr);
@@ -115,7 +115,7 @@ extern err_code write_graph(FILE* flux_dest, SPARSE_GRAPH* graph_source) {
 		fprintf(flux_dest, "%u ", graph_source->row_index[i]);
 	}
 	fprintf(flux_dest, "\n");
-	return ErrOk;
+	return ERR_OK;
 } // not tested
 
 static void skip_char(char c, char** buff) {
@@ -149,7 +149,7 @@ static void fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size) {
 
 err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	if (!(flux_source && graph_dest)) {
-		return ErrNull;
+		return ERR_NULL;
 }
 
 	char buff[256];
@@ -162,14 +162,14 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	uint32_t size_elems_arr = 0;
 	size_elems_arr = strtol(start, &end, 10);
 	if (start == end) {
-		return ErrVal;
+		return ERR_VAL;
 	}
 	start = end;
 
 	uint32_t size_row_arr = 0;
 	size_row_arr = strtol(start, &end, 10);
 	if (start == end) {
-		return ErrVal;
+		return ERR_VAL;
 	}
 	start = end;
 
@@ -179,19 +179,19 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	}
 
 	if (!fgets(buff, 256, flux_source)) {
-		return ErrFormat;
+		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->elems, size_elems_arr);
 
 	if (!fgets(buff, 256, flux_source)) {
-		return ErrFormat;
+		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->col_index, size_elems_arr);
 
 	if (!fgets(buff, 256, flux_source)) {
-		return ErrFormat;
+		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->row_index, size_row_arr);
 
-	return ErrOk;
+	return ERR_OK;
 } // not tested; 100% wrong

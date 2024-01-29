@@ -16,12 +16,12 @@
 
 typedef uint8_t err_code;
 
-enum Errors {
-	ErrOk = 0,
-	ErrNull,
-	ErrAlloc,
-	ErrVal,
-	ErrFormat,
+enum errors {
+	ERR_OK = 0,
+	ERR_NULL,
+	ERR_ALLOC,
+	ERR_VAL,
+	ERR_FORMAT,
 };
 
 #define debug
