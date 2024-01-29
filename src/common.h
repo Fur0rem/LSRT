@@ -16,7 +16,7 @@
 
 typedef uint8_t err_code;
 
-enum errors {
+enum ERRORS {
 	ERR_OK = 0,
 	ERR_NULL,
 	ERR_ALLOC,

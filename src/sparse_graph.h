@@ -38,46 +38,46 @@ extern err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest);
 	read graph_dest from flux_dest
 */
 
-extern err_code link_exists(bool* ret, SPARSE_GRAPH* sg, LINK l);
+extern err_code link_exists(bool* ret, SPARSE_GRAPH* spg, LINK lnk);
 /*
-	ret,sg -> not null
-	l.i and l.j must be less than nb_elems
+	ret,spg -> not null
+	lnk.i and lnk.j must be less than nb_elems
 
-	sets ret to true if a link (i,j) exists in sg, sets it to false otherwise.
+	sets ret to true if a link (i,j) exists in spg, sets it to false otherwise.
 */
 
-extern err_code get_link(int64_t* ret, SPARSE_GRAPH* sg, LINK l);
+extern err_code get_link(int64_t* ret, SPARSE_GRAPH* spg, LINK lnk);
 /*
-	ret,sg -> not null
-	l.i and l.j must be less than nb_elems
+	ret,spg -> not null
+	lnk.i and lnk.j must be less than nb_elems
 
-	sets ret to the value of the link i,j if it exists in sg ,
+	sets ret to the value of the link i,j if it exists in spg ,
 	sets it to -1 otherwise .
 */
 
-extern void free_graph(SPARSE_GRAPH* sg);
+extern void free_graph(SPARSE_GRAPH* spg);
 /*
-	sg -> *
-	frees sg if it's not null
+	spg -> *
+	frees spg if it's not null
 */
 
 #ifdef debug
-extern err_code init_graph(SPARSE_GRAPH* sg, uint32_t sea, uint32_t sra);
+extern err_code init_graph(SPARSE_GRAPH* spg, uint32_t sea, uint32_t sra);
 /*
-	sg -> not null
+	spg -> not null
 
-	initializes the graph sg, the array elems and col_index are initialized to sea
+	initializes the graph spg, the array elems and col_index are initialized to sea
 	the array row_index is initialized to sra
 
 	throws errors on alloc failure
 */
 
-extern err_code set_link(SPARSE_GRAPH* sg, LINK l, uint32_t weight);
+extern err_code set_link(SPARSE_GRAPH* spg, LINK lnk, uint32_t weight);
 /*
-	sg -> not null
-	l.i and l.j must be less than nb_elems
+	spg -> not null
+	lnk.i and lnk.j must be less than nb_elems
 
-	sets the link l to the weight passed as argument if it exists,
+	sets the link lnk to the weight passed as argument if it exists,
 	overwrites the previous weight if it's already set
 */
 #endif

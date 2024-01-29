@@ -1,59 +1,59 @@
 #include "sparse_graph.h"
 
-err_code init_graph(SPARSE_GRAPH* sg, uint32_t sea, uint32_t sra) {
+err_code init_graph(SPARSE_GRAPH* spg, uint32_t sea, uint32_t sra) {
 
-	if (!sg) {
+	if (!spg) {
 		return ERR_NULL;
 	}
 
-	sg->elems = calloc(sea, sizeof(uint32_t));
-	if (!sg->elems) {
+	spg->elems = calloc(sea, sizeof(uint32_t));
+	if (!spg->elems) {
 		return ERR_ALLOC;
 	}
 
-	sg->col_index = calloc(sea, sizeof(uint32_t));
-	if (!sg->col_index) {
+	spg->col_index = calloc(sea, sizeof(uint32_t));
+	if (!spg->col_index) {
 		return ERR_ALLOC;
 	}
 
-	sg->row_index = calloc(sra, sizeof(uint32_t));
-	if (!sg->row_index) {
+	spg->row_index = calloc(sra, sizeof(uint32_t));
+	if (!spg->row_index) {
 		return ERR_ALLOC;
 	}
 
 	return ERR_OK;
 } // not tested
 
-void free_graph(SPARSE_GRAPH* sg) {
-	if (sg) {
-		if (sg->elems) {
-			free(sg->elems);
+void free_graph(SPARSE_GRAPH* spg) {
+	if (spg) {
+		if (spg->elems) {
+			free(spg->elems);
 		}
-		if (sg->col_index) {
-			free(sg->col_index);
+		if (spg->col_index) {
+			free(spg->col_index);
 		}
-		if (sg->row_index) {
-			free(sg->row_index);
+		if (spg->row_index) {
+			free(spg->row_index);
 		}
-		sg->elems = sg->col_index = sg->row_index = NULL;
-		sg->size_row_arr = sg->size_elems_arr = 0;
+		spg->elems = spg->col_index = spg->row_index = NULL;
+		spg->size_row_arr = spg->size_elems_arr = 0;
 	}
 } // not tested
 
-err_code get_link(int64_t* ret, SPARSE_GRAPH* sg, LINK l) {
-	if (!ret || !sg) {
+err_code get_link(int64_t* ret, SPARSE_GRAPH* spg, LINK lnk) {
+	if (!ret || !spg) {
 		return ERR_NULL;
 	}
-	if (sg->size_row_arr + 1 < l.row) {
+	if (spg->size_row_arr + 1 < lnk.row) {
 		return ERR_VAL;
 	}
 
-	int64_t row_start = sg->row_index[l.row];
-	int64_t row_end = sg->row_index[l.row + 1];
+	int64_t row_start = spg->row_index[lnk.row];
+	int64_t row_end = spg->row_index[lnk.row + 1];
 
 	for (uint32_t i = row_start; i < row_end; i++) {
-		if (sg->col_index[i] == l.col) {
-			*ret = sg->elems[i];
+		if (spg->col_index[i] == lnk.col) {
+			*ret = spg->elems[i];
 			return ERR_OK;
 		}
 	}
@@ -62,10 +62,10 @@ err_code get_link(int64_t* ret, SPARSE_GRAPH* sg, LINK l) {
 	return ERR_OK;
 } // not tested
 
-err_code link_exists(bool* ret, SPARSE_GRAPH* sg, LINK l) {
+err_code link_exists(bool* ret, SPARSE_GRAPH* spg, LINK lnk) {
 
 	int64_t tmp;
-	err_code failure = get_link(&tmp, sg, l);
+	err_code failure = get_link(&tmp, spg, lnk);
 	if (failure) {
 		return failure;
 	}
@@ -74,20 +74,20 @@ err_code link_exists(bool* ret, SPARSE_GRAPH* sg, LINK l) {
 	return ERR_OK;
 } // not tested ;
 
-err_code set_link(SPARSE_GRAPH* sg, LINK l, uint32_t weight) {
-	if (!sg) {
+err_code set_link(SPARSE_GRAPH* spg, LINK lnk, uint32_t weight) {
+	if (!spg) {
 		return ERR_NULL;
 	}
-	if (sg->size_row_arr + 1 < l.row) {
+	if (spg->size_row_arr + 1 < lnk.row) {
 		return ERR_VAL;
 	}
 
-	int64_t row_start = sg->row_index[l.row];
-	int64_t row_end = sg->row_index[l.row + 1];
+	int64_t row_start = spg->row_index[lnk.row];
+	int64_t row_end = spg->row_index[lnk.row + 1];
 
 	for (uint32_t i = row_start; i < row_end; i++) {
-		if (sg->col_index[i] == l.col) {
-			sg->elems[i] = weight;
+		if (spg->col_index[i] == lnk.col) {
+			spg->elems[i] = weight;
 			return ERR_OK;
 		}
 	}
@@ -118,12 +118,14 @@ extern err_code write_graph(FILE* flux_dest, SPARSE_GRAPH* graph_source) {
 	return ERR_OK;
 } // not tested
 
-static void skip_char(char c, char** buff) {
-	while (**buff == c && **buff != '\0') {
+static void skip_char(char chr , char** buff) {
+	while (**buff == chr && **buff != '\0') {
 		(*buff)++;
 	}
 } // static helper ; doesn't check for shit.
 
+#define DEC_BASE 10
+#define BUFF_SIZE 256
 static void fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size) {
 
 	uint32_t cpt = 0;
@@ -135,7 +137,7 @@ static void fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size) {
 	do {
 		start = end;
 
-		uint32_t parsed_num = strtol(start, &end, 10); // parses a number
+		uint32_t parsed_num = strtol(start, &end, DEC_BASE); // parses a number
 		if (start != end) {
 			arr_dest[cpt] = parsed_num;
 		}
@@ -150,45 +152,44 @@ static void fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size) {
 err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	if (!(flux_source && graph_dest)) {
 		return ERR_NULL;
-}
+	}
 
-	char buff[256];
-	fgets(buff, 256, flux_source);
+	char buff[BUFF_SIZE];
+	fgets(buff, BUFF_SIZE, flux_source);
 	skip_char(' ', (char**)&buff);
 
 	char* end = (char*)&buff;
 	char* start = (char*)&buff;
 
 	uint32_t size_elems_arr = 0;
-	size_elems_arr = strtol(start, &end, 10);
+	size_elems_arr = strtol(start, &end, DEC_BASE);
 	if (start == end) {
 		return ERR_VAL;
 	}
 	start = end;
 
 	uint32_t size_row_arr = 0;
-	size_row_arr = strtol(start, &end, 10);
+	size_row_arr = strtol(start, &end, DEC_BASE);
 	if (start == end) {
 		return ERR_VAL;
 	}
-	start = end;
 
 	err_code failure = init_graph(graph_dest, size_elems_arr, size_row_arr);
 	if (failure) {
 		return failure;
 	}
 
-	if (!fgets(buff, 256, flux_source)) {
+	if (!fgets(buff, BUFF_SIZE, flux_source)) {
 		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->elems, size_elems_arr);
 
-	if (!fgets(buff, 256, flux_source)) {
+	if (!fgets(buff, BUFF_SIZE, flux_source)) {
 		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->col_index, size_elems_arr);
 
-	if (!fgets(buff, 256, flux_source)) {
+	if (!fgets(buff, BUFF_SIZE, flux_source)) {
 		return ERR_FORMAT;
 	}
 	fill_arr(buff, graph_dest->row_index, size_row_arr);
