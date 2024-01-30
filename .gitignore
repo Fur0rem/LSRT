@@ -2,3 +2,4 @@
 bin/
 test/bin/
 cache/
+scripts/__pycache__/
