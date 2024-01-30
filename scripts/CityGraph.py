@@ -1,14 +1,23 @@
 import osmnx as ox
 
 class CityGraph :
-	ville : str
+	"""
+	Represents a graph of a city, with some useful methods
+	--- Attributes ---
+	city : name of the city
+	graph : the graph itself
+	nodes : a dict that maps a node to its index in the graph
+	projected_graph : the graph projected on a plane
+	"""
+	city : str
 	graph : nx.Graph
 	nodes : dict[int, int]
 	projected_graph : nx.Graph = None
 
-	def __init__(self, ville : str, network_type : str = "drive") :
-		self.ville = ville
-		self.graph = ox.graph_from_place(ville, network_type=network_type)
+	def __init__(self, city : str, network_type : str = "drive") :
+		"""Loads a graph from OSmnx through its name"""
+		self.city = city
+		self.graph = ox.graph_from_place(city, network_type=network_type)
 		self.nodes = { edge : i  for i, edge in enumerate(self.graph.nodes())}
 
 	def get_node_index(self, node : int) :
