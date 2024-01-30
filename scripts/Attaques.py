@@ -1,8 +1,5 @@
 import osmnx as ox
 import networkx as nx
-import numpy as np
-import scipy as sp
-import sys
 import random
 
 from CityGraph import CityGraph
