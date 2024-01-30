@@ -1,4 +1,5 @@
 import osmnx as ox
+import networkx as nx
 
 class CityGraph :
 	"""
@@ -46,7 +47,8 @@ class CityGraph :
 	def get_edge_index(self, edge_idx : int) :
 		return list(self.graph.edges())[edge_idx]
 
-	def read_from_file(file_path : str) -> CityGraph :
+	@staticmethod
+	def read_from_file(file_path : str) :
 		# TODO
 		return None
 
