@@ -161,9 +161,7 @@ static void fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size) {
 
 		cpt++;
 	} while (cpt < arr_size && start != end);
-} // not tested; static helper ; doesn't check for shit
-// prolly wrong
-
+} // tested; seems ok
 err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	if (!(flux_source && graph_dest)) {
 		return ERR_NULL;
@@ -171,11 +169,11 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 
 	char buff[BUFF_SIZE];
 	fgets(buff, BUFF_SIZE, flux_source);
-	skip_char(' ', (char**)&buff);
 
-	char* end = (char*)&buff;
-	char* start = (char*)&buff;
+	char* end = (char*)buff;
+	char* start = (char*)buff;
 
+	printf("start=%s end=%s", start, end);
 	uint32_t size_elems_arr = 0;
 	size_elems_arr = strtol(start, &end, DEC_BASE);
 	if (start == end) {
@@ -210,4 +208,4 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	fill_arr(buff, graph_dest->row_index, size_row_arr);
 
 	return ERR_OK;
-} // not tested; 100% wrong
+} // tested seems ok
