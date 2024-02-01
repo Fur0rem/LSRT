@@ -1,0 +1,64 @@
+
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+
+\title{Compte Rendu reunion du 30/01}
+\author{Ivan}
+
+\begin{document}
+
+\maketitle
+
+\section{Compte rendu}
+
+Points abordés : 
+
+\subsection{1 : Clarification mesure}
+La notion de "distance" a été clarifiée. Il sera 
+mesuré ici le temps pour accéder à un noeud b depuis 
+un noeud a au temps t. 
+
+ie : (t, a, b)
+
+Cette mesure est différente des mesures usuelles de 
+plus court chemin sur les linkstreams. Elle ressemble 
+cependant à la notion de "reachability". 
+
+ 
+
+\subsection{2 : Choix d'algorithme}
+
+On utilise Floyd-Warshall, un algorithme basé sur 
+Bellman-Ford car la suppression / l'ajout de liens sur 
+un link-stream "casse" l'hypothèse de Dijkstra (un nombre 
+de liens plus grand implique un trajet plus couteux). 
+
+On utilise pas de parcrours en largeur temporel car cet
+algorithme est "incompatible" avec le choix de représentation 
+de linkstream. 
+
+
+\subsection{3 : Clarification sur les attaques} 
+
+On va effectuer plusieurs types d'attaque (aléatoire uniforme, 
+centré sur un certain temps, basé sur la betweeness centrality, 
+...) . Afin de pouvoir comparer leur efficacité.
+
+Une fois ces mesures effectuées, on pourra effectuer des 
+attaques se basant sur des métriques plus complexes (coupes 
+de graphes, attaque avec coût,...). 
+
+Il faudra effectuer chaque type d'attaque avec 
+différentes "intensités" (différent nombre de liens supprimés) 
+pour évaluer leur efficacité.
+
+\subsection{4 : Divers } 
+
+On choisis le graphe Drive d'osmnx pour générer la ville. 
+
+Pour la semaine prochaine, on finira l'implémentation C des 
+linkstream, la génération des attaques, la génération des 
+graphes. On fusionnera également les branches divergentes.   
+
+\end{document}
