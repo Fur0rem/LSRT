@@ -10,7 +10,7 @@ static err_code init_uarr32(UARR_32 * arr, uint32_t size){
     arr->size = size ; 
 
     return ERR_OK;
-}//not tested
+}//tested ; works 
 
 static err_code add_uarr32(UARR_32 * arr, uint32_t index, uint32_t elem){
     def_err_handler(!arr, "add_uarr32", ERR_NULL);
@@ -20,7 +20,7 @@ static err_code add_uarr32(UARR_32 * arr, uint32_t index, uint32_t elem){
     }
 
     return ERR_OK;
-}//not tested
+}//not tested  probably works ; useless
 
 static void free_uarr32(UARR_32 *  arr){
     if(arr){
@@ -28,7 +28,7 @@ static void free_uarr32(UARR_32 *  arr){
         arr->elems = NULL; 
         arr->size = 0 ;
     }
-}//not tested
+}//tested; works 
 
 static int less_than( const void * nb1, const void * nb2){
     //not doing the nb1 - nb2 bc uint32_t might overflow
@@ -45,7 +45,7 @@ static int less_than( const void * nb1, const void * nb2){
         ret = 1 ;
     }
     return ret ;
-}
+}//static func to pass to qsort
 
 static err_code parse_uarr32(UARR_32 * arr, char * source){
     
@@ -68,9 +68,9 @@ static err_code parse_uarr32(UARR_32 * arr, char * source){
     qsort((void*)arr->elems, arr->size, sizeof(uint32_t), less_than);
 
     return ERR_OK;
-}//not tested
+}//tested works; 
 
-static err_code fprint_uarr32(FILE * dest, UARR_32 * arr){
+static err_code fprint_uarr32(FILE * dest, const UARR_32 * arr){
     def_err_handler(!(arr && dest), "fprint_uarr32", ERR_NULL);
 
     fprintf(dest, "%u ", arr->size);
@@ -80,7 +80,7 @@ static err_code fprint_uarr32(FILE * dest, UARR_32 * arr){
     fprintf(dest, "\n");
 
     return ERR_OK;
-}//not tested
+}//tested; works
 
 err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size ){
     def_err_handler(!dlt, "init_dlt", ERR_NULL);
@@ -91,13 +91,13 @@ err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size ){
     dlt->size = size ;
 
     return ERR_OK; 
-}//not tested 
+}//tested ; works
 
-void free_dlt(DELETED_LINKS_TAB * dlt, uint32_t size){
+void free_dlt(DELETED_LINKS_TAB * dlt){
 
     if(dlt){
         if(dlt->elems){
-            for(uint32_t i = 0 ; i < size ; i ++){
+            for(uint32_t i = 0 ; i < dlt->size ; i ++){
                 free_uarr32(&dlt->elems[i]);
             }
             free(dlt->elems);
@@ -105,7 +105,7 @@ void free_dlt(DELETED_LINKS_TAB * dlt, uint32_t size){
         dlt->elems = NULL ; 
         dlt->size = 0 ;
     }
-}//not tested 
+}//tested  ; works
 
 err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
@@ -117,7 +117,7 @@ err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     fprintf(flux,"\n");
 
     return ERR_OK;
-}//not tested
+}//tested ; works
 
 err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
@@ -146,21 +146,20 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
  
 
     return ERR_OK;
-}//not tested
+}//tested ; works
 
 
 static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
     def_err_handler(!arr, "dicho_search", ERR_NULL);
 
     uint32_t left = 0 ; 
-    uint32_t right = arr->size ;
+    uint32_t right = arr->size - 1 ;
     *ret = false ;
 
     while(left != right){
-        uint32_t cur_index = (left + right) / 2 ;
-
+        uint32_t cur_index =  left + (right - 1)/ 2 ;
         if(arr->elems[cur_index] < elem){
-            left = cur_index + 1; 
+            left = cur_index + 1 ; 
         }else if(arr->elems[cur_index] > elem){
             right = cur_index - 1 ;
         }else{
@@ -168,14 +167,21 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
             left = right ;
         }
     }
+    printf("exit left=%u right=%u \n", left, right);
+
     return ERR_OK;
-}
+}//works
 
 err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t time){
     def_err_handler(!(ret && dlt), "is_deleted", ERR_NULL);
-   
+
+    if(link > dlt->size ){
+         *ret = false; 
+         return ERR_OK;
+    }
+
     err_code failure = dicho_search(ret, &dlt->elems[link], time);
     def_err_handler(failure, "is_deleted", failure);
 
     return ERR_OK;
-}//not tested
+}//tested ; works 
