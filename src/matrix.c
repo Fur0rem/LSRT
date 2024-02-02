@@ -42,7 +42,6 @@ static err_code set_elem_mat( DISTANCE_MATRIX * mat, size_t row, size_t col, uin
     return ERR_OK;
 }
 
-
 err_code init_dma(DISTANCE_MATRIX_ARRAY * dma, uint32_t nb_mat, uint32_t rows, uint32_t cols){
     def_err_handler(!dma, "init_dma", ERR_NULL);
 
@@ -58,17 +57,20 @@ err_code init_dma(DISTANCE_MATRIX_ARRAY * dma, uint32_t nb_mat, uint32_t rows, u
 
     dma->nb_matrixes = nb_mat ; 
     return ERR_OK;
-}// not tested 
+}// tested ; ok
 
 void free_dma(DISTANCE_MATRIX_ARRAY * dma){
     if(dma){
-        for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++ ){
-            free_matrix(&dma->matrixes[i]);
+        if(dma->matrixes){
+            for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++ ){
+                free_matrix(&dma->matrixes[i]);
+            }
+            free(dma->matrixes);
         }
         dma->matrixes = NULL ; 
         dma->nb_matrixes = 0 ;
     }
-}//not tested 
+}// tested ; ok
 
 err_code set_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t value,  uint32_t index, uint32_t row, uint32_t col){
     def_err_handler(!dma, "set_elem_dma", ERR_NULL);
@@ -78,7 +80,7 @@ err_code set_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t value,  uint32_t ind
     def_err_handler(failure ,"set_elem_dma", failure);
 
     return ERR_OK ; 
-}//not tested 
+}// tested ; ok
 
 err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * ret,  uint32_t index, uint32_t row, uint32_t col){
     def_err_handler(!dma, "get_elem_dma", ERR_NULL);
@@ -88,4 +90,25 @@ err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * ret,  uint32_t ind
     def_err_handler(failure ,"get_elem_dma", failure);
 
     return ERR_OK ;
-}//not tested
+}//not tested ; should be ok
+
+#ifdef debug
+//debug functions ; doesn't check for shit
+static void fprint_matrix( FILE * flux, DISTANCE_MATRIX * mat ){
+
+    for(uint32_t i = 0 ; i < mat->cols * mat->rows ; i++){
+        fprintf(flux, "%u ", mat->values[i]);
+        if(i % (mat->cols) == mat->cols - 1){
+            fprintf(flux, "\n");
+        }
+    }
+}
+
+err_code fprint_dma(FILE * flux, DISTANCE_MATRIX_ARRAY * dma){
+    for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++){
+        fprint_matrix(flux, &dma->matrixes[i]);
+        fprintf(flux, "-----------------\n");
+    }
+    return ERR_OK;
+}
+#endif

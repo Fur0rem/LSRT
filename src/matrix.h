@@ -18,6 +18,7 @@ typedef struct s_dmatrixes{
     DISTANCE_MATRIX * matrixes ;
 
 }DISTANCE_MATRIX_ARRAY ; 
+#define declare_dma(dma) DISTANCE_MATRIX_ARRAY (dma) = {0, NULL};
 
 extern err_code init_dma(DISTANCE_MATRIX_ARRAY * dma, uint32_t nb_mat, uint32_t rows, uint32_t cols);
 extern void free_dma(DISTANCE_MATRIX_ARRAY * dma);
