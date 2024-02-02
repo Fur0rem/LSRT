@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 test_files
+=======
+tests_files/
+>>>>>>> origin
 .vscode/
 bin/
 test/bin/
