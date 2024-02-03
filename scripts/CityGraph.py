@@ -1,6 +1,8 @@
 import osmnx as ox
 import networkx as nx
 
+LOWEST_MAX_SPEED=30
+
 class CityGraph :
 	"""
 	Represents a graph of a city, with some useful methods
@@ -61,8 +63,44 @@ class CityGraph :
 		return None
 
 	def write_to_file(self, file_path : str) -> None :
-		# TODO
-		pass
+		nodeList=list(self.graph.nodes); # Should be changed
+		csr=sp.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
+		V=np.ndarray(len(csr.indices), dtype=np.uint32)
+		
+		i=0;
+		for j in range(len(csr.indices)):
+			weights=[]
+			d=[] # in case of no maxspeed
+			for e in self.graph.succ[nodeList[i]][nodeList[j]].values():
+				if "weight" in e.keys():
+					weights.append(e["weight"])
+				elif "maxspeed" in e.keys():
+					weights.append(int(e["length"]*100000)/e["maxspeed"]);
+				else:
+					d.append(e["length"])
+			if(len(weights)==0):
+				V[j]=int(np.min(d)*100000)/e["maxspeed"];
+			else:
+				V[j]=np.min(weights);
+			j+=1;
+			while((i+1<len(csr.indptr)) and (j>=csr.indptr[i+1])): # if ? (while in case of a node without succ)
+				i+=1;
+
+		f=open(file, "w");
+		f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
+		for i in V:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		for i in csr.indices:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		for i in csr.indptr:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		f.close();
 
 # Exemple utilisation
 # graph = CityGraph("Paris")
