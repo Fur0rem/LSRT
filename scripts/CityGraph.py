@@ -9,20 +9,19 @@ class CityGraph :
 	graph : the graph itself
 	nodes_idx_map : a dict that maps a node to its index in the graph
 	projected_graph : the graph projected on a plane
+	lanes_data : the number of lanes of each edge indexed by the edge index
 	"""
 	city_name : str
 	graph : nx.Graph
 	nodes_idx_map : dict[int, int]
 	projected_graph : nx.Graph = None
+	lanes_data : list[int] = None
 
 	def __init__(self, city_name : str, network_type : str = "drive") :
 		"""Loads a graph from OSmnx through its name"""
 		ox.settings.osm_xml_way_tags=["highway", "lanes"]
 		self.city_name = city_name
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
-		#Load the graph with the number of lanes too
-		self.graph = ox.graph_from_place(city_name, network_type=network_type)
-
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
 
 	def get_node_index(self, node : int) :
@@ -36,6 +35,20 @@ class CityGraph :
 	def print_stats(self) :
 		"""Prints some stats about the graph"""
 		print(ox.basic_stats(self.graph))
+
+	def get_lanes_data(self) :
+		"""Returns the number of lanes of each edge"""
+		if self.lanes_data is None :
+			graph_lanes = self.graph.edges.data("lanes")
+			lanes_data = []
+			for i, edge in enumerate(graph_lanes) :
+				if edge[2] != None :
+					lanes_data.append(int(edge[2]))
+				else :
+					lanes_data.append(1)
+			self.lanes_data = lanes_data
+
+		return self.lanes_data
 
 	def get_projected_graph(self) :
 		"""Returns the projected graph"""
@@ -59,16 +72,10 @@ class CityGraph :
 		"""Accesses an edge through its index"""
 		return list(self.graph.edges())[edge_idx]
 	
-	# TODO : ca marche pas
 	def get_nb_lanes_of_edge(self, edge_idx : int) -> int:
 		"""Returns the number of lanes of an edge"""
-		#edges = ox.graph_to_gdfs(self.graph, nodes=False, edges=True)
-		#print(edges.columns)
-		#lanes = edges["lanes"]
-		#for (u, v, d) in self.graph.edges(data=True):
-			#print(d)
-		#print(lanes)
-		return self.graph.get_edge_data(*self.get_edge_index(edge_idx), key="lanes")
+		edges = self.get_lanes_data()
+		return edges[edge_idx]
 
 	@staticmethod
 	def read_from_file(file_path : str) :

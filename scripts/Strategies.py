@@ -24,7 +24,7 @@ def random_attack(graph : CityGraph, nbTemps : int, budget : int) -> Attack :
 			attacks.add_attack(i, edge_idx)
 			edges_t.pop(edge_idx)
 			nb_retires += 1
-			budget_used += 1 #graph.get_nb_lanes_of_edge(edge_idx)
+			budget_used += 1 + graph.get_nb_lanes_of_edge(edge_idx)
 
 	return attacks
 			
