@@ -39,7 +39,6 @@ void free_graph(SPARSE_GRAPH* spg) {
 
 
 err_code get_link( int64_t * ret, SPARSE_GRAPH * spg , LINK lnk){
-   
 	def_err_handler(!(ret && spg), "get_link", ERR_NULL);
 	def_err_handler((spg->size_row_arr - 1 < lnk.row), "get link valcheck 1", ERR_VAL);
 	def_err_handler((spg->size_elems_arr - 1 < lnk.col ), "get_link valcheck 2", ERR_VAL);

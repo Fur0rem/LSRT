@@ -61,9 +61,11 @@ static err_code parse_uarr32(UARR_32 * arr, char * source){
     
     err_code failure = init_uarr32(arr, size);
     def_err_handler(failure, "parse_uarr32", failure);
-
-    failure = fill_arr(end, arr->elems, size); 
-    def_err_handler(failure, "parse_uarr32", failure);
+    
+    if(size){ //case where no link is deleted
+        failure = fill_arr(end, arr->elems, size); 
+        def_err_handler(failure, "parse_uarr32", failure);
+    }
 
     qsort((void*)arr->elems, arr->size, sizeof(uint32_t), less_than);
 
