@@ -151,7 +151,13 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
 
 static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
     def_err_handler(!arr, "dicho_search", ERR_NULL);
-
+    
+    if(arr->size == 0){
+        *ret = false ; 
+        return ERR_OK;
+    }
+    def_err_handler(!arr->elems, "dicho_search arr->elems", ERR_NULL);
+    
     uint32_t left = 0 ; 
     uint32_t right = arr->size - 1 ;
     *ret = false ;
@@ -167,15 +173,16 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
             left = right ;
         }
     }
-    printf("exit left=%u right=%u \n", left, right);
+    //printf("exit left=%u right=%u \n", left, right);
 
     return ERR_OK;
 }//works
 
 err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t time){
     def_err_handler(!(ret && dlt), "is_deleted", ERR_NULL);
-
-    if(link > dlt->size ){
+    def_war_handler(link >= dlt->size, "is_deleted", ERR_VAL);
+    if(link >= dlt->size ){
+        printf("link=%u, dlt->size=%u\n", link, dlt->size);
          *ret = false; 
          return ERR_OK;
     }

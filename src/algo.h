@@ -4,7 +4,7 @@
 #include "matrix.h"
 #include "link_stream.h"
 
-err_code temporal_floy_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma);
+err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma);
 /*
     oh boy it's time to write code that actually does stuff 
 
