@@ -32,8 +32,8 @@ class Attack :
 		# Conversion
 		edges_deleted : dict[int, set[int]] = {}
 		for time, edge_idx in self.attacks :
-			node0 = self.graph.get_node_index(self.graph.get_edge_index(edge_idx)[0])
-			node1 = self.graph.get_node_index(self.graph.get_edge_index(edge_idx)[1])
+			node0 = self.graph.get_node_index(self.graph.get_edge_at(edge_idx)[0])
+			node1 = self.graph.get_node_index(self.graph.get_edge_at(edge_idx)[1])
 			if (node0, node1) in edges_deleted :
 				edges_deleted[(node0, node1)].add(time)
 			else :
@@ -56,7 +56,7 @@ class Attack :
 		print(f"Attacks have been written to {file_path}")
 				
 def print_suppression_edge(graph : CityGraph, edge_idx : int, time : int):
-	edge = graph.get_edge_index(edge_idx)
+	edge = graph.get_edge_at(edge_idx)
 	noeud0 = graph.get_node_index(edge[0])
 	noeud1 = graph.get_node_index(edge[1])
 	print(f"T={time}, suppression de l'arete {edge_idx} entre les noeuds {noeud0} et {noeud1}")

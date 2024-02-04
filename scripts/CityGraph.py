@@ -16,6 +16,7 @@ class CityGraph :
 	nodes_idx_map : dict[int, int]
 	projected_graph : nx.Graph = None
 	lanes_data : list[int] = None
+	betweenness_centralities : list[float] = None
 
 	def __init__(self, city_name : str, network_type : str = "drive") :
 		"""Loads a graph from OSmnx through its name"""
@@ -49,6 +50,12 @@ class CityGraph :
 			self.lanes_data = lanes_data
 
 		return self.lanes_data
+	
+	def get_betweenness_centralities(self) :
+		"""Returns the betweenness centralities of each edge"""
+		if self.betweenness_centralities is None :
+			self.betweenness_centralities = nx.edge_betweenness_centrality(self.get_projected_graph())
+		return self.betweenness_centralities
 
 	def get_projected_graph(self) :
 		"""Returns the projected graph"""
@@ -68,7 +75,7 @@ class CityGraph :
 		"""Returns the number of edges in the graph"""
 		return self.graph.number_of_edges()
 
-	def get_edge_index(self, edge_idx : int) :
+	def get_edge_at(self, edge_idx : int) :
 		"""Accesses an edge through its index"""
 		return list(self.graph.edges())[edge_idx]
 	
@@ -76,6 +83,17 @@ class CityGraph :
 		"""Returns the number of lanes of an edge"""
 		edges = self.get_lanes_data()
 		return edges[edge_idx]
+	
+	def get_edge_betweenness_centrality(self, edge_idx : int) -> float:
+		"""Returns the betweenness centrality of an edge"""
+		edges = self.get_betweenness_centralities()
+		edge = self.get_edge_at(edge_idx)
+		edge = (edge[0], edge[1], 0) # keys are tuples with a third 0 for some reason
+		return edges[edge]
+
+	def find_edge_index(self, node0 : int, node1 : int) -> int:
+		"""Returns the index of an edge through its nodes"""
+		return list(self.graph.edges()).index((node0, node1))
 
 	@staticmethod
 	def read_from_file(file_path : str) :
