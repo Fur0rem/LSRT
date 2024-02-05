@@ -36,7 +36,7 @@ static err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
                 failure = is_deleted(&deleted, &(lst->deleted_links), col_index, time);  
                 def_err_handler(failure, "prepare_ftw", failure);
                 //set elem dma might be wrong
-                if(!deleted){
+                if(!deleted && (ret + time < dma->nb_matrixes)){
                     //printf("setelemdma ret=%u time=%u lnk={%u,%u}\n", (uint32_t)ret, time , lnk.row, lnk.col);
                     failure = set_elem_dma(dma, (uint32_t) ret, time, lnk.row, lnk.col);
                     def_err_handler(failure, "prepare_ftw", failure);
@@ -62,7 +62,7 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
 
     //the big temporal floyd warshall loop
     //fuck I'm doing it in the wrong direction I have to start from the end of it 
-    for(uint32_t time = 0 ; time < dma->nb_matrixes ; time ++){
+    for(int64_t time = dma->nb_matrixes - 1 ; time > -1 ; time--){
         for(uint32_t k = 0 ; k < dma->matrixes->rows; k++){
             for(uint32_t  i = 0 ; i < dma->matrixes->rows ; i++){
                 for(uint32_t  j = 0 ; j < dma->matrixes->rows ; j++){
