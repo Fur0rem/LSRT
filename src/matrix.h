@@ -35,6 +35,8 @@ extern err_code init_dma(DISTANCE_MATRIX_ARRAY * dma, uint32_t nb_mat, uint32_t 
     rows -> number of rows of each matrix 
     cols -> number of cols of each matrix
 
+    initialized the matrix at dma with nb_mat matrixes of size rows*cols each.
+
 */
 
 extern void free_dma(DISTANCE_MATRIX_ARRAY * dma);
@@ -44,11 +46,15 @@ extern void free_dma(DISTANCE_MATRIX_ARRAY * dma);
 
 extern err_code set_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t value,  uint32_t index, uint32_t row, uint32_t col);
 /*
+    dma -> not null & initialized
     set dma->matrixes[index].values[i][j] to value ; checks for wrong args
 */
 
 extern err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * value,  uint32_t index, uint32_t row, uint32_t col);
 /*
+    dma & value -> not null 
+    dma -> initialized
+    
     fetches dma->matrixes[index].values[i][j] to value ; checks for wrong args 
 */
 

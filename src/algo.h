@@ -6,8 +6,11 @@
 
 err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma);
 /*
-    oh boy it's time to write code that actually does stuff 
+    lst & dma -> initialized & not null 
 
-    O(n**3) hopefully 
+    sets dma to the return value of a "temporal_floyd_warshall"
+    executed on lst. 
+    see documentation of temporal_floyd_warshall for more informations 
+    (documentation not written yet)
 */
 #endif 

@@ -1,0 +1,60 @@
+
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{algpseudocode}
+
+\title{Temporal Floyd Warshall pseudocode}
+\author{Ivan}
+
+\begin{document}
+
+
+\centerline{$InitTFW(LinkStream \ lks, DistanceMatrixes \ dma$}
+\begin{algorithmic}
+	\For{matrix in dma :}
+		\For{$element \ in \ matrix :$}
+			\State $element \gets \infty$
+		\EndFor
+	\EndFor
+	\For{$tlink \ in \ lks :$}
+		\State $dma.matrix[tlink.time][tlink.link] \gets tlink.weight$ 
+	\EndFor
+
+	\For{$i \ in \ \ \{0..lks.nbnodes\}$ }
+		\For{$matrix \ in \ dma$ }
+			\State $matrix[i][i] \gets 0$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+
+\hfill \break
+\hfill \break 
+
+\centerline{$TemporalFloydWarshall(LinkStream \ lks, DistanceMatrixes \ dma)$}
+\begin{algorithmic}
+	\State $InitTFW(lks, dma)$
+
+	\For {$time \ in \ \{dma.NumMatrixes \ .. \ 0 \} $}
+		\For { $k \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+			\For { $i \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+				\For { $j \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+				
+					\State $distIJ \gets dma.matrix[t][ij]$
+					\State $distIK \gets dma.matrix[t][ik]$
+					\State $distKJ \gets dma.matrix[t+distIK][kj]$
+
+					\If{ $ distIJ > distIK + distKJ  $}
+						\State $dma.matrix[t][ij] \gets distIK + distKJ$
+					\EndIf
+				\EndFor
+			\EndFor
+		\EndFor
+		
+
+	\EndFor 
+
+\end{algorithmic}
+
+
+\end{document}

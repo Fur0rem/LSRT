@@ -48,6 +48,7 @@ extern err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt);
 
 extern err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t time);
 /*
+    ret & dlt -> not null & initialized
     returns true if a link is deleted at time t in dlt ; false otherwise .
 */
 

@@ -61,7 +61,6 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
     def_err_handler(failure, "temporal_floyd_warshall", failure);    
 
     //the big temporal floyd warshall loop
-    //fuck I'm doing it in the wrong direction I have to start from the end of it 
     for(int64_t time = dma->nb_matrixes - 1 ; time > -1 ; time--){
         for(uint32_t k = 0 ; k < dma->matrixes->rows; k++){
             for(uint32_t  i = 0 ; i < dma->matrixes->rows ; i++){
@@ -96,6 +95,5 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
         }
     }
     return ERR_OK;
-}//not tested
-//doesnt check function calls atm ; 
+}//tested ; somewhat ok ; needs more testing
 

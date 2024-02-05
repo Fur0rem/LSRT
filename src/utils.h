@@ -43,6 +43,15 @@ same as error_hanler but doesn't return anything
 #define BUFF_SIZE 256
 
 extern void skip_char(char chr , char** buff);
+/*
+    sets *buff to it's first char that isn't chr.
+*/
 extern err_code fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size);
+/*
+    str_source & arr_dest -> not null 
+
+    parses number from str source and writes them in arr_dest while str_source contains
+    number and the number of elements written in arr_dest is less than arr_size
+*/
 
 #endif

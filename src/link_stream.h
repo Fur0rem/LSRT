@@ -23,6 +23,9 @@ typedef struct s_link_stream{
 
 extern err_code parse_link_stream(LINK_STREAM * lks, FILE * graph_source, FILE * deleted_links_source );
 /*
+    lks , graph_source, deleted_links_source -> not null 
+    memleak if lks is initialized.
+    
     parses a link stream from the source of it's graph and deleted links 
 */
 extern void free_link_stream(LINK_STREAM * lks); 

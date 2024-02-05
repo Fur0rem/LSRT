@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-test_files
-=======
+docs/*.pdf
 tests_files/
->>>>>>> origin
 .vscode/
 bin/
 test/bin/
