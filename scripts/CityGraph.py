@@ -1,5 +1,7 @@
 import osmnx as ox
 import networkx as nx
+import numpy as np
+import scipy as sp
 
 LOWEST_MAX_SPEED=30
 
@@ -64,13 +66,36 @@ class CityGraph :
 
 	def write_to_file(self, file_path : str) -> None :
 		nodeList=list(self.graph.nodes); # Should be changed
-		csr=sp.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
+		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)
 		
+
+		for i in range(len(csr.indptr)-1):
+			for j in range(csr.indptr[i], csr.indptr[i+1]):
+				weights=[]
+				d=[] # in case of no maxspeed
+				# print(list(self.graph.succ.keys())[0],nodeList[i])
+				print(self.graph.succ[nodeList[i]], nodeList[csr.indices[j]])
+				for e in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
+					if "weight" in e.keys():
+						weights.append(e["weight"])
+					elif "maxspeed" in e.keys():
+						weights.append(int(e["length"]*100000)/int(e["maxspeed"])); # TODO Remove this cast
+					else:
+						d.append(e["length"])
+				if(len(weights)==0):
+					V[j]=int(np.min(d)*100000)/LOWEST_MAX_SPEED;
+				else:
+					V[j]=np.min(weights);
+
+		"""
 		i=0;
+		print(nodeList)
 		for j in range(len(csr.indices)):
 			weights=[]
 			d=[] # in case of no maxspeed
+			print(list(self.graph.succ.keys())[0],nodeList[i])
+			print(self.graph.succ[nodeList[i]], nodeList[i])
 			for e in self.graph.succ[nodeList[i]][nodeList[j]].values():
 				if "weight" in e.keys():
 					weights.append(e["weight"])
@@ -85,6 +110,7 @@ class CityGraph :
 			j+=1;
 			while((i+1<len(csr.indptr)) and (j>=csr.indptr[i+1])): # if ? (while in case of a node without succ)
 				i+=1;
+		"""
 
 		f=open(file, "w");
 		f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
@@ -103,6 +129,5 @@ class CityGraph :
 		f.close();
 
 # Exemple utilisation
-# graph = CityGraph("Paris")
-# graph.print_stats()
-# graph.show()
+graph = CityGraph("Sainte")
+graph.write_to_file("../../result.txt");
