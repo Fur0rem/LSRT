@@ -1,7 +1,9 @@
 import random
+import networkx as nx
 
 from CityGraph import CityGraph
 from Attack import Attack, print_suppression_edge
+
 
 # Juste pour test pour l'instant
 ville="Saints"
@@ -98,6 +100,12 @@ def moving_attack(graph : CityGraph, nbTimes : int, budget : int) -> Attack :
 		for edge_idx in range(graph.nb_edges()) :
 			if nb_people_on_edges[edge_idx] > 0 :
 				# Move the people
+				
+				# If there are no neighbours, stay on the edge
+				if len(neighbours[edge_idx]) == 0 :
+					attacks.add_attack(time, edge_idx)
+					continue
+
 				edge_idx2 = random.choice(list(neighbours[edge_idx]))
 				nb_people_on_edges[edge_idx] -= graph.get_nb_lanes_of_edge(edge_idx)
 				nb_people_on_edges[edge_idx2] += graph.get_nb_lanes_of_edge(edge_idx)
@@ -117,6 +125,46 @@ def moving_attack(graph : CityGraph, nbTimes : int, budget : int) -> Attack :
 
 	return attacks
 
+def is_bridge(graph : CityGraph, node0 : int, node1 : int) -> bool :
+	"""Returns True if the edge is a bridge"""
+	# TODO : ca marche pas pour les graphes orientes car networkx veut me rendre malheureux	
+	# Remove the edge
+	graph.graph.remove_edge(node0, node1)
+	# Check if the graph is still connected
+	is_connected = nx.is_connected(graph.graph)
+	# Add the edge back
+	graph.graph.add_edge(node0, node1)
+	return not is_connected
+
+
+def connex_attack(graph : CityGraph, nbTimes : int, budget : int) -> Attack :
+	"""We remove edges which cut the graph into two parts recursively
+	Algorithm reference : https://stackoverflow.com/questions/11218746/bridges-in-a-connected-graph"""
+
+	attacks = Attack(graph)
+	edges = list(graph.edges())
+
+	# Find the bridge with the highest betweenness centrality
+	# Then remove it
+	for time in range(nbTimes) :
+		# Find the bridge with the highest betweenness centrality
+		bridge = None
+		max_betweenness = 0
+		for edge_idx in range(graph.nb_edges()) :
+			edge = graph.get_edge_at(edge_idx)
+			if is_bridge(graph, edge[0], edge[1]) :
+				betweenness = graph.get_edge_betweenness_centrality(edge_idx)
+				if betweenness > max_betweenness :
+					bridge = edge_idx
+					max_betweenness = betweenness
+		if bridge is not None :
+			attacks.add_attack(time, bridge)
+		else :
+			break
+		
+		print_suppression_edge(graph, bridge)
+
+	return attacks
 
 graph = CityGraph(ville)
 graph.print_stats()
@@ -132,3 +180,5 @@ graph.print_stats()
 # a.write_to_file("test_betweenness_centralities_attack.txt")
 a = moving_attack(graph, 10, 100)
 a.write_to_file("test_moving_attack.txt")
+a = connex_attack(graph, 10, 10)
+a.write_to_file("test_connex_attack.txt")
