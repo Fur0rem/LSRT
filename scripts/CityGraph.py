@@ -80,7 +80,7 @@ class CityGraph :
 					if "weight" in e.keys():
 						weights.append(e["weight"])
 					elif "maxspeed" in e.keys():
-						weights.append(int(e["length"]*100000)/int(e["maxspeed"])); # TODO Remove this cast
+						weights.append(int(e["length"]*100000)/cast_tmp(e["maxspeed"])); # TODO Remove this cast
 					else:
 						d.append(e["length"])
 				if(len(weights)==0):
@@ -112,8 +112,9 @@ class CityGraph :
 				i+=1;
 		"""
 
-		f=open(file, "w");
-		f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
+		f=open(file_path, "w");
+		# f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
+		f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr))])+"\n") # TODO change this line
 		for i in V:
 			f.write(str(i)+" ");
 		f.write("\n");
@@ -127,6 +128,15 @@ class CityGraph :
 		f.write("\n");
 
 		f.close();
+
+def cast_tmp(var):
+	"""TODO : Change this function"""
+	if(type(var)==int):
+		return var
+	elif((type(var)==float) or (type(var)==str)):
+		return int(var)
+	elif((type(var)==list) or (type(var)==tuple)):
+		return np.min([cast_tmp(x) for x in var])
 
 # Exemple utilisation
 graph = CityGraph("Sainte")
