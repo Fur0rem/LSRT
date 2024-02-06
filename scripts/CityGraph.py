@@ -42,7 +42,7 @@ class CityGraph :
 		if self.lanes_data is None :
 			graph_lanes = self.graph.edges.data("lanes")
 			lanes_data = []
-			for i, edge in enumerate(graph_lanes) :
+			for edge in graph_lanes :
 				if edge[2] != None :
 					lanes_data.append(int(edge[2]))
 				else :
@@ -94,6 +94,12 @@ class CityGraph :
 	def find_edge_index(self, node0 : int, node1 : int) -> int:
 		"""Returns the index of an edge through its nodes"""
 		return list(self.graph.edges()).index((node0, node1))
+	
+	def get_neighbours_of_edge(self, edge_idx : int) -> list[int]:
+		"""Returns the neighbours of an edge"""
+		print(edge_idx)
+		edge = self.get_edge_at(edge_idx)
+		return list(self.graph.neighbors(edge[0])) + list(self.graph.neighbors(edge[1]))
 
 	@staticmethod
 	def read_from_file(file_path : str) :
