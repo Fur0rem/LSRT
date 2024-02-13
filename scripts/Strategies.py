@@ -61,7 +61,7 @@ def min_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane
     """Each time, it removes the edge with the least lanes until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, lambda x : -graph.get_nb_lanes_of_edge(x), costPerLane)
 
-def max_lanes_attack(graph : CityGraph, nbTimes : int, budget : int), costPerLane : bool -> Attack :
+def max_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> Attack :
     """Each time, it removes the edge with the most lanes until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, lambda x : graph.get_nb_lanes_of_edge(x), costPerLane)
 
@@ -76,7 +76,7 @@ def moving_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
     edges = list(graph.edges())
     
     # First time
-    attacks = random_attack(graph, 1, budget)
+    attacks = random_attack(graph, 1, budget, costPerLane)
     
     # Next times
     # First, find the neighbours of the concerned edges
