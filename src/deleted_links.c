@@ -84,16 +84,18 @@ static err_code fprint_uarr32(FILE * dest, const UARR_32 * arr){
     return ERR_OK;
 }//tested; works
 
-err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size ){
+err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta){
     def_err_handler(!dlt, "init_dlt", ERR_NULL);
 
     dlt->elems = calloc(size, sizeof(UARR_32));
     def_err_handler(!dlt->elems, "init_dlt", ERR_NULL);
     
     dlt->size = size ;
+    dlt->delta = (delta) ? delta : 1 ;//no floating point exception !!!!
 
     return ERR_OK; 
 }//tested ; works
+//modified for delta
 
 void free_dlt(DELETED_LINKS_TAB * dlt){
 
@@ -106,13 +108,14 @@ void free_dlt(DELETED_LINKS_TAB * dlt){
         }
         dlt->elems = NULL ; 
         dlt->size = 0 ;
+        dlt->delta = 0 ; 
     }
 }//tested  ; works
 
 err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
 
-    fprintf(flux, "%u\n", dlt->size);
+    fprintf(flux, "%u %u\n", dlt->size, dlt->delta);
     for(uint32_t i = 0 ; i < dlt->size ; i++){
         fprint_uarr32(flux, &dlt->elems[i]);
     }
@@ -120,6 +123,7 @@ err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
 
     return ERR_OK;
 }//tested ; works
+//modified for delta
 
 err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
@@ -136,7 +140,12 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     uint32_t size = strtol(start, &end, DEC_BASE);
     def_err_handler((start == end), "read_dlt", ERR_FORMAT);
 
-    err_code failure = init_dlt(dlt, size);
+
+    start = end ; 
+    uint32_t delta = strtol(start, &end, DEC_BASE);
+    def_err_handler((start == end), "read_dlt", ERR_FORMAT);
+
+    err_code failure = init_dlt(dlt, size, delta);
     def_err_handler(failure, "read_dlt", failure);
 
     for(uint32_t i = 0 ; i < size ; i++){
@@ -145,10 +154,9 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
         def_err_handler(failure, "read_dlt", failure);
     }
 
- 
-
     return ERR_OK;
 }//tested ; works
+//modified !!!
 
 
 static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
@@ -183,14 +191,16 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
 err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t time){
     def_err_handler(!(ret && dlt), "is_deleted", ERR_NULL);
     def_war_handler(link >= dlt->size, "is_deleted", ERR_VAL);
+    
     if(link >= dlt->size ){
-        printf("link=%u, dlt->size=%u\n", link, dlt->size);
+        //printf("link=%u, dlt->size=%u\n", link, dlt->size);
          *ret = false; 
          return ERR_OK;
     }
 
-    err_code failure = dicho_search(ret, &dlt->elems[link], time);
+    err_code failure = dicho_search(ret, &dlt->elems[link], time / dlt->delta );
     def_err_handler(failure, "is_deleted", failure);
 
     return ERR_OK;
 }//tested ; works 
+//divides the time given as arg by delta ; might be wrong idk ; testing needed

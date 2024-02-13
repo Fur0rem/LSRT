@@ -11,16 +11,17 @@ typedef struct uarr32{
 
 typedef struct delinks{
 
+    uint32_t delta ; //delta is the number of time steps in the weight to go from one elem to another
     uint32_t size ; 
     UARR_32 * elems ; //links are the indexes; elems[i] stores the times when the link i is deleted
 }DELETED_LINKS_TAB ;
 
-#define declare_dlt(dlt) DELETED_LINKS_TAB (dlt) = {0,NULL};
+#define declare_dlt(dlt) DELETED_LINKS_TAB (dlt) = {0,0,NULL};
 /*
     macro function to cleanly declare a DLT ; pass an unused name in the 
     namespace
 */
-extern err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size );
+extern err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta );
 /*
     dlt -> not null 
 

@@ -1,5 +1,5 @@
 
-todo : 
+done : 
 
 
 1 ere etape : implementation du programme en C
@@ -18,6 +18,14 @@ todo :
 			- implementation de Bellman Ford / Floyd Warshall 
 				-> cela risque de prendre du temps; il faudra
 				   implementer beaucoup de code auxiliaire 
+
+
+todo : 
+
+
+correction de floyd-Warshall temporel 
+	-> ajout de l'entier pr faire la différence entre pas de temps 
+	 	graphe et pas de temps poids des liens 
 
 2 e etape : implementation de scripts Python permettant d'evaluer 
 la mesure : 

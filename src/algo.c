@@ -47,7 +47,7 @@ static err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
     //intializes edge values (ie : mat[v][v]) to zero
     for(uint32_t mat = 0 ; mat < dma->nb_matrixes ; mat++){
         for(uint32_t row = 0 ; row < dma->matrixes[mat].rows ; row ++){
-            failure = set_elem_dma(dma,0, mat, row, row);
+            failure = set_elem_dma(dma,1, mat, row, row);//one to self bc you still advance in time
             def_err_handler(failure, "prepare_ftw", failure);
         }
     }
@@ -96,4 +96,21 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
     }
     return ERR_OK;
 }//tested ; somewhat ok ; needs more testing
+//does it handle the waiting case ??? 
+//i'm really unsure
 
+err_code sum_dma(double * ret,  DISTANCE_MATRIX_ARRAY * dma){
+    def_err_handler(!(ret && dma), "sum_dma", ERR_NULL);
+
+    double sum = 0; 
+    for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++){
+        for(uint32_t j = 0 ; j < dma->matrixes[i].cols * dma->matrixes[i].rows ; j++){
+            
+            if( (dma->matrixes[i].values[j] != UINT8_MAX) && (dma->matrixes[i].values[j]) && i!=j ){
+                sum += (double)((double)1/(double)(dma->matrixes[i].values[j])) ;
+            }
+        }
+    }
+    *ret = sum ; 
+    return ERR_OK ;
+}//not tested ; should be okay though 
