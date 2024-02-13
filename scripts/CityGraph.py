@@ -1,5 +1,9 @@
 import osmnx as ox
 import networkx as nx
+import numpy as np
+import scipy as sp
+
+LOWEST_MAX_SPEED=30
 
 class CityGraph :
 	"""
@@ -61,10 +65,79 @@ class CityGraph :
 		return None
 
 	def write_to_file(self, file_path : str) -> None :
-		# TODO
-		pass
+		nodeList=list(self.graph.nodes); # Should be changed
+		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
+		V=np.ndarray(len(csr.indices), dtype=np.uint32)
+		
+
+		for i in range(len(csr.indptr)-1):
+			for j in range(csr.indptr[i], csr.indptr[i+1]):
+				weights=[]
+				d=[] # in case of no maxspeed
+				# print(list(self.graph.succ.keys())[0],nodeList[i])
+				print(self.graph.succ[nodeList[i]], nodeList[csr.indices[j]])
+				for e in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
+					if "weight" in e.keys():
+						weights.append(e["weight"])
+					elif "maxspeed" in e.keys():
+						weights.append(int(e["length"]*100000)/cast_tmp(e["maxspeed"])); # TODO Remove this cast
+					else:
+						d.append(e["length"])
+				if(len(weights)==0):
+					V[j]=int(np.min(d)*100000)/LOWEST_MAX_SPEED;
+				else:
+					V[j]=np.min(weights);
+
+		"""
+		i=0;
+		print(nodeList)
+		for j in range(len(csr.indices)):
+			weights=[]
+			d=[] # in case of no maxspeed
+			print(list(self.graph.succ.keys())[0],nodeList[i])
+			print(self.graph.succ[nodeList[i]], nodeList[i])
+			for e in self.graph.succ[nodeList[i]][nodeList[j]].values():
+				if "weight" in e.keys():
+					weights.append(e["weight"])
+				elif "maxspeed" in e.keys():
+					weights.append(int(e["length"]*100000)/e["maxspeed"]);
+				else:
+					d.append(e["length"])
+			if(len(weights)==0):
+				V[j]=int(np.min(d)*100000)/e["maxspeed"];
+			else:
+				V[j]=np.min(weights);
+			j+=1;
+			while((i+1<len(csr.indptr)) and (j>=csr.indptr[i+1])): # if ? (while in case of a node without succ)
+				i+=1;
+		"""
+
+		f=open(file_path, "w");
+		# f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
+		f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr))])+"\n") # TODO change this line
+		for i in V:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		for i in csr.indices:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		for i in csr.indptr:
+			f.write(str(i)+" ");
+		f.write("\n");
+
+		f.close();
+
+def cast_tmp(var):
+	"""TODO : Change this function"""
+	if(type(var)==int):
+		return var
+	elif((type(var)==float) or (type(var)==str)):
+		return int(var)
+	elif((type(var)==list) or (type(var)==tuple)):
+		return np.min([cast_tmp(x) for x in var])
 
 # Exemple utilisation
-# graph = CityGraph("Paris")
-# graph.print_stats()
-# graph.show()
+graph = CityGraph("Sainte")
+graph.write_to_file("../../result.txt");
