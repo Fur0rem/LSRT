@@ -1,0 +1,5 @@
+docs/*.pdf
+tests_files/
+.vscode/
+bin/
+test/bin/
