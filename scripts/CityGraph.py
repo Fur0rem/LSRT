@@ -114,7 +114,7 @@ class CityGraph :
 		"""Accesses an edge through its index"""
 		return list(self.graph.edges())[edge_idx]
 
-	def write_to_file(self, file_path : str) -> None :
+	def write_to_file(self, file_path : str, delta=1/3600) -> None : # by default, delta convert the length to have the speed correzsponding to m/s
 		nodeList=list(self.graph.nodes); # Should be changed
 		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)
@@ -130,7 +130,7 @@ class CityGraph :
 					if "weight" in e.keys():
 						weights.append(e["weight"])
 					elif "maxspeed" in e.keys():
-						weights.append(int(e["length"]*100000)/cast_tmp(e["maxspeed"])); # TODO Remove this cast
+						weights.append(int(e["length"]*delta)/cast_tmp(e["maxspeed"])); # TODO Remove this cast
 					else:
 						d.append(e["length"])
 				if(len(weights)==0):
