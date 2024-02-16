@@ -173,12 +173,12 @@ def connex_attack(graph : CityGraph, nbTimes : int, budget : int) -> Attack :
 
     return attacks
 
-graph = CityGraph(ville)
-graph.print_stats()
+#graph = CityGraph(ville)
+#graph.print_stats()
 # graph.show() # je sais pas comment fermer une fenetre sous sway au secours
 
-a = random_attack(graph, 10, 10, True)
-a.write_to_file("test_random_attack.txt")
+#a = random_attack(graph, 10, 10, True)
+#a.write_to_file("test_random_attack.txt")
 # a = min_lanes_attack(graph, 10, 10)
 # a.write_to_file("test_min_lanes_attack.txt")
 # a = max_lanes_attack(graph, 10, 10)
@@ -189,3 +189,38 @@ a.write_to_file("test_random_attack.txt")
 # a.write_to_file("test_moving_attack.txt")
 # a = connex_attack(graph, 10, 10)
 # a.write_to_file("test_connex_attack.txt")
+
+import argparse
+
+def main():
+    # nom_ville : str, type_attack : str, nb_times : int, delta : int (default 8), output_file : Optional[str]
+    parser = argparse.ArgumentParser(description="Generate an attack on a city graph")
+    parser.add_argument("nom_ville", type=str, help="The name of the city")
+    parser.add_argument("type_attack", type=str, help="The type of attack, can be 'random', 'min_lanes', 'max_lanes', 'betweenness_centralities', 'moving' or 'connex'")
+    parser.add_argument("nb_times", type=int, help="The number of times the attack is repeated")
+    parser.add_argument("delta", type=int, help="The variation frequency of the attack", nargs="?", default=8)
+    parser.add_argument("output_file", type=str, help="The output file", nargs="?", default = None)
+
+    args = parser.parse_args()
+    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.delta}.txt"
+    graph = CityGraph(args.nom_ville)
+    
+    switch = {
+        "random" : random_attack,
+        "min_lanes" : min_lanes_attack,
+        "max_lanes" : max_lanes_attack,
+        "betweenness_centralities" : betweenness_centralities_attack,
+        "moving" : moving_attack,
+        "connex" : connex_attack
+    }
+
+    if args.type_attack not in switch :
+        print(f"Error : {args.type_attack} is not a valid attack type")
+        return
+    
+    a = switch[args.type_attack](graph, args.nb_times, args.delta, True)
+    a.write_to_file(args.output_file)
+
+
+if __name__ == "__main__" :
+    main()
