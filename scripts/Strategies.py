@@ -204,7 +204,8 @@ def main():
     args = parser.parse_args()
     args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.delta}.txt"
     graph = CityGraph(args.nom_ville)
-    
+
+    # Peut etre transformer en variable dynamiquement si ca devient trop
     switch = {
         "random" : random_attack,
         "min_lanes" : min_lanes_attack,
