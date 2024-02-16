@@ -1,8 +1,8 @@
-TARGET := ../lsrt
-DEBUG := ../lsrt_debug
+TARGET := lsrt
+DEBUG := lsrt_debug
 
-TEST := ../test
-TEST_DBG := ../test_dbg
+TEST := test
+TEST_DBG := test_dbg
 
 CC := gcc
 

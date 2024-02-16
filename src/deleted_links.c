@@ -1,5 +1,6 @@
 #include "deleted_links.h"
 #include "utils.h"
+#include <stdint.h>
 
 static err_code init_uarr32(UARR_32 * arr, uint32_t size){
     def_err_handler(!arr, "init_uarr32", ERR_NULL);
@@ -174,10 +175,16 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
 
     while(left != right){
         uint32_t cur_index =  left + (right - 1)/ 2 ;
+        //printf("left=%u , right=%u , cur_index=%d\n", left,right , cur_index);
         if(arr->elems[cur_index] < elem){
             left = cur_index + 1 ; 
         }else if(arr->elems[cur_index] > elem){
-            right = cur_index - 1 ;
+            if(cur_index != 0){
+                right = cur_index - 1 ;
+            }else{
+                left = right ; 
+                *ret = false ; 
+            }
         }else{
             *ret = true ; 
             left = right ;
@@ -198,7 +205,7 @@ err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t
          return ERR_OK;
     }
 
-    err_code failure = dicho_search(ret, &dlt->elems[link], time / dlt->delta );
+    err_code failure = dicho_search(ret, &dlt->elems[link], (uint32_t) time/(dlt->delta) );
     def_err_handler(failure, "is_deleted", failure);
 
     return ERR_OK;
