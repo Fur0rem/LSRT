@@ -1,7 +1,3 @@
-import osmnx as ox
-import networkx as nx
-import random
-
 from CityGraph import CityGraph
 
 # Juste pour test pour l'instant

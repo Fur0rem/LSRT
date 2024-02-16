@@ -1,11 +1,6 @@
 import osmnx as ox
 import networkx as nx
-
-import osmnx as ox
-import networkx as nx
 import numpy as np
-import scipy as sp
-
 
 LOWEST_MAX_SPEED=30
 
