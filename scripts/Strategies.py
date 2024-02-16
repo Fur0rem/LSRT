@@ -198,11 +198,12 @@ def main():
     parser.add_argument("nom_ville", type=str, help="The name of the city")
     parser.add_argument("type_attack", type=str, help="The type of attack, can be 'random', 'min_lanes', 'max_lanes', 'betweenness_centralities', 'moving' or 'connex'")
     parser.add_argument("nb_times", type=int, help="The number of times the attack is repeated")
+    parser.add_argument("budget", type=int, help="The budget of the attack", nargs="?", default=100)
     parser.add_argument("delta", type=int, help="The variation frequency of the attack", nargs="?", default=8)
     parser.add_argument("output_file", type=str, help="The output file", nargs="?", default = None)
 
     args = parser.parse_args()
-    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.delta}.txt"
+    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.budget}_{args.delta}.txt"
     graph = CityGraph(args.nom_ville)
 
     # Peut etre transformer en variable dynamiquement si ca devient trop
@@ -219,7 +220,12 @@ def main():
         print(f"Error : {args.type_attack} is not a valid attack type")
         return
     
-    a = switch[args.type_attack](graph, args.nb_times, args.delta, True)
+    # Write graph to file
+    graph.write_to_file(f"{args.nom_ville}.txt")
+    
+    # Write attack to file
+    a = switch[args.type_attack](graph, args.nb_times, args.budget, True)
+    a.set_delta(args.delta)
     a.write_to_file(args.output_file)
 
 

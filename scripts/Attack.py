@@ -17,10 +17,16 @@ class Attack :
 
     graph : CityGraph
     attacks : list[int] # Format : [time, edge_idx]
+    delta : int
 
-    def __init__(self, graph : CityGraph) :
+    def __init__(self, graph : CityGraph, delta : int = 0) :
         self.graph = graph
         self.attacks = []
+        self.delta = delta
+
+    def set_delta(self, delta : int) -> None :
+        """Sets the delta"""
+        self.delta = delta
     
     def add_attack(self, time : int, edge_idx : int) -> None :
         """Adds an attack to the list"""
@@ -54,7 +60,7 @@ class Attack :
         
         # Writing
         with open(file_path, "w") as file :
-            file.write(f"{len(edges_deleted)}\n")
+            file.write(f"{len(edges_deleted)} {self.delta}\n")
             for edge, times in edges_deleted :
                 file.write(f"{len(times)} {' '.join(map(str, times))}\n")
         

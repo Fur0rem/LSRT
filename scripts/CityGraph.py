@@ -52,6 +52,8 @@ class CityGraph :
 			lanes_data = []
 			for edge in graph_lanes :
 				#print(edge)
+
+				# Sometimes it's a list for some reason
 				if type(edge[2]) == list :
 					sum_list = sum([int(x) for x in edge[2]])
 					lanes_data.append(int(sum_list/len(edge[2])))
@@ -117,7 +119,7 @@ class CityGraph :
 		"""Accesses an edge through its index"""
 		return list(self.graph.edges())[edge_idx]
 
-	def write_to_file(self, file_path : str, delta=1) -> None :
+	def write_to_file(self, file_path : str) -> None :
 		nodeList=list(self.graph.nodes); # Should be changed
 		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)
@@ -128,18 +130,24 @@ class CityGraph :
 				weights=[]
 				d=[] # in case of no maxspeed
 				# print(list(self.graph.succ.keys())[0],nodeList[i])
-				print(self.graph.succ[nodeList[i]], nodeList[csr.indices[j]])
-				for e in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
-					if "weight" in e.keys():
-						weights.append(e["weight"])
-					elif "maxspeed" in e.keys():
-						weights.append(int(e["length"]*delta)/(cast_tmp(e["maxspeed"])*3600)); # TODO Remove this cast
+				#print(self.graph.succ[nodeList[i]], nodeList[csr.indices[j]])
+				for edge in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
+					if "maxspeed" not in edge.keys() and "length" not in edge.keys():
+						weights.append(1)
+					elif "maxspeed" not in edge.keys() and "length" in edge.keys():
+						weights.append(int(edge["length"])/LOWEST_MAX_SPEED)
+					elif "maxspeed" in edge.keys() and "length" not in edge.keys():
+						weights.append(1)
 					else:
-						d.append(e["length"])
+						weights.append(int(float(edge["length"])/cast_tmp(edge["maxspeed"])))
+
+					weights[-1]=max(1,weights[-1])
+
 				if(len(weights)==0):
-					V[j]=int(np.min(d)*100000)/LOWEST_MAX_SPEED;
+					V[j]=int(np.min(d)/LOWEST_MAX_SPEED)
 				else:
-					V[j]=np.min(weights);
+					V[j]=np.min(weights)
+
 
 		"""
 		i=0;
@@ -167,7 +175,8 @@ class CityGraph :
 
 		f=open(file_path, "w");
 		# f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
-		f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr), delta)])+"\n") # TODO change this line
+		# f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr), delta)])+"\n") # TODO change this line
+		f.write(" ".join([str(x) for x in (len(V), len(csr.indptr))])+"\n")
 		for i in V:
 			f.write(str(i)+" ");
 		f.write("\n");
