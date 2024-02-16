@@ -48,15 +48,18 @@ class CityGraph :
 	def get_lanes_data(self) :
 		"""Returns the number of lanes of each edge"""
 		if self.lanes_data is None :
-			graph_lanes = self.graph.edges.data("lanes")
+			graph_lanes = self.graph.edges.data("lanes", default = 1)
 			lanes_data = []
 			for edge in graph_lanes :
-				if edge[2] != None :
-					lanes_data.append(int(edge[2]))
+				#print(edge)
+				if type(edge[2]) == list :
+					sum_list = sum([int(x) for x in edge[2]])
+					lanes_data.append(int(sum_list/len(edge[2])))
 				else :
-					lanes_data.append(1)
+					lanes_data.append(int(edge[2]))
 			self.lanes_data = lanes_data
 
+		#print(self.lanes_data)
 		return self.lanes_data
 	
 	def get_betweenness_centralities(self) :
