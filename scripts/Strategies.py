@@ -6,7 +6,7 @@ from Attack import Attack, print_suppression_edge
 
 
 # Juste pour test pour l'instant
-ville="Saints"
+ville="Melun"
 
 def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> Attack :
     """Each time, it removes a random edge from the graph until the budget is reached or no more edges are available"""
@@ -99,7 +99,7 @@ def moving_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
     for attack in attacks.attacks :
         nb_people_on_edges[attack[1]] += costFunc(attack[1])
 
-    print(nb_people_on_edges)
+    #print(nb_people_on_edges)
 
 
     for time in range(1, nbTimes) :
