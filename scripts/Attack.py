@@ -35,12 +35,8 @@ class Attack :
     def write_to_file(self, file_path : str) -> None :
         """Writes the attacks to a file"""
         
-        #print(self.graph.nodes_idx_map)
-        #edges_of_graph = list(self.graph.graph.edges())
-        #print(edges_of_graph)
         # Map the edges to their indexes
         edges_of_graph = [(self.graph.get_node_index(edge[0]), self.graph.get_node_index(edge[1])) for edge in self.graph.edges()]
-        #edges_of_graph.sort(key = lambda x : (x[0], x[1]))
 
         # Conversion
         edges_deleted : dict[int, set[int]] = { edge : set() for edge in edges_of_graph}
@@ -60,7 +56,7 @@ class Attack :
         
         # Writing
         with open(file_path, "w") as file :
-            file.write(f"{len(edges_deleted)} {self.delta}\n")
+            file.write(f"{len(edges_deleted)} {self.delta} {self.attacks[-1][0] + 1}\n")
             for edge, times in edges_deleted :
                 file.write(f"{len(times)} {' '.join(map(str, times))}\n")
         

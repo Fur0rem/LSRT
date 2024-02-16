@@ -221,12 +221,12 @@ def main():
         return
     
     # Write graph to file
-    graph.write_to_file(f"{args.nom_ville}.txt")
+    graph.write_to_file(f"tests_files/{args.nom_ville}.txt")
     
     # Write attack to file
     a = switch[args.type_attack](graph, args.nb_times, args.budget, True)
     a.set_delta(args.delta)
-    a.write_to_file(args.output_file)
+    a.write_to_file(f"tests_files/{args.output_file}.txt")
 
 
 if __name__ == "__main__" :
