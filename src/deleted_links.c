@@ -174,7 +174,7 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
     *ret = false ;
 
     while(left != right){
-        uint32_t cur_index =  left + (right - 1)/ 2 ;
+        uint32_t cur_index =  left + (right - left)/ 2 ;
         //printf("left=%u , right=%u , cur_index=%d\n", left,right , cur_index);
         if(arr->elems[cur_index] < elem){
             left = cur_index + 1 ; 
@@ -189,11 +189,17 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
             *ret = true ; 
             left = right ;
         }
+        if(left > right){
+            *ret = false ; 
+            left = right  ; 
+        }
     }
     //printf("exit left=%u right=%u \n", left, right);
 
     return ERR_OK;
 }//works
+
+
 
 err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t time){
     def_err_handler(!(ret && dlt), "is_deleted", ERR_NULL);

@@ -64,6 +64,9 @@ int main(int argc, char ** argv) {
 	if(flux != stdout ){
 		fclose(flux);
 	}
+
+    fprint_dma(stdout, &dma);
+
 	free_dma(&dma);
 	free_link_stream(&lks);
 	return 0;

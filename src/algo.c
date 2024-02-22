@@ -80,11 +80,11 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
 
                     uint16_t dist_kj = UINT8_MAX ;
                     if(time + dist_ik < dma->nb_matrixes){//checks that time + dist_ik is not after the last time
-                        printf("dist_kj checked\n");
+                        //printf("dist_kj checked\n");
                         failure = get_elem_dma(dma, (uint8_t * )&dist_kj, time + dist_ik , k,j );
                         def_err_handler(failure, "temporal_floyd_warshall 3", failure); 
                     }  
-                    printf("time=%u (i,j,k)=(%u,%u,%u)\ndist_ij=%u, distik=%u, dist_kj=%u\n",time,i,j,k,dist_ij, dist_ik , dist_kj);
+                    //printf("time=%u (i,j,k)=(%u,%u,%u)\ndist_ij=%u, distik=%u, dist_kj=%u\n",time,i,j,k,dist_ij, dist_ik , dist_kj);
 
                     if( (dist_ij > (dist_ik + dist_kj)) && (time + dist_ik + dist_kj) < dma->nb_matrixes  ){
                         failure = set_elem_dma(dma, dist_ik + dist_kj, time, i, j);
@@ -93,6 +93,7 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
                 }   
             }
         }
+        printf("iteration number : i=%ld\n",time  );
     }
     return ERR_OK;
 }//tested ; somewhat ok ; needs more testing
