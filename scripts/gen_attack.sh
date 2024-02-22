@@ -9,16 +9,20 @@ fi
 budget_step=100
 budget_cur=100
 
+output_attack="tmp_attack"
 output_name="$1_$2_$3_$4_$5"
 
 if [[ $# -gt 5 ]]; then 
     budget_step=$6
 fi 
 
-while [[ budget_cur -le $5 ]]; do 
-    python Strategies.py "$1" "$2" "$3" "$4" "$budget_cur"
+while [[ budget_cur -le $5 ]]; do
+
+    echo "execution pour budget_cur=$budget_cur"
+
+    python Strategies.py "$1" "$2" "$3" "$budget_cur" "$4" "$output_attack"
     
     budget_cur=$((budget_cur + budget_step))
 
-    ./lsrt "$1_graph" "$1_$2_$3_$4" -f "$output_name"  
+    ./lsrt "$1_graph" "$output_attack" -f "$output_name"  
 done
