@@ -1,5 +1,6 @@
 #include "algo.h"
 #include "utils.h"
+#include <complex.h>
 #include <string.h>
 
 
@@ -112,6 +113,8 @@ err_code sum_dma(double * ret,  DISTANCE_MATRIX_ARRAY * dma){
             }
         }
     }
+    sum -= dma->matrixes[0].rows ;
+    
     *ret = sum ; 
     return ERR_OK ;
 }//not tested ; should be okay though 

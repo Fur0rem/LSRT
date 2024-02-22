@@ -22,7 +22,7 @@ int main(int argc, char ** argv) {
         case 'f' : //output file
 			opt_mask |= 1<<1; 
 			opt_shift+=2;
-			flux = fopen(optarg,"w");
+			flux = fopen(optarg,"a");
 			break;
 
         case '?':    
@@ -50,7 +50,7 @@ int main(int argc, char ** argv) {
 	fclose(fattack);
 	//initializes the matrixes 
 	declare_dma(dma); 	
-	failure = init_dma(&dma, lks.deleted_links.size, lks.sparse_graph.size_row_arr, lks.sparse_graph.size_row_arr); 
+	failure = init_dma(&dma, lks.deleted_links.nb_it, lks.sparse_graph.size_row_arr, lks.sparse_graph.size_row_arr); 
 	def_err_handler(failure, "main init_dma", failure);
 	//starts the algorithm
 	failure = temporal_floyd_warshall(&lks, &dma);
@@ -59,7 +59,7 @@ int main(int argc, char ** argv) {
 	double ret ; 
 	failure = sum_dma(&ret,  &dma);
 	def_err_handler(failure, "main sum_dma", failure);
-	fprintf(flux, "sum = %.2f\n", ret);
+	fprintf(flux, "%.2f\n", ret);
 	//cleans stuff up
 	if(flux != stdout ){
 		fclose(flux);

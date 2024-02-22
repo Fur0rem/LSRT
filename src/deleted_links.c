@@ -85,7 +85,7 @@ static err_code fprint_uarr32(FILE * dest, const UARR_32 * arr){
     return ERR_OK;
 }//tested; works
 
-err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta){
+err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32_t nb_it){
     def_err_handler(!dlt, "init_dlt", ERR_NULL);
 
     dlt->elems = calloc(size, sizeof(UARR_32));
@@ -93,6 +93,7 @@ err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta){
     
     dlt->size = size ;
     dlt->delta = (delta) ? delta : 1 ;//no floating point exception !!!!
+    dlt->nb_it = nb_it ; 
 
     return ERR_OK; 
 }//tested ; works
@@ -146,7 +147,11 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     uint32_t delta = strtol(start, &end, DEC_BASE);
     def_err_handler((start == end), "read_dlt", ERR_FORMAT);
 
-    err_code failure = init_dlt(dlt, size, delta);
+    start = end ; 
+    uint32_t nb_it = strtol(start, &end, DEC_BASE);
+    def_err_handler((start == end), "read_dlt", ERR_FORMAT);
+
+    err_code failure = init_dlt(dlt, size, delta, nb_it);
     def_err_handler(failure, "read_dlt", failure);
 
     for(uint32_t i = 0 ; i < size ; i++){
