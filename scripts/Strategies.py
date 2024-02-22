@@ -203,7 +203,7 @@ def main():
     parser.add_argument("output_file", type=str, help="The output file", nargs="?", default = None)
 
     args = parser.parse_args()
-    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.budget}_{args.delta}.txt"
+    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.nb_times}_{args.budget}_{args.delta}"
     graph = CityGraph(args.nom_ville)
 
     # Peut etre transformer en variable dynamiquement si ca devient trop
@@ -221,12 +221,14 @@ def main():
         return
     
     # Write graph to file
-    graph.write_to_file(f"tests_files/{args.nom_ville}.txt")
-    
+    graph.write_to_file(f"{args.nom_ville}_graph")
+    if args.budget > graph.nb_edges(): 
+        args.budget = graph.nb_edges() - 1 
+
     # Write attack to file
     a = switch[args.type_attack](graph, args.nb_times, args.budget, True)
     a.set_delta(args.delta)
-    a.write_to_file(f"tests_files/{args.output_file}.txt")
+    a.write_to_file(f"{args.output_file}")
 
 
 if __name__ == "__main__" :
