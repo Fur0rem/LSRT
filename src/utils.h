@@ -54,4 +54,10 @@ extern err_code fill_arr(char* str_source, uint32_t* arr_dest, uint32_t arr_size
     number and the number of elements written in arr_dest is less than arr_size
 */
 
+extern FILE* fopen_check(const char* filename, const char* mode);
+/*
+    some wrappers around fopen
+    to check for errors
+*/
+
 #endif

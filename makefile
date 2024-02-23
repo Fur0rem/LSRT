@@ -7,7 +7,7 @@ TEST_DBG := test_dbg
 CC := gcc
 
 DEBUG_FLAGS := -g -fsanitize=address -fsanitize=object-size -fno-optimize-sibling-calls -fsanitize=undefined -fsanitize=leak -fsanitize=alignment
-CFLAGS := -Og -g -std=gnu17 -Wall -Wextra -Wpedantic -Wno-unused-parameter 
+CFLAGS := -O2 -std=gnu17 -Wall -Wextra -Wpedantic -Wno-unused-parameter 
 
 SRCS := $(wildcard src/*.c)
 
