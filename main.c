@@ -59,13 +59,13 @@ int main(int argc, char ** argv) {
 	double ret ; 
 	failure = sum_dma(&ret,  &dma);
 	def_err_handler(failure, "main sum_dma", failure);
-	fprintf(flux, "%.2f\n", ret);
+	fprintf(flux, "%f\n", ret);
 	//cleans stuff up
 	if(flux != stdout ){
 		fclose(flux);
 	}
 
-    fprint_dma(stdout, &dma);
+    //fprint_dma(stdout, &dma);
 
 	free_dma(&dma);
 	free_link_stream(&lks);
