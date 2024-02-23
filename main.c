@@ -12,7 +12,7 @@ int main(int argc, char ** argv) {
 	uint8_t opt_shift = 0 ; 
 
 	int chr;
-    while ((chr = getopt(argc, argv, "hf:")) != -1) {
+    while ((chr = getopt(argc, argv, "hf:d")) != -1) {
         
         switch (chr) {
         case 'h': //help
@@ -23,6 +23,10 @@ int main(int argc, char ** argv) {
 			opt_mask |= 1<<1; 
 			opt_shift+=2;
 			flux = fopen(optarg,"a");
+			break;
+		case 'd' : //output file
+			opt_mask |= 1<<2; 
+			opt_shift++;
 			break;
 
         case '?':    
@@ -64,8 +68,11 @@ int main(int argc, char ** argv) {
 	if(flux != stdout ){
 		fclose(flux);
 	}
-
-    //fprint_dma(stdout, &dma);
+	if(opt_mask &  (1<<2) ){
+		FILE * f = fopen("dma_dump","a");
+		fprint_dma(f, &dma);
+		fclose(f);
+	}
 
 	free_dma(&dma);
 	free_link_stream(&lks);
