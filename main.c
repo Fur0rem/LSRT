@@ -11,7 +11,7 @@ int main(int argc, char ** argv) {
 	FILE * flux = stdout ;
 	uint8_t opt_shift = 0 ; 
 
-	char chr;
+	int chr;
     while ((chr = getopt(argc, argv, "hf:")) != -1) {
         
         switch (chr) {
