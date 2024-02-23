@@ -13,7 +13,7 @@ extern err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRA
     see documentation of temporal_floyd_warshall for more informations 
     (documentation not written yet&)
 */
-extern err_code sum_dma(double * ret,  DISTANCE_MATRIX_ARRAY * dma);
+extern err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_ARRAY * dma);
 /*
     ret & dma -> not null
 

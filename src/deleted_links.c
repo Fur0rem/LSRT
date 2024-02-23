@@ -1,4 +1,5 @@
 #include "deleted_links.h"
+#include "common.h"
 #include "utils.h"
 #include <stdint.h>
 
@@ -202,7 +203,26 @@ static err_code dicho_search(bool * ret, UARR_32 * arr, uint32_t elem){
     //printf("exit left=%u right=%u \n", left, right);
 
     return ERR_OK;
-}//works
+}//doesn't work 
+
+static err_code linear_search(bool * ret, UARR_32 * arr, uint32_t elem){
+    def_err_handler(!arr, "dicho_search", ERR_NULL);
+    
+    if(arr->size == 0){
+        *ret = false ; 
+        return ERR_OK;
+    }
+    def_err_handler(!arr->elems, "dicho_search arr->elems", ERR_NULL);
+    
+    for(uint32_t i = 0 ; i < arr->size; i++){
+        if(arr->elems[i] == elem ){
+            *ret = true ; 
+            return ERR_OK ;
+        }
+    }
+    *ret = false ; 
+    return ERR_OK;
+}//doesn't work 
 
 
 
@@ -216,7 +236,7 @@ err_code is_deleted(bool * ret, DELETED_LINKS_TAB * dlt, uint32_t link, uint32_t
          return ERR_OK;
     }
 
-    err_code failure = dicho_search(ret, &dlt->elems[link], (uint32_t) time/(dlt->delta) );
+    err_code failure = linear_search(ret, &dlt->elems[link], (uint32_t) time/(dlt->delta) );
     def_err_handler(failure, "is_deleted", failure);
 
     return ERR_OK;

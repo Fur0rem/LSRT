@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <stdio.h>
 
 static inline char * str_flag(err_code flag)
 {
@@ -79,7 +80,11 @@ err_code fill_arr(char* str_source, uint32_t * arr_dest, uint32_t arr_size) {
 
 		cpt++;
 	} while (cpt < arr_size && start != end);
-	def_war_handler( (cpt != arr_size), "fill_arr", ERR_VAL);
+
+  char * errbuf = calloc(256, sizeof(char));
+  snprintf(errbuf, 255, "fill_arr as=%u cpt=%u", arr_size, cpt);
+	def_war_handler( (cpt != arr_size),errbuf, ERR_VAL);
+  free(errbuf);
 
 	return ERR_OK;
 } // tested; seems ok

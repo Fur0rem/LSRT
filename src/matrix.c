@@ -1,6 +1,7 @@
 #include "matrix.h"
 #include "misc.h"
 #include "utils.h"
+#include <stdint.h>
 
 static err_code  init_matrix(DISTANCE_MATRIX * mat,  size_t rows, size_t cols) {
     def_err_handler(!mat,"init_matrix", ERR_NULL);
@@ -33,7 +34,7 @@ static err_code get_elem_mat(uint8_t * ret , DISTANCE_MATRIX* mat, size_t row, s
     return ERR_OK;
 }
 
-static err_code set_elem_mat( DISTANCE_MATRIX * mat, size_t row, size_t col, uint8_t val) {
+static err_code set_elem_mat( DISTANCE_MATRIX * mat, uint32_t row, uint32_t col, uint8_t val) {
     def_err_handler(!(mat), "set_elem_mat", ERR_NULL);
     def_err_handler((row > mat->rows || col > mat->cols), "set_elem_mat", ERR_VAL);
 
@@ -105,10 +106,11 @@ static void fprint_matrix( FILE * flux, DISTANCE_MATRIX * mat ){
 }
 
 err_code fprint_dma(FILE * flux, DISTANCE_MATRIX_ARRAY * dma){
-    for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++){
+     fprint_matrix(flux, &dma->matrixes[0]);
+    /*for(uint32_t i = 0 ; i < dma->nb_matrixes ; i++){
         fprint_matrix(flux, &dma->matrixes[i]);
         fprintf(flux, "-----------------\n");
-    }
+    }*/
     return ERR_OK;
 }
 #endif

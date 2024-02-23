@@ -61,9 +61,10 @@ int main(int argc, char ** argv) {
 	def_err_handler(failure, "main temporal_floyd_warshall", failure);
 	//sums every little square in the matrix and writes results
 	double ret ; 
-	failure = sum_dma(&ret,  &dma);
+	uint64_t reachables; 
+	failure = sum_dma(&ret, &reachables,  &dma);
 	def_err_handler(failure, "main sum_dma", failure);
-	fprintf(flux, "%f\n", ret);
+	fprintf(flux, "%lf %lu\n", ret, reachables);
 	//cleans stuff up
 	if(flux != stdout ){
 		fclose(flux);

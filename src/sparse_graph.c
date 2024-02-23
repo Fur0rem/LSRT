@@ -119,7 +119,7 @@ extern err_code write_graph(FILE* flux_dest, SPARSE_GRAPH* graph_source) {
 err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	def_err_handler(!(flux_source && graph_dest ), "read_graph", ERR_NULL);
 
-	char buff[BUFF_SIZE];
+	char * buff = calloc(BUFF_SIZE, sizeof(char));
 	fgets(buff, BUFF_SIZE, flux_source);
 
 	char* end = (char*)buff;
@@ -151,5 +151,6 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 	failure = fill_arr(buff, graph_dest->row_index, size_row_arr);
 	def_err_handler(failure, "read_graph" , failure);
 
+	free(buff);
 	return ERR_OK;
 } // tested seems ok; changed; need to retest
