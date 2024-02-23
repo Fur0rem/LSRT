@@ -135,8 +135,11 @@ err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_A
         }
     }
     sum -= dma->matrixes[0].rows ;
+    sum /=  (((dma->matrixes[0].rows) * (dma->matrixes[0].rows - 1) ));
+
     reachables -= dma->matrixes[0].rows ;
-    sum /=  (dma->nb_matrixes * ((dma->matrixes[0].rows) * (dma->matrixes[0].rows -1) ));
+    //reachables /= (((dma->matrixes[0].rows) * (dma->matrixes[0].rows - 1) ));
+   
     *ret_sum = sum ; 
     *ret_reachables = reachables ;
     return ERR_OK ;
