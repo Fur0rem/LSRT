@@ -93,7 +93,6 @@ FILE* fopen_check(const char* filename, const char* mode){
     FILE* file = fopen(filename, mode);
     if (!file) {
         fprintf(stderr, "Cannot open file %s\n", filename);
-        exit(ERR_FILE);
     }
     return file;
 }

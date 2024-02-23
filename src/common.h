@@ -23,7 +23,6 @@ enum ERRORS {
 	ERR_REALLOC,
 	ERR_VAL,
 	ERR_FORMAT,
-	ERR_FILE,
 };
 
 #define debug
