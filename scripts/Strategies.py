@@ -13,7 +13,7 @@ def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
 
-    attacks = Attack(graph)
+    attacks = Attack(graph, is_moving=True)
     edges = list(graph.edges())
     
     for time in range(nbTimes) :
@@ -36,11 +36,30 @@ def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, sort_by : call
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
 
-    attacks = Attack(graph)
+    attacks = Attack(graph, is_moving=False)
     edges = list(graph.edges())
     for i, edge in enumerate(edges) :
         edges[i] = graph.find_edge_index(edge[0], edge[1])
     edges.sort(key = sort_by, reverse = True)
+
+    #  For some reason this is.. slower?
+    # edges_t = edges.copy()
+    # budget_used = 0
+    # nb_retires = 0
+    # while budget_used < budget and len(edges_t) > 0 :
+    #     edge_idx = edges_t.pop(0)
+    #     cost = costFunc(edge_idx)
+    #     if cost <= budget - budget_used :
+    #         attacks.add_attack(0, edge_idx)
+    #         budget_used += cost
+    #         nb_retires += 1
+    #     #edges_t.pop(edge_idx)
+    
+    # # Now clone the rest each time
+    # attacks_zero = attacks.attacks.copy()
+    # for time in range(1, nbTimes) :
+    #     for attack in attacks_zero :
+    #         attacks.add_attack(time, attack[1])
 
     for time in range(nbTimes) :
         edges_t = edges.copy()
@@ -53,7 +72,6 @@ def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, sort_by : call
                 attacks.add_attack(time, edge_idx)
                 budget_used += cost
                 nb_retires += 1
-            #edges_t.pop(edge_idx)
 
     return attacks
 

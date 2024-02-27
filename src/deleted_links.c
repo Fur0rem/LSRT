@@ -26,7 +26,9 @@ static err_code add_uarr32(UARR_32 * arr, uint32_t index, uint32_t elem){
 
 static void free_uarr32(UARR_32 *  arr){
     if(arr){
-        if(arr->elems) free(arr->elems); 
+        if (arr->elems) {
+            free(arr->elems); 
+        }
         arr->elems = NULL; 
         arr->size = 0 ;
     }
@@ -86,7 +88,7 @@ static err_code fprint_uarr32(FILE * dest, const UARR_32 * arr){
     return ERR_OK;
 }//tested; works
 
-err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32_t nb_it){
+err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32_t nb_it, bool is_moving){
     def_err_handler(!dlt, "init_dlt", ERR_NULL);
 
     dlt->elems = calloc(size, sizeof(UARR_32));
@@ -95,6 +97,7 @@ err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32
     dlt->size = size ;
     dlt->delta = (delta) ? delta : 1 ;//no floating point exception !!!!
     dlt->nb_it = nb_it ; 
+    dlt->is_moving = is_moving ;
 
     return ERR_OK; 
 }//tested ; works
@@ -118,7 +121,7 @@ void free_dlt(DELETED_LINKS_TAB * dlt){
 err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
 
-    fprintf(flux, "%u %u\n", dlt->size, dlt->delta);
+    fprintf(flux, "%u %u %d\n", dlt->size, dlt->delta, dlt->is_moving);
     for(uint32_t i = 0 ; i < dlt->size ; i++){
         fprint_uarr32(flux, &dlt->elems[i]);
     }
@@ -134,7 +137,9 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
     char buff[BUFF_SIZE] ;
     def_err_handler(!fgets(buff,BUFF_SIZE,flux),"read_dlt",ERR_FORMAT);
 
-    char * start ;
+    //printf("buff = %s\n", buff);
+
+    /*char * start ;
     char * end ;
     start = buff; 
     skip_char(' ', &start) ; 
@@ -150,9 +155,16 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
 
     start = end ; 
     uint32_t nb_it = strtol(start, &end, DEC_BASE);
-    def_err_handler((start == end), "read_dlt", ERR_FORMAT);
+    def_err_handler((start == end), "read_dlt", ERR_FORMAT);*/
 
-    err_code failure = init_dlt(dlt, size, delta, nb_it);
+    int size;
+    int delta;
+    int nb_it;
+    char is_moving;
+    int ret = sscanf(buff, "%d %d %d %c", &size, &delta, &nb_it, &is_moving);
+    def_err_handler(ret != 4, "read_dlt", ERR_FORMAT);
+
+    err_code failure = init_dlt(dlt, size, delta, nb_it, (is_moving == STATIC) ? false : true);
     def_err_handler(failure, "read_dlt", failure);
 
     for(uint32_t i = 0 ; i < size ; i++){
@@ -160,6 +172,8 @@ err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
         failure = parse_uarr32(&dlt->elems[i], buff);
         def_err_handler(failure, "read_dlt", failure);
     }
+
+    printf("size = %d, delta = %d, nb_it = %d, is_moving = %c\n", size, delta, nb_it, is_moving);
 
     return ERR_OK;
 }//tested ; works

@@ -14,11 +14,13 @@ class Attack :
     graph : CityGraph
     attacks : list[int] # Format : [time, edge_idx]
     delta : int
+    is_moving : bool
 
-    def __init__(self, graph : CityGraph, delta : int = 0) :
+    def __init__(self, graph : CityGraph, delta : int = 0, is_moving : bool = True) -> None :
         self.graph = graph
         self.attacks = []
         self.delta = delta
+        self.is_moving = is_moving
 
     def set_delta(self, delta : int) -> None :
         """Sets the delta"""
@@ -52,7 +54,8 @@ class Attack :
         
         # Writing
         with open(file_path, "w") as file :
-            file.write(f"{len(edges_deleted)} {self.delta} {self.attacks[-1][0] + 1}\n")
+            letter = 'M' if self.is_moving else 'S'
+            file.write(f"{len(edges_deleted)} {self.delta} {self.attacks[-1][0] + 1} {letter}\n")
             for edge, times in edges_deleted :
                 file.write(f"{len(times)} {' '.join(map(str, times))}\n")
         

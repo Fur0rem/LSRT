@@ -10,7 +10,7 @@ typedef struct s_link_stream{
     DELETED_LINKS_TAB deleted_links ; 
     
 }LINK_STREAM; 
-#define declare_link_stream(lks) LINK_STREAM lks = { {0, NULL, NULL, 0, NULL}, {0,0, NULL,0}};
+#define declare_link_stream(lks) LINK_STREAM lks = { {0, NULL, NULL, 0, NULL}, {0,0, NULL,0, true} }
 /*
     simple wrapper around sparse graph and 
     deleted links to make it more handy :)

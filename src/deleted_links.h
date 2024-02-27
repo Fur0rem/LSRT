@@ -3,6 +3,10 @@
 
 #include "common.h"
 #include <stdint.h>
+#include <stdbool.h>
+
+#define MOVING 'M'
+#define STATIC 'S'
 
 typedef struct uarr32{
     uint32_t size; 
@@ -16,14 +20,15 @@ typedef struct delinks{
     UARR_32 * elems ; //links are the indexes; elems[i] stores the times when the link i is deleted
 
     uint32_t nb_it ;
+    bool is_moving ; //if true, the links are static, else they're moving
 }DELETED_LINKS_TAB ;
 
-#define declare_dlt(dlt) DELETED_LINKS_TAB (dlt) = {0,0,NULL, 0};
+#define declare_dlt(dlt) DELETED_LINKS_TAB (dlt) = {0,0,NULL, 0, true}
 /*
     macro function to cleanly declare a DLT ; pass an unused name in the 
     namespace
 */
-extern err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32_t nb_it );
+extern err_code init_dlt(DELETED_LINKS_TAB * dlt, uint32_t size, uint32_t delta, uint32_t nb_it, bool is_moving);
 /*
     dlt -> not null 
 
