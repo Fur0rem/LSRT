@@ -225,18 +225,20 @@ import argparse
 
 def main():
 
-    # nom_ville : str, type_attack : str, times : int, delta : int (default 8), output_file : Optional[str]
     parser = argparse.ArgumentParser(description="Generate an attack on a city graph")
+
     parser.add_argument("nom_ville", type=str, help="The name of the city")
     parser.add_argument("type_attack", type=str, help="The type of attack, can be 'random', 'min_lanes', 'max_lanes', 'betweenness_centralities', 'moving' or 'connex'")
     parser.add_argument("times", type=int, help="The number of times the attack is repeated")
-    parser.add_argument("budget", type=int, help="The budget of the attack")
     parser.add_argument("delta", type=int, help="The variation frequency of the attack")
-    parser.add_argument("output_file", type=str, help="The output file", nargs="?", default=None)
-
+    parser.add_argument("output_file_format", type=str, help="The output file format")
+    parser.add_argument("budgets", type=int, nargs="+", help="The budget of the attack")
+    
     args = parser.parse_args()
-    args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.times}_{args.budget}_{args.delta}"
+
+    args.output_file_format = args.output_file_format if args.output_file_format is not None else "TODO : fix that shit"
     graph = CityGraph(args.nom_ville)
+
     if args.times == NO_ARG :
         # Convert the graph to be non oriented else networkx is mad >:(
         tmp_graph = None
@@ -264,18 +266,16 @@ def main():
     if args.type_attack not in switch :
         print(f"{TermColors.RED}Error{TermColors.ENDC}: {args.type_attack} is not a valid attack type")
         return
-
+    
     print(args)
 
     # Write graph to file
     graph.write_to_file(f"{args.nom_ville}_graph")
-    if args.budget > graph.nb_edges(): 
-        args.budget = graph.nb_edges() - 1 
-
-    # Write attack to file
-    a = switch[args.type_attack](graph, args.times, args.budget, False)
-    a.set_delta(args.delta)
-    a.write_to_file(f"{args.output_file}")
+    
+    # Generate the attacks
+    for budget in args.budgets :
+        attack = switch[args.type_attack](graph, args.times, budget, True)
+        attack.write_to_file(f"{args.output_file_format}_{budget}")
 
 if __name__ == "__main__" :
     main()

@@ -6,8 +6,8 @@ int main(int argc, char ** argv){
     declare_link_stream(lks);
 
 
-    FILE * gfile = fopen("tests_files/test_graph", "r"); 
-    FILE * afile = fopen("tests_files/test_attack", "r"); 
+    FILE * gfile = fopen_check("tests_files/test_graph", "r"); 
+    FILE * afile = fopen_check("tests_files/test_attack", "r"); 
     err_code failure = parse_link_stream(&lks, gfile, afile);
     def_err_handler(failure, "main", failure);
 

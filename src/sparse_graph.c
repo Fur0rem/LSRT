@@ -127,6 +127,9 @@ err_code read_graph(FILE* flux_source, SPARSE_GRAPH* graph_dest) {
 
 	uint32_t size_elems_arr = 0;
 	size_elems_arr = strtol(start, &end, DEC_BASE);
+	printf("size_elems_arr = %u\n", size_elems_arr);
+	printf("start = %s\n", start);
+	printf("end = %s\n", end);
 	def_err_handler(start == end , "read_graph 1" ,ERR_VAL);
 
 	start = end;

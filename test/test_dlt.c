@@ -7,7 +7,7 @@ int main(int argc, char ** argv){
 
     declare_dlt(dlt);
 
-    FILE * f = fopen("dlt_test_file", "r");
+    FILE * f = fopen_check("dlt_test_file", "r");
     read_dlt(f, &dlt);
 
 

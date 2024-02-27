@@ -34,12 +34,12 @@ int main(int argc, char ** argv){
 
     //printf("ret=%li ex=%u\n", ret, ret_exist);
     
-    FILE * dest = fopen("g", "w");
+    FILE * dest = fopen_check("g", "w");
     write_graph(dest, &spg);
     fclose(dest);
 
     declare_sparse_graph(spg2);
-    FILE * source = fopen("g","r");
+    FILE * source = fopen_check("g","r");
     read_graph(source,&spg2);
     printf("----------\n");
      write_graph(stdout, &spg2);

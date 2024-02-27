@@ -77,22 +77,32 @@ while true; do
 done
 
 # Generate a new temporary filename for the attack
-TMP_FILE=$(mktemp -q /tmp/attack.XXXXXX)
+FILE_FORMAT=$(mktemp -q /tmp/attackXXXXXX)
 if [ $? -ne 0 ]; then
     echo "$0: Can't create temp file"
     exit 1
 fi
 
-bug_cur=$BUDGET_MIN
+cur_budg=$BUDGET_MIN
+attack_string=""
 
-while [[ $bug_cur -le $BUDGET_MAX ]]; do
-    echo "Execution with budget=$bug_cur"
+i=0
+while [[ $cur_budg -le $BUDGET_MAX ]]; do
+    #python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"
+    #./lsrt "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX"
 
-    python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$bug_cur" "$DELTA" "$TMP_FILE"
-    ./lsrt "$CITY"_graph "$TMP_FILE" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX"
+    attack_string="$attack_string $cur_budg"
 
-    bug_cur=$((bug_cur * GROWTH_NUMERATOR))
-    bug_cur=$((bug_cur / GROWTH_DENOMINATOR))
+    cur_budg=$((cur_budg * GROWTH_NUMERATOR))
+    cur_budg=$((cur_budg / GROWTH_DENOMINATOR))
+    i=$((i + 1))
 done
 
-rm "$TMP_FILE"
+python3 scripts/Strategies.py $CITY $ATTACK $TIMES $DELTA $FILE_FORMAT $attack_string
+echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
+./lsrt "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
+
+for i in $attack_string; do
+    #rm "$FILE_FORMAT"_$i
+    echo "rm $FILE_FORMAT"_$i
+done
