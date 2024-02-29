@@ -277,5 +277,7 @@ def main():
         attack = switch[args.type_attack](graph, args.times, budget, True)
         attack.write_to_file(f"{args.output_file_format}_{budget}")
 
+    print(f"{TermColors.GREEN}Done{TermColors.ENDC}")
+    
 if __name__ == "__main__" :
     main()

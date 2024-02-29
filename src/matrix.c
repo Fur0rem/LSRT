@@ -1,5 +1,4 @@
 #include "matrix.h"
-#include "misc.h"
 #include "utils.h"
 #include <stdint.h>
 
@@ -83,7 +82,7 @@ err_code set_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t value,  uint32_t ind
     return ERR_OK ; 
 }// tested ; ok
 
-err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * ret,  uint32_t index, uint32_t row, uint32_t col){
+err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * ret,  uint32_t index, uint32_t row, uint32_t col) {
     def_err_handler(!dma, "get_elem_dma", ERR_NULL);
     def_err_handler(index > dma->nb_matrixes , "get_elem_dma", ERR_VAL);
 

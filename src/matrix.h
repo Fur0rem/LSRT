@@ -50,7 +50,7 @@ extern err_code set_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t value,  uint3
     set dma->matrixes[index].values[i][j] to value ; checks for wrong args
 */
 
-extern err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * value,  uint32_t index, uint32_t row, uint32_t col);
+err_code get_elem_dma(DISTANCE_MATRIX_ARRAY * dma , uint8_t * ret,  uint32_t index, uint32_t row, uint32_t col);
 /*
     dma & value -> not null 
     dma -> initialized

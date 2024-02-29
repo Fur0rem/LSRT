@@ -119,7 +119,9 @@ void free_dlt(DELETED_LINKS_TAB * dlt){
 }//tested  ; works
 
 err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
-    def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
+    printf("flux = %p, dlt = %p\n", flux, dlt);
+    def_err_handler(!flux, "write_dlt flux", ERR_NULL);
+    def_err_handler(!dlt, "write_dlt dlt", ERR_NULL);
 
     fprintf(flux, "%u %u %d\n", dlt->size, dlt->delta, dlt->is_moving);
     for(uint32_t i = 0 ; i < dlt->size ; i++){
@@ -132,7 +134,8 @@ err_code write_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
 //modified for delta
 
 err_code read_dlt(FILE * flux, DELETED_LINKS_TAB * dlt){
-    def_err_handler(!(flux && dlt), "write_dlt", ERR_NULL);
+    def_err_handler(!flux, "read_dlt flux", ERR_NULL);
+    def_err_handler(!dlt, "read_dlt dlt", ERR_NULL);
 
     char buff[BUFF_SIZE] ;
     def_err_handler(!fgets(buff,BUFF_SIZE,flux),"read_dlt",ERR_FORMAT);

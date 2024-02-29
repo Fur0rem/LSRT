@@ -1,17 +1,12 @@
 #include "utils.h"
 #include <stdio.h>
 
-static inline char * str_flag(err_code flag)
-{
-
-    switch (flag) 
-    { 
-        
+static inline char * str_flag(err_code flag) {
+    switch (flag) { 
         case ERR_NULL: return "null pointer passed";
         case ERR_ALLOC: return "couldn't allocate memory";
         case ERR_REALLOC: return "couldn't reallocate memory";
         case ERR_VAL: return "value given not matching expected values";
-        
         default : return "unknown error";
     }
 }//ok
@@ -81,8 +76,9 @@ err_code fill_arr(char* str_source, uint32_t * arr_dest, uint32_t arr_size) {
         cpt++;
     } while (cpt < arr_size && start != end);
 
-    char * errbuf = calloc(256, sizeof(char));
-    snprintf(errbuf, 255, "fill_arr as=%u cpt=%u", arr_size, cpt);
+    const int ERR_BUFF_SIZE = 256;
+    char * errbuf = calloc(ERR_BUFF_SIZE, sizeof(char));
+    snprintf(errbuf, ERR_BUFF_SIZE-1, "fill_arr as=%u cpt=%u", arr_size, cpt);
     def_war_handler( (cpt != arr_size),errbuf, ERR_VAL);
     free(errbuf);
 

@@ -1,6 +1,9 @@
 #include "algo.h"
+#include "common.h"
+#include "matrix.h"
 #include "sparse_graph.h"
 #include "utils.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -11,7 +14,7 @@ static err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
 
     //write_graph(stdout, &lst->sparse_graph);
     for(uint32_t i = 0 ; i < dma->nb_matrixes ; i ++){ //initializes matrixes to + infinity
-        memset( dma->matrixes[i].values , UINT8_MAX,  dma->matrixes[i].rows * dma->matrixes[i].rows * sizeof(uint8_t));
+        memset(dma->matrixes[i].values, UINT8_MAX, (unsigned long)(dma->matrixes[i].rows * dma->matrixes[i].rows) * sizeof(uint8_t));
     }
     err_code failure ;
 
@@ -69,6 +72,37 @@ static err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
     return ERR_OK ;
 }//this SEEMS ok. It might not be though.
 
+err_code compute_min_distance(DISTANCE_MATRIX_ARRAY* dma, uint32_t i, uint32_t j, uint32_t k, int64_t time) {
+
+    err_code failure;
+    uint16_t dist_ij = UINT8_MAX;
+
+    //check that the distance isn't > than the endtime
+    failure = get_elem_dma(dma, (uint8_t *)&dist_ij, time, i,j );
+    def_err_handler(failure, "temporal_floyd_warshall 1", failure);   
+        
+    uint16_t dist_ik = UINT8_MAX ;
+
+    failure = get_elem_dma(dma, (uint8_t *)&dist_ik, time, i,k );
+    def_err_handler(failure, "temporal_floyd_warshall 2", failure);   
+    
+    //recupere distance a time + dist(i,k)
+    uint16_t dist_kj = UINT8_MAX ;
+    if(time + dist_ik < dma->nb_matrixes){//checks that time + dist_ik is not after the last time
+        failure = get_elem_dma(dma, (uint8_t * )&dist_kj, time + dist_ik , k,j );
+        def_err_handler(failure, "temporal_floyd_warshall 3", failure); 
+    }  
+
+    if ( (dist_ij > (dist_ik + dist_kj)) && ((time + dist_ik + dist_kj) < dma->nb_matrixes) ){
+        failure = set_elem_dma(dma, dist_ik + dist_kj, time, i, j); 
+        def_err_handler(failure, "temporal_floyd_warshall 4", failure);
+        if (failure != ERR_OK) {
+            return failure;
+        }
+    }
+    return ERR_OK;
+}
+
 err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma){
     def_err_handler(!(lst && dma), "temporal_floyd_warshall", ERR_NULL);
 
@@ -80,41 +114,14 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
         for(uint32_t k = 0 ; k < dma->matrixes->rows; k++){
             for(uint32_t  i = 0 ; i < dma->matrixes->rows ; i++){
                 for(uint32_t  j = 0 ; j < dma->matrixes->rows ; j++){
-                    
-                    //check that the distance isn't > than the endtime
-                    uint16_t dist_ij = UINT8_MAX ;
-                    
-                    failure = get_elem_dma(dma, (uint8_t *)&dist_ij, time, i,j );
-                    def_err_handler(failure, "temporal_floyd_warshall 1", failure);   
-                       
-                    uint16_t dist_ik = UINT8_MAX ;
-
-                    failure = get_elem_dma(dma, (uint8_t *)&dist_ik, time, i,k );
-                    def_err_handler(failure, "temporal_floyd_warshall 2", failure);   
-                    //recupere distance a time + dist(i,k)
-
-                    uint16_t dist_kj = UINT8_MAX ;
-                    if(time + dist_ik < dma->nb_matrixes){//checks that time + dist_ik is not after the last time
-                        //printf("dist_kj checked\n");
-                        failure = get_elem_dma(dma, (uint8_t * )&dist_kj, time + dist_ik , k,j );
-                        def_err_handler(failure, "temporal_floyd_warshall 3", failure); 
-                    }  
-                    //printf("time=%u (i,j,k)=(%u,%u,%u)\ndist_ij=%u, distik=%u, dist_kj=%u\n",time,i,j,k,dist_ij, dist_ik , dist_kj);
-
-                    if( (dist_ij > (dist_ik + dist_kj)) && (time + dist_ik + dist_kj) < dma->nb_matrixes  ){
-                        //failure = set_elem_dma(dma, dist_ik + dist_kj, time, i, j);
-                       
-                        dma->matrixes[time].values[ i * dma->matrixes[time].cols + j] = dist_ik + dist_kj ;
-
-                        //def_err_handler(failure, "temporal_floyd_warshall", failure);   
-                        //printf("time=%u (i,j,k)=(%u,%u,%u)\ndist_ij=%u, distik=%u, dist_kj=%u\n",time,i,j,k,dist_ij, dist_ik , dist_kj);
-
-                    }
+                    failure = compute_min_distance(dma, i, j, k, time);
+                    def_err_handler(failure, "temporal_floyd_warshall", failure);
                 }   
             }
         }
         printf("iteration number : i=%ld\n",time  );
     }
+
     return ERR_OK;
 }//tested ; somewhat ok ; needs more testing
 //does it handle the waiting case ??? 

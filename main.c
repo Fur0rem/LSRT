@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include "src/algo.h"
 #include "src/common.h"
+#include "src/deleted_links.h"
+#include "src/link_stream.h"
+#include "src/sparse_graph.h"
 #include "src/utils.h"
 #include <bits/getopt_core.h>
 #include <stdlib.h>
@@ -9,16 +12,21 @@
 #include <string.h>
 
 
+
+// make lsrt --always-make && time -v ./gen_attack.sh -c Coulommiers -a betweenness_centralities -n 10 -x 50
+
+
 const int FLAG_HELP = 1 << 0;
 const int FLAG_FLUX = 1 << 1;
 const int FLAG_DEBUG = 1 << 2;
 
-double process_attack(char* attack_file, const char* graph_content, uint32_t budget, int opt_mask) {
+double process_attack(char* attack_file, SPARSE_GRAPH* graph, uint32_t budget, int opt_mask) {
     printf("budget: %u\n", budget);
 
     // first attack
-    char* attack_filename = calloc(256, sizeof(char));
-    snprintf(attack_filename, 255, "%s_%u", attack_file, budget);
+	const int FILENAME_SIZE = 256;
+    char* attack_filename = calloc(FILENAME_SIZE, sizeof(char));
+    snprintf(attack_filename, FILENAME_SIZE-1, "%s_%u", attack_file, budget);
     printf("attack_filename: %s\n", attack_filename);
 
     // Parse linked stream from files
@@ -26,13 +34,13 @@ double process_attack(char* attack_file, const char* graph_content, uint32_t bud
     FILE* fattack = fopen_check(attack_filename, "r");
 
 	// TODO : utiliser un const char* plutot que cette atrocité c'est quoi cette merde
-	FILE* fgraph = fmemopen((void*)graph_content, strlen(graph_content), "r");
 
-    err_code failure = parse_link_stream(&lks, fgraph, fattack );
-    def_err_handler(failure, "main parse_link", failure);
+	lks.sparse_graph = *graph;
+    read_dlt(fattack, &(lks.deleted_links));
 
-    fclose(fgraph); 
     fclose(fattack);
+
+	err_code failure;
 
     // Initialize Distance Matrix Array
     declare_dma(dma);     
@@ -48,7 +56,10 @@ double process_attack(char* attack_file, const char* graph_content, uint32_t bud
     uint64_t reachables; 
     failure = sum_dma(&ret, &reachables, &dma);
 
-    printf("ret: %lf\n", ret);
+	/*double ret;
+	failure = temporal_floyd_warshall(&lks, &ret);*/
+
+    printf("ret: %lf, budget: %d\n", ret, budget);
     def_err_handler(failure, "main sum_dma", failure);
 
     if (opt_mask & FLAG_DEBUG) {
@@ -58,7 +69,8 @@ double process_attack(char* attack_file, const char* graph_content, uint32_t bud
     }
 
     free_dma(&dma);
-    free_link_stream(&lks);
+    //free_link_stream(&lks);
+	free_dlt(&(lks.deleted_links));
     free(attack_filename);
 
 	return ret;
@@ -67,7 +79,7 @@ double process_attack(char* attack_file, const char* graph_content, uint32_t bud
 struct process_attack_args {
 	double* all_answers;
 	char* attack_file;
-	char* graph_content;
+	SPARSE_GRAPH* graph_content;
 	uint32_t budget;
 	int opt_mask;
 	int index;
@@ -140,21 +152,20 @@ int main(int argc, char* argv[]) {
 
 	// Open the graph file
 	FILE* fgraph = fopen_check(graph_file, "r");
-	char* graph_content = calloc(1024*1024, sizeof(char));
-	size_t size = fread(graph_content, sizeof(char), 1024*1024, fgraph);
-	graph_content[size] = '\0';
+	SPARSE_GRAPH* graph_content = calloc(1, sizeof(SPARSE_GRAPH));
+	read_graph(fgraph, graph_content);
 
-	// Process the attacks
+	struct process_attack_args* paa = malloc(sizeof(struct process_attack_args) * nb_budgets);
+
     for (int i = 0; i < nb_budgets; i++) {
         printf("budgets_arr[%d]: %u\n", i, budgets_arr[i]);
-        struct process_attack_args paa;
-        paa.all_answers = all_answers;
-        paa.attack_file = attack_file;
-        paa.graph_content = graph_content;
-        paa.budget = budgets_arr[i];
-        paa.opt_mask = opt_mask;
-        paa.index = i;
-        pthread_create(&threads[i], NULL, process_attack_thread, &paa);
+        paa[i].all_answers = all_answers;
+        paa[i].attack_file = attack_file;
+        paa[i].graph_content = graph_content;
+        paa[i].budget = budgets_arr[i];
+        paa[i].opt_mask = opt_mask;
+        paa[i].index = i;
+        pthread_create(&threads[i], NULL, process_attack_thread, &paa[i]);
     }
 
 	// Wait for all threads to finish
@@ -171,8 +182,15 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Clean up
-		if (flux != stdout) {
-			fclose(flux);
-		}
-return 0;
+	if (flux != stdout) {
+		fclose(flux);
+	}
+	fclose(foutput);
+	free(budgets_arr);
+	free(all_answers);
+	free(threads);
+	free(paa);
+	free(graph_content);
+
+	return 0;
 }
