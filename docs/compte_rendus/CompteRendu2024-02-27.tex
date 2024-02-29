@@ -1,0 +1,63 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\title{Compte rendu de la réunion du 27 Février}
+\date{}
+
+\begin{document}
+	
+\maketitle
+	
+\section*{Progres effectués pendan les vacances}
+	\begin{itemize}
+		\item Les simulations ont été testées
+			(sur l'ordinateur de l'association de physique, un raspberry Pi
+			et nos ordinateurs personnels, elles fonctionnent. 
+		\item Il faudrait donc commencer à faire des plots. 
+		\item Pierre a fait un script permettant d'automatiser le lancement de simulations en générant le graphe 
+			/l'attaque puis en lançant des instances du programme C. 
+	\end{itemize}
+\newpage
+	
+\section*{Pour la suite}
+	\begin{itemize}
+			\item Vérifier que la génération du graphe est bien correcte (données "étranges" contenant beaucoup de poids à 1 ). 
+			\item Séparer le groupe, une partie optimisation du programme, une partie mesure . 
+			\item Propositions d'optimisations :
+				\begin{itemize} 
+				\item Multithreader le programme C pour qu'il partage ses données et qu'il y aie des commutations. Plus rapide lorsque plusieurs attaques sont lancées.  
+				\item Multithreaded le calcul d'une matrice de distance. 
+				\item N'utiliser que deux matrices pour une meilleure complexité spatiale. 
+				\item Effectuer les calculs de distance sur GPU. 
+
+			\end{itemize}
+			\item Pour les optimisations, garder en tête qu'il faut pouvoir expliquer "pourquoi" on les effectue.
+		
+			\item Il faudrait également effectuer des Benchmarck.
+		\end{itemize}
+	
+\section*{Robustesse}
+	\begin{itemize}
+		\item Consensus sur le fait que ce n'est "pas grave" que le temps restant "influence" la mesure (ie : on peut aller moins loin si on a moins de temps). Car ce qui est important et l'évolution de cette mesure ie: le rapport entre la mesure sur un Linkstream attaqué et sur un Linkstream non attaqué. 
+		\item Penser à lire les différentes réferences sur les définitions de la robustesse dans les réseaux temporels. Il va être important de se positionner par rapport aux réferences pour justifier le choix de mesure
+		\item Bien réflechir à comment justifier le choix d'une mesure "all temporal distance" contre la mesure classique "shortest temporal distances" 
+		\item Réflechir à d'autres mesures possibles sur le Linkstream.  
+		\end{itemize}
+	
+\newpage
+	
+			\section*{Compte Rendu de mi-projet}
+	\begin{itemize}
+		\item Compte rendu de quelques pages. 
+		\item Présenter le sujet (reformuler la problématique etc) 
+		\item Présenter le travail accompli jusqu'à présent (une partie par partie effectuée). 
+		\item Présenter ce que l'on va pouvoir faire ensuite. 
+		\item Envoyer une première version du rapport d'ici le 8mars 
+
+	\end{itemize}
+		
+\begin{itemize}
+\item prochaine reunion le 12/03
+\end{itemize}
+\end{document}
