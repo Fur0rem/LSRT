@@ -31,47 +31,34 @@ def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
 
     return attacks
 
+cache = {}
+
 def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, sort_by : callable, costPerLane : bool) -> Attack :
     """Each time, it removes the edge that is the most affected by the sort_by function until the budget is reached or no more edges are available"""
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
 
     attacks = Attack(graph, is_moving=False)
-    edges = list(graph.edges())
-    for i, edge in enumerate(edges) :
-        edges[i] = graph.find_edge_index(edge[0], edge[1])
-    edges.sort(key = sort_by, reverse = True)
 
-    #  For some reason this is.. slower?
-    # edges_t = edges.copy()
-    # budget_used = 0
-    # nb_retires = 0
-    # while budget_used < budget and len(edges_t) > 0 :
-    #     edge_idx = edges_t.pop(0)
-    #     cost = costFunc(edge_idx)
-    #     if cost <= budget - budget_used :
-    #         attacks.add_attack(0, edge_idx)
-    #         budget_used += cost
-    #         nb_retires += 1
-    #     #edges_t.pop(edge_idx)
-    
-    # # Now clone the rest each time
-    # attacks_zero = attacks.attacks.copy()
-    # for time in range(1, nbTimes) :
-    #     for attack in attacks_zero :
-    #         attacks.add_attack(time, attack[1])
+    # We use a cache to avoid recomputing the sorted attacks for the same graph
+    if (graph.city_name, sort_by, costPerLane) in cache :
+        edges = cache[(graph.city_name, sort_by, costPerLane)]
+    else :
+        edges = list(range(graph.nb_edges()))
+        edges.sort(key = sort_by, reverse = True)
+        cache[(graph.city_name, sort_by, costPerLane)] = edges
 
-    for time in range(nbTimes) :
-        edges_t = edges.copy()
-        budget_used = 0
-        nb_retires = 0
-        while budget_used < budget and len(edges_t) > 0 :
-            edge_idx = edges_t.pop(0)
-            cost = costFunc(edge_idx)
-            if cost <= budget - budget_used :
+    edges_t = edges.copy()
+    budget_used = 0
+    nb_retires = 0
+    while budget_used < budget and len(edges_t) > 0 :
+        edge_idx = edges_t.pop(0)
+        cost = costFunc(edge_idx)
+        if cost <= budget - budget_used :
+            for time in range(nbTimes) :
                 attacks.add_attack(time, edge_idx)
-                budget_used += cost
-                nb_retires += 1
+            budget_used += cost
+            nb_retires += 1
 
     return attacks
 
@@ -273,6 +260,7 @@ def main():
     graph.write_to_file(f"{args.nom_ville}_graph")
     
     # Generate the attacks
+    # TODO : On peut surement faire l'ecriture en asynchrone mais je suis trop debile wola
     for budget in args.budgets :
         attack = switch[args.type_attack](graph, args.times, budget, True)
         attack.write_to_file(f"{args.output_file_format}_{budget}")

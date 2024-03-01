@@ -13,7 +13,7 @@
 
 
 
-// make lsrt --always-make && time -v ./gen_attack.sh -c Coulommiers -a betweenness_centralities -n 10 -x 50
+// make lsrt --always-make && \time -v ./gen_attack.sh -c Coulommiers -a betweenness_centralities -n 10 -x 50
 
 
 const int FLAG_HELP = 1 << 0;

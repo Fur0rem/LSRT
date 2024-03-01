@@ -1,8 +1,5 @@
 from CityGraph import CityGraph
 
-# Juste pour test pour l'instant
-ville="Saints"
-
 class Attack :
     """
     Represents an attack on a graph

@@ -168,23 +168,22 @@ class CityGraph :
 				i+=1;
 		"""
 
-		f=open(file_path, "w");
+		with open(file_path, "w") as f :
 		# f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
 		# f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr), delta)])+"\n") # TODO change this line
-		f.write(" ".join([str(x) for x in (len(V), len(csr.indptr))])+"\n")
-		for i in V:
-			f.write(str(i)+" ");
-		f.write("\n");
+			f.write(" ".join([str(x) for x in (len(V), len(csr.indptr))])+"\n")
+			for i in V:
+				f.write(str(i)+" ")
+			f.write("\n")
 
-		for i in csr.indices:
-			f.write(str(i)+" ");
-		f.write("\n");
+			for i in csr.indices:
+				f.write(str(i)+" ")
+			f.write("\n")
 
-		for i in csr.indptr:
-			f.write(str(i)+" ");
-		f.write("\n");
+			for i in csr.indptr:
+				f.write(str(i)+" ")
+			f.write("\n")
 
-		f.close();
 
 def cast_tmp(var):
 	"""TODO : Change this function"""
