@@ -40,7 +40,7 @@ same as error_hanler but doesn't return anything
 
 
 #define DEC_BASE 10
-#define BUFF_SIZE 32768
+#define BUFF_SIZE 65536
 
 extern void skip_char(char chr , char** buff);
 /*
