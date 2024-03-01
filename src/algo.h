@@ -20,4 +20,6 @@ extern err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_M
     sums the inverse of the distance of the elements in dma's matrixes 
     and sets *ret to this sum.
 */
+
+err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma);
 #endif

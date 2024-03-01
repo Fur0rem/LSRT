@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-static err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
+err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
     def_err_handler(!(lst && dma), "temporal_floyd_warshall", ERR_NULL);
     
 
@@ -120,6 +120,8 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
 //does it handle the waiting case ??? 
 //i'm really unsure
 
+
+
 err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_ARRAY * dma){
     def_err_handler(!(ret_sum && dma && ret_reachables), "sum_dma", ERR_NULL);
 
@@ -135,7 +137,7 @@ err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_A
         }
     }
     sum -= dma->matrixes[0].rows ;
-    sum /=  (((dma->matrixes[0].rows) * (dma->matrixes[0].rows - 1) ));
+    sum /=  t*(((dma->matrixes[0].rows) * (dma->matrixes[0].rows - 1) ));
 
     reachables -= dma->matrixes[0].rows ;
     //reachables /= (((dma->matrixes[0].rows) * (dma->matrixes[0].rows - 1) ));
