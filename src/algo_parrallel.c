@@ -4,75 +4,110 @@
 #include "matrix.h"
 #include "utils.h"
 #include "algo.h"
-#include <bits/pthreadtypes.h>
+#include "thpool.h"
+
 #include <stdint.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
 
-static err_code compute_min_distance( DISTANCE_MATRIX_ARRAY * dma,uint32_t time, uint32_t i , uint32_t j , uint32_t k){
-    //check that the distance isn't > than the endtime
-    uint16_t dist_ij = UINT8_MAX ;
-                    
-    err_code failure = get_elem_dma(dma, (uint8_t *)&dist_ij, time, i,j );
-    def_err_handler(failure, "temporal_floyd_warshall 1", failure);   
-                       
-    uint16_t dist_ik = UINT8_MAX ;
+/*
+THIS VERY MUCH IS A WIP FILE 
+ITS VERY VERY VERY MESSY 
+AND IT DOESNT WORK **AT ALL**
+DO NOT TRY TO USE ANY OF THE FUNCTIONS
+PLEASE DON'T.
+UNDER ANY CIRCUMSTANCES 
+I BEG YOU 
+DO NOT LOOK AT IT EITHER 
 
-    failure = get_elem_dma(dma, (uint8_t *)&dist_ik, time, i,k );
-    def_err_handler(failure, "temporal_floyd_warshall 2", failure);   
-    //recupere distance a time + dist(i,k)
+- K.avi :) 
+*/
 
-    uint16_t dist_kj = UINT8_MAX ;
-    if(time + dist_ik < dma->nb_matrixes){//checks that time + dist_ik is not after the last time
-        failure = get_elem_dma(dma, (uint8_t * )&dist_kj, time + dist_ik , k,j );
-        def_err_handler(failure, "temporal_floyd_warshall 3", failure); 
-    }  
-
-    if( (dist_ij > (dist_ik + dist_kj)) && (time + dist_ik + dist_kj) < dma->nb_matrixes  ){   
-        dma->matrixes[time].values[ i * dma->matrixes[time].cols + j] = dist_ik + dist_kj ;
-    }
-    return ERR_OK; 
-}
+// OK so ACTUALLY I'll have to implement 
+// a tiled FW in order to juice the 
+//multi-threading as much as possible
+//Man I thought the thread pool part 
+//was the annoying one smh 
 
 
-err_code mat_calc_mt( LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma, uint32_t time ){
-    /*
-        multithreaded version of matrix update; 
-        each thread should compute it's fraction of the matrix. 
+//local structure -> start reference 
+//to a dma index to write to 
+//length -> number of values to write 
+typedef struct S_MATSECTION{
+    DISTANCE_MATRIX * dm ;
+    uint32_t subsection_start_index ;
+    uint32_t subsection_length ;
+    
+}s_matsection;
+//each subsection length and start index should be 
+//computed only once ; the only thing that 
+//will change is the dma_ref
 
-    */
-    return ERR_OK;
-}
-
-
-typedef struct thread_tab{
+typedef struct S_MATSECTION_TAB{
     uint32_t size ; 
-    pthread_t * elems; 
-}THREADS_TAB; 
+    
+    DISTANCE_MATRIX* ref_dm ;
+    uint32_t* arr_subsection_start_index ; 
+    uint32_t* arr_subsection_length ;
+    
+}s_matsection_tab ; 
 
-err_code init_thtab(THREADS_TAB * thtab){
 
-}
+static err_code init_matsection_tab(s_matsection_tab * tab,
+    DISTANCE_MATRIX_ARRAY * dma, uint32_t time){
+
+    def_err_handler(!tab, "init_matsection_tab", ERR_NULL);
+    def_err_handler(!dma, "init_matsection_tab", ERR_VAL);
+
+    uint32_t size = dma->matrixes[0].cols * dma->matrixes[0].rows / global_nb_threads ;
+
+    tab->ref_dm = &dma->matrixes[time] ;
+
+    tab->size = size ;
+
+    return ERR_OK; 
+}//only initializes the matsection tab ; each matsection has to be initialized 
+//by hand and then updated to the DMA_TAB at each time and so on 
+//bah gawd I have an idea
+//Ok my idea is shit; fuck it we ballin
+//NOT DONE 
+
+void * thwork_matrix(void * arg){
+    s_matsection * section = (s_matsection *) arg ; 
+    if(!section){
+        return NULL ; 
+    }
+    //do the work 
+    //floyd_warshall(section->dma, section->start_index, section->length);
+    return NULL ; 
+}//subroutine executed by the worker threads
+//NOT DONE 
+
+static err_code split_matrix(DISTANCE_MATRIX_ARRAY * dma,  s_matsection * sections){
+    return ERR_OK ;
+}//no? 
+
+static err_code launch_batch_ite(DISTANCE_MATRIX * dist_mat , S_THPOOL * thpool){
+
+    return ERR_OK ; 
+}//not done 
 
 err_code temporal_floyd_warshall_multi_threaded(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma){
 
+    S_THPOOL tpool ; 
+    err_code failure = thpool_init(&tpool); 
+    def_err_handler(failure , "tmp_dw_mt", failure); 
 
-    def_err_handler(!(lst && dma), "temporal_floyd_warshall", ERR_NULL);
+    thpool_start(&tpool);
 
-    err_code failure = prepare_tfw(lst, dma); 
-    def_err_handler(failure, "temporal_floyd_warshall", failure);    
+    for(uint32_t i = dma->nb_matrixes ; i > 0 ; i--){
 
-    //init threads here
-
-    //the big temporal floyd warshall loop
-    for(int64_t time = dma->nb_matrixes - 1 ; time > -1 ; time--){
-        /*for(uint32_t k = 0 ; k < dma->matrixes->rows; k++){
-            for(uint32_t  i = 0 ; i < dma->matrixes->rows ; i++){
-                for(uint32_t  j = 0 ; j < dma->matrixes->rows ; j++){
-                   compute_min_distance(dma,  time, i, j, k) ;
-                }   
-            }
-        }*/
-        printf("iteration number : i=%ld\n",time  );
+        launch_batch_ite(&dma->matrixes[i],&tpool);
+        thpool_wait_for_all(&tpool);
     }
-    return ERR_OK;
-}
+
+    thpool_destroy(&tpool); 
+    return ERR_OK; 
+}//not done 
+
