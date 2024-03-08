@@ -1,4 +1,13 @@
 
+TODO : 
+	
+	- Multi threadage cpu TFW 
+		- tiled FW 
+		- multi threadage 
+	- plot script (easy but annoying) 
+- merge data shell script (put the time directly in the file (easy)
+	- actually maybe just write it in the file when generating that would be less silly 
+
 done : 
 
 

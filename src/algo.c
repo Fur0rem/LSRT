@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 
 err_code prepare_tfw(LINK_STREAM * lst, DISTANCE_MATRIX_ARRAY * dma){
@@ -77,6 +78,7 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
 
     //the big temporal floyd warshall loop
     for(int64_t time = dma->nb_matrixes - 1 ; time > -1 ; time--){
+      
         for(uint32_t k = 0 ; k < dma->matrixes->rows; k++){
             for(uint32_t  i = 0 ; i < dma->matrixes->rows ; i++){
                 for(uint32_t  j = 0 ; j < dma->matrixes->rows ; j++){
@@ -113,7 +115,7 @@ err_code temporal_floyd_warshall(LINK_STREAM * lst , DISTANCE_MATRIX_ARRAY * dma
                 }   
             }
         }
-        printf("iteration number : i=%ld\n",time  );
+        printf("temporal_floyd warshall it : i=%ld\n",time  );
     }
     return ERR_OK;
 }//tested ; somewhat ok ; needs more testing

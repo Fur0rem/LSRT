@@ -4,10 +4,12 @@
 #include "src/common.h"
 #include "src/utils.h"
 #include <bits/getopt_core.h>
+#include <time.h>
 
-const int FLAG_HELP = 1 << 0;
-const int FLAG_FLUX = 1 << 1;
-const int FLAG_DEBUG = 1 << 2;
+#define FLAG_HELP 1 << 0
+#define FLAG_FLUX  1 << 1
+#define FLAG_DEBUG  1 << 2
+#define FLAG_BENCHMARK 1 << 3
 
 int main(int argc, char* argv[]) {
 
@@ -17,7 +19,7 @@ int main(int argc, char* argv[]) {
 	int chr;
 
 	// Parse options
-    while ((chr = getopt(argc, argv, "hf:d")) != -1) {
+    while ((chr = getopt(argc, argv, "hf:db")) != -1) {
         switch (chr) {
 
 			case 'h':
@@ -31,6 +33,10 @@ int main(int argc, char* argv[]) {
 				break;
 			case 'd' :
 				opt_mask |= FLAG_DEBUG;
+				opt_shift++;
+				break;
+			case 'b' : 
+				opt_mask |= FLAG_BENCHMARK;
 				opt_shift++;
 				break;
 
@@ -53,8 +59,22 @@ int main(int argc, char* argv[]) {
 	FILE* fgraph = fopen_check(argv[1+opt_shift], "r");
 	FILE* fattack = fopen_check(argv[2+opt_shift] , "r");
 
+
+	time_t total;
+	time_t start; 
+	time_t end;
+	if (opt_mask & FLAG_BENCHMARK) {	
+		time(&start);
+		total = start;
+	}
+
 	err_code failure = parse_link_stream(&lks, fgraph, fattack );
 	def_err_handler(failure, "main parse_link", failure);
+
+	if(opt_mask & FLAG_BENCHMARK){	
+		time(&end);
+		fprintf(flux,"parse_link_stream tot time : %lu ", start - end);
+	}
 
 	fclose(fgraph); 
 	fclose(fattack);
@@ -62,18 +82,49 @@ int main(int argc, char* argv[]) {
 
 	// Initialize Distance Matrix Array
 	declare_dma(dma); 	
+
+
+	if (opt_mask & FLAG_BENCHMARK) {
+		time(&start);
+	}
 	failure = init_dma(&dma, lks.deleted_links.nb_it, lks.sparse_graph.size_row_arr, lks.sparse_graph.size_row_arr); 
 	def_err_handler(failure, "main init_dma", failure);
 	
+	if(opt_mask & FLAG_BENCHMARK){	
+		time(&end);
+		fprintf(flux,"init_dma tot time : %lu ", start - end);
+	}
+
 	// Main algorithm
+	if (opt_mask & FLAG_BENCHMARK) {
+		time(&start);
+	}
+
 	failure = temporal_floyd_warshall(&lks, &dma);
 	def_err_handler(failure, "main temporal_floyd_warshall", failure);
+
+	if(opt_mask & FLAG_BENCHMARK){	
+		time(&end);
+		fprintf(flux,"temporal_floyd_warshall tot time : %lu ", start - end);
+	}
+	
 
 	// Calculate sum (the metric we want to compute)
 	double ret; 
 	uint64_t reachables; 
+
+	if (opt_mask & FLAG_BENCHMARK) {
+		time(&start);
+	}
+
 	failure = sum_dma(&ret, &reachables, &dma);
 	def_err_handler(failure, "main sum_dma", failure);
+
+	if(opt_mask & FLAG_BENCHMARK){	
+		time(&end);
+		fprintf(flux,"sum_dma tot time : %lu ", start - end);
+	}
+	
 	fprintf(flux, "%lf %lu\n", ret, reachables);
 
 	// Clean up
@@ -89,5 +140,11 @@ int main(int argc, char* argv[]) {
 
 	free_dma(&dma);
 	free_link_stream(&lks);
+
+	if(opt_mask & FLAG_BENCHMARK){	
+		time(&end);
+		fprintf(flux,"total time : %lu ", total - end);
+	}
+
 	return 0;
 }
