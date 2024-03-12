@@ -20,13 +20,16 @@ De plus, nous avons déjà écrit un wrapper sur l'API de Vulkan permettant de f
 Le but du projet est de calculer l'évolution de la robustesse du graphe en fonction du budget, et chaque instance de la simulation est entièrement indépendante des autres.
 Nous pouvons donc facilement paralléliser les instances sur plusieurs coeurs, voire plusieures machines, et les faire tourner en même temps, pour maximiser l'utilisation du CPU, et attendre moins longtemps pour obtenir les résultats.
 
+% End of section parallellisation_simulations
+\subsubsubsection*{}
+\todo{hack dégueu pour mettre un espace}
 Mais cela ne résoud pas le problème de la compléxité et le gain dépend du nombre de coeurs disponibles, sans parler du coût énergétique de l'opération.
 
 \subsubsection{Moins de calculs}\label{subsubsec:moins_de_calculs}
 
 \subsubsubsection{Utilisation d'un cache}\label{subsubsubsec:cache}
 Pour les attaques avec peu de budget, nous pouvons nous imaginer que la plupart des plus courts chemins ne changent pas, car ils ne passent pas par les liens bloqués.
-Nous pouvons donc mettre en place un système de stocker pour les plus courts chemins sur le graphe non-attaqué, et ne recalculer que les plus courts chemins qui ont changé.
+Nous pouvons donc mettre en place un système de stockage pour les plus courts chemins sur le graphe non-attaqué, et ne recalculer que les plus courts chemins qui ont changé.
 Cela nécessite de changer notre algortihme pour calculer les plus courts chemins plûtot que leurs distances, ainsi qu'un système efficace pour invalider les plus courts chemins impactés par les attaques.
 
 \subsubsubsection{Propriétés des attaques statiques}\label{subsubsubsec:proprietes_attaques_statiques}
@@ -107,5 +110,10 @@ Cette solution est la plus compliquée à implémenter, mais aussi très promett
 Notre implémentation prototype montre déjà des résultats encourageants, mais il faut encore vérifier la validité des résultats et tester la performance sur des graphes plus grands.
 
 \subsection{Nouvelles attaques}\label{subsec:nouvelles_attaques}
+D'autres équipes du lip6 ont travaillé sur des coupes de graphe, c'est-à-dire le diviser en sous-composantes connexes, et leur but est de minimiser le nombre de liens à supprimer pour obtenir cette division.
+Nous allons récupérer certaines de leurs coupes calculées, et les utiliser pour attaquer le graphe, afin de voir si elles sont pertinentes.
+\todo{citer les gens qui ont fait ça}
 
 \subsection{Modification de la mesure}
+L'efficacité est une mesure intéressante, mais elle ne prend pas en compte la variation comparée à un graphe non-attaqué.
+Nous pourrions donc modifier la mesure pour prendre en compte cette variation, afin de comparer le changement d'efficacité plûtot que l'efficacité elle-même.

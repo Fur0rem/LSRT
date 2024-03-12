@@ -4,7 +4,7 @@
 Nous laissons le choix du prix de chaque lien à l'utilisateur, soit une constante, 1 dans notre cas, soit une fonction qui détermine le prix en fonction de la largeur de la rue bloquée,
 avec la largeur de la rue qui correspond à son nombre de voies de circulation.
 
-Nous avons choisi de séparer la gestion des attaques de la gestion des stratégies d'attaques.
+Nous avons choisi de séparer la gestion des attaques des stratégies d'attaques.
 Pour la gestion, nous avons la classe Attaque, avec 2 primitives:
 \begin{itemize}
     \item Bloquer un lien à un temps donné
@@ -74,7 +74,7 @@ Dans l'état-de-l'art, l'attaque par centralité intermédiaire est considérée
 La centralité intermédiaire est une mesure représentant l'importance d'un lien dans un graphe.
 Elle est calculée en comptant le nombre de plus courts chemins passant par ce lien.
 
-Cette stratégie consiste donc à bloquer les liens les plus importants en les triant par centralité intermédiaire décroissante.
+Cette stratégie consiste donc à bloquer les liens les plus importants en les triant par centralité intermédiaire.
 Nous notons d'ailleurs que OSMnx contient des options pour récupérer les centralités intermédiaires des liens d'un graphe directement.
 \begin{algorithm}[H]
 \caption{Attaque par centralité intermédiaire}

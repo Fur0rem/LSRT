@@ -1,5 +1,5 @@
 \section{Introduction}
-Les réseaux sont des objets primordiaux dans le monde moderne, le réseau routier, les réseaux sociaux, les réseaux de neurones, internet, ect\dots
+Les réseaux sont des concepts primordiaux dans le monde moderne, le réseau routier, les réseaux sociaux, les réseaux de neurones, internet, ect\dots
 Ces réseaux peuvent être modélisés par des graphes orientés pondérés G = (V,E) où V est l'ensemble des sommets, E l'ensemble des liens e = (u,v,w) où u et v sont les sommets reliés par le lien e et w est le poids de ce lien.
 De nombreux outils mathématiques et informatiques ont été développés pour trouver les manières les plus efficaces de les concevoir.
 
@@ -9,7 +9,7 @@ Il est donc important de pouvoir savoir comment ces blocages vont impacter le tr
 Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens. 
 Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, ${t_{\max}}$ étant calculé en fonction du diamètre de la ville d=<plus long plus court chemin>.
 \todo[nolist]{insérer la formule du diamètre}.
-Nous appelerons un le blocage d'un lien (u,v,w) par un obstacle le fait de retirer le lien (u,v) du graphe pour un instant t donné.
+Nous appelerons le blocage d'un lien (u,v,w) par un obstacle le fait de rendre inaccessible le lien (u,v) du graphe pour un instant t donné.
 GT = (G, A), avec
 G le graphe d'une ville G = (V,E), avec V qui représente les carrefours et intersections, et E qui représente les rues.
 A l'attaque du graphe, qui est l'ensemble des blocages de liens.\label{sec:explication_attaques}
