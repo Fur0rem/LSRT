@@ -1,0 +1,66 @@
+% -------- %
+% Packages %
+% -------- %
+
+%% Basics
+\usepackage[french]{babel} % langue
+\usepackage[utf8]{inputenc} % means input encoding. A voir avec l'encodage des caractères. faut pas chercher à comprendre.
+\usepackage[T1]{fontenc} % better accents, and unicode caracters
+\usepackage{lmodern} % pareil
+
+%% figures
+\usepackage{graphicx} % Required for inserting images
+\usepackage{subcaption} % Required for creating figures with multiple parts (subfigures)
+\usepackage{float} % Allows putting an [H] in \begin{figure} to specify the exact location of the figure
+\usepackage{wrapfig} % Allows in-line images such as the example fish picture
+\usepackage{adjustbox} % Required for fitting table to page
+\graphicspath{{./images/}}		%chemin vers les images
+
+%% tables
+\usepackage[table]{xcolor} % Required for specifying colors by name. table allows to color in tables.
+\usepackage{booktabs} % Required for better table rules : \toprule, \midrule, \bottomrule and set the width of the columns
+\usepackage{multirow} % Required for multirows in tables
+\usepackage{tikz} % Required for drawing custom shapes
+
+%% Math
+\usepackage{amsmath} % Required for some math elements
+\usepackage{amsthm} % to write theorems, definitions, lemmas, ...
+\usepackage{amssymb} % more math symbols
+
+%% mise en page
+\usepackage{geometry} % Required for adjusting page dimensions and margins. Adapted the margin for comments
+\usepackage{hyperref} % manage hyperlinks
+\usepackage{xspace} % space if no punctiation
+\usepackage{xcolor} % Required for specifying colors by name
+\definecolor{darkgreen}{rgb}{0.0, 0.5, 0.0}
+\geometry{margin=20mm} %enough space for margin notes
+\hypersetup{colorlinks=true, linkcolor=darkgreen, urlcolor=magenta, citecolor=blue}
+
+% % ------------------- %
+% % Writing pseudocodes %
+% % ------------------- %
+\usepackage{algorithm} % write pseudocode, suggested by IEEEtran instead of algorithm2e
+\usepackage{algpseudocode} 
+
+%% TODO notes
+\usepackage{todonotes} % Required for the boxes that can be used to write comments, and to-do lists
+
+%% Subsubsubsection
+\usepackage{titlesec}
+
+\titleclass{\subsubsubsection}{straight}[\subsection]
+
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{\thesubsubsection.\arabic{subsubsubsection}}
+\titleformat{\subsubsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsubsection}{1em}{}
+\titlespacing*{\subsubsubsection}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\makeatletter
+\def\toclevel@subsubsubsection{4}
+\def\l@subsubsubsection{\@dottedtocline{4}{7.0em}{4.1em}}
+\makeatother
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}

@@ -1,0 +1,21 @@
+\section{Introduction}
+Les réseaux sont des objets primordiaux dans le monde moderne, le réseau routier, les réseaux sociaux, les réseaux de neurones, internet, ect\dots
+Ces réseaux peuvent être modélisés par des graphes orientés pondérés G = (V,E) où V est l'ensemble des sommets, E l'ensemble des liens e = (u,v,w) où u et v sont les sommets reliés par le lien e et w est le poids de ce lien.
+De nombreux outils mathématiques et informatiques ont été développés pour trouver les manières les plus efficaces de les concevoir.
+
+Cependant, ces objets sont bien réels, et peuvent donc subir des perturbations extérieures qu'il est important de prendre en compte.
+Dans ce projet, nous allons prendre l'exemple de manifestants bloquant les routes d'une ville, qui entraîne naturellement des perturbations dans le réseau routier.
+Il est donc important de pouvoir savoir comment ces blocages vont impacter le trafic.
+Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens. 
+Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, ${t_{\max}}$ étant calculé en fonction du diamètre de la ville d=<plus long plus court chemin>.
+\todo[nolist]{insérer la formule du diamètre}.
+Nous appelerons un le blocage d'un lien (u,v,w) par un obstacle le fait de retirer le lien (u,v) du graphe pour un instant t donné.
+GT = (G, A), avec
+G le graphe d'une ville G = (V,E), avec V qui représente les carrefours et intersections, et E qui représente les rues.
+A l'attaque du graphe, qui est l'ensemble des blocages de liens.\label{sec:explication_attaques}
+Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité ${\epsilon}$=<Insérer big formule ici>
+\todo[nolist]{insérer la formule d'efficacité}
+
+Les villes attaquées seront importées depuis une bibliothèque de données de rues nommées OpenStreetMap, puis le paquet OSMnx pour les convertir en graphes que nous pourrons manipuler.
+Nous simulerons ensuite des attaques sur ces villes, avec différentes stratégies, et avec un nombre de liens attaqués variable, que nous appellerons le budget de l'attaque, où chaque lien a un prix.
+Pour finir, nous calculerons l'impact de ces attaques sur l'efficacité de la ville, afin de pouvoir les comparer.
