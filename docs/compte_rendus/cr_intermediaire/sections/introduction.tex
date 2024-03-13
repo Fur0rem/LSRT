@@ -1,21 +1,34 @@
 \section{Introduction}
 Les réseaux sont des concepts primordiaux dans le monde moderne, le réseau routier, les réseaux sociaux, les réseaux de neurones, internet, ect\dots
-Ces réseaux peuvent être modélisés par des graphes orientés pondérés G = (V,E) où V est l'ensemble des sommets, E l'ensemble des liens e = (u,v,w) où u et v sont les sommets reliés par le lien e et w est le poids de ce lien.
+Ces réseaux peuvent être modélisés par des graphes orientés pondérés $G = (V,E)$ où $V$ est l'ensemble des sommets, \mbox{$E$ est l'ensemble des liens} \mbox{$e = (u,v,w)$ $u,v \in V, w \in \mathbb{N}$ qui est la pondération du lien de $u$ à $v$},
+noté \link{u}{w}{v}.
 De nombreux outils mathématiques et informatiques ont été développés pour trouver les manières les plus efficaces de les concevoir.
 
 Cependant, ces objets sont bien réels, et peuvent donc subir des perturbations extérieures qu'il est important de prendre en compte.
 Dans ce projet, nous allons prendre l'exemple de manifestants bloquant les routes d'une ville, qui entraîne naturellement des perturbations dans le réseau routier.
 Il est donc important de pouvoir savoir comment ces blocages vont impacter le trafic.
-Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens. 
-Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, ${t_{\max}}$ étant calculé en fonction du diamètre de la ville d=<plus long plus court chemin>.
-\todo[nolist]{insérer la formule du diamètre}.
-Nous appelerons le blocage d'un lien (u,v,w) par un obstacle le fait de rendre inaccessible le lien (u,v) du graphe pour un instant t donné.
-GT = (G, A), avec
-G le graphe d'une ville G = (V,E), avec V qui représente les carrefours et intersections, et E qui représente les rues.
-A l'attaque du graphe, qui est l'ensemble des blocages de liens.\label{sec:explication_attaques}
-Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité ${\epsilon}$=<Insérer big formule ici>
-\todo[nolist]{insérer la formule d'efficacité}
+Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens, que nous appellerons $GT$
 
-Les villes attaquées seront importées depuis une bibliothèque de données de rues nommées OpenStreetMap, puis le paquet OSMnx pour les convertir en graphes que nous pourrons manipuler.
+\bigskip
+Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, avec $GT_{t}$ l'état du graphe temporel à l'instant $t$.
+${t_{\max}}$ étant calculé en fonction du diamètre de la ville 
+\begin{equation*}
+    {diametre = \max_{\forall u \forall v \in V} \{\text{longueur}(PlusCourtChemin(u,v))\}}
+\footnote{Cette formule ne marche que si le graphe est connexe, sinon il faut prendre le maximum des diamètres des composantes connexes.}
+\end{equation*}
+Nous appelerons le blocage d'un lien \link{u}{w}{v} à un temps $t$ par un obstacle le fait de rendre inaccessible le lien \link{u}{w}{v} de $GT_{t}$,
+et une attaque $A$ l'ensemble des blocages de liens à chaque pas de temps.
+Nous avons donc
+\begin{equation*}
+    GT = \{GT_{i}, \forall i \in [0, {t_{\max}}]\} 
+    \equiv (G, A)
+\end{equation*}\label{sec:explication_attaques}
+Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité
+\begin{equation*}
+    \varepsilon = \int_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
+\end{equation*}
+\bigskip
+
+Nous importerons les villes attaquées depuis une bibliothèque de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}, puis le paquet python OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} pour les convertir en graphes que nous pourrons manipuler.
 Nous simulerons ensuite des attaques sur ces villes, avec différentes stratégies, et avec un nombre de liens attaqués variable, que nous appellerons le budget de l'attaque, où chaque lien a un prix.
 Pour finir, nous calculerons l'impact de ces attaques sur l'efficacité de la ville, afin de pouvoir les comparer.

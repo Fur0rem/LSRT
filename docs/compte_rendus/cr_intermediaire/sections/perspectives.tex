@@ -17,12 +17,11 @@ Nous avons donc cherché sur internet et il existe des papiers sur un Floyd-Wars
 De plus, nous avons déjà écrit un wrapper sur l'API de Vulkan permettant de faire des calculs sur le GPU facilement depuis le programme C.
 
 \subsubsubsection{Parallélisation des simulations}\label{subsubsubsec:parallelisation_simulations} 
-Le but du projet est de calculer l'évolution de la robustesse du graphe en fonction du budget, et chaque instance de la simulation est entièrement indépendante des autres.
+Le but du projet est de calculer l'évolution de l'efficacité du graphe en fonction du budget, et chaque instance de la simulation est entièrement indépendante des autres.
 Nous pouvons donc facilement paralléliser les instances sur plusieurs coeurs, voire plusieures machines, et les faire tourner en même temps, pour maximiser l'utilisation du CPU, et attendre moins longtemps pour obtenir les résultats.
 
 % End of section parallellisation_simulations
-\subsubsubsection*{}
-\todo{hack dégueu pour mettre un espace}
+\bigskip
 Mais cela ne résoud pas le problème de la compléxité et le gain dépend du nombre de coeurs disponibles, sans parler du coût énergétique de l'opération.
 
 \subsubsection{Moins de calculs}\label{subsubsec:moins_de_calculs}
@@ -40,7 +39,7 @@ Comme les attaques statiques ne changent pas, on peut calculer les distances min
 Les graphes temporels sont assez difficiles à manipuler, notamment à cause de liens qui peuvent être bloqués à certains moments, mais pas à d'autres.
 La plupart des algorithmes de graphes classiques sont donc rendus inutilisables, car ils supposent que le graphe est statique, et ne voient pas dans le futur.
 Prenons notamment l'exemple de l'algorithme de Dijkstra, qui est très utile pour trouver les plus courts chemins, mais qui ne peut pas être utilisé dans notre implémentation actuelle.
-Soit le graphe temporel G ci-dessous\ref{fig:exemple_dijkstra}, où chaque lien est étiqueté par sa distance, et considérons que nous voulons aller de 0 à 2 au temps 0.
+Soit le graphe temporel G ci-dessous~\ref{fig:exemple_dijkstra}, où chaque lien est étiqueté par sa distance, et considérons que nous voulons aller de 0 à 2 au temps 0.
 
 \begin{figure}[H]
     \centering
@@ -88,14 +87,15 @@ Soit le graphe temporel G ci-dessous\ref{fig:exemple_dijkstra}, où chaque lien 
     \caption{Graphe temporel G}\label{fig:exemple_dijkstra}
 \end{figure}
 
-Pour Dijkstra, au temps 0, le seul noeud visitable est le noeud 1 et va donc passer par le lien 0 --1--> 1, une fois au noeud 1, le seul lien accessible à parcourir est le lien 1 --3--> 2, et il va donc prendre ce chemin, pour un coût total de 4.
-Alors que nous pouvons facilement voir que le plus court chemin est en fait d'attendre sur 0, puis de prendre le lien 0 --1--> 2, pour un coût total de 2.
+Pour Dijkstra, au temps 0, le seul noeud visitable est le noeud 1 et va donc passer par le lien \link{0}{1}{1}, une fois au noeud 1, le seul lien accessible à parcourir est le lien \link{1}{3}{2}, et il va donc prendre ce chemin, pour un coût total de 4.
+Alors que nous pouvons facilement voir que le plus court chemin est en fait d'attendre sur 0, puis de prendre le lien \link{0}{1}{2}, pour un coût total de 2.
 
 Cependant, nous avons récemment pensé à une nouvelle structure de données.
 Désormais, plusieurs liens peuvent exister entre 2 noeuds, mais ils ne sont pas tous actifs en même temps.
-On va donc avoir des liens fantômes qui remplacent les liens supprimés, équivalents à la distance réelle plus l'attente nécessaire.
-Cela va permettre de ne pas avoir besoin de regarder dans le futur pour calculer les chemins, tout en calculant quand même la vraie distance minimale.
-Cette nouvelle structure de données va rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, Bellman-Ford, A*, Johnson, etc\dots
+Nous allons donc avoir des liens fantômes qui remplacent les liens supprimés, équivalents à la distance réelle plus l'attente nécessaire.
+
+Cela va permettre de ne pas avoir besoin de regarder dans le futur pour calculer les chemins, tout en calculant quand même la vraie distance minimale,
+et ainsi rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, Bellman-Ford, A*, Johnson, etc\dots
 
 \begin{algorithm}[H]
 \caption{Construction de la structure de données}
@@ -121,7 +121,7 @@ Notre implémentation prototype montre déjà des résultats encourageants, mais
 \subsection{Nouvelles attaques}\label{subsec:nouvelles_attaques}
 D'autres équipes du lip6 ont travaillé sur des coupes de graphe, c'est-à-dire le diviser en sous-composantes connexes, et leur but est de minimiser le nombre de liens à supprimer pour obtenir cette division.
 Nous allons récupérer certaines de leurs coupes calculées, et les utiliser pour attaquer le graphe, afin de voir si elles sont pertinentes.
-\todo{citer les gens qui ont fait ça}
+\todo{Citer les gens qui ont fait ça}
 
 \subsection{Modification de la mesure}
 L'efficacité est une mesure intéressante, mais elle ne prend pas en compte la variation comparée à un graphe non-attaqué.

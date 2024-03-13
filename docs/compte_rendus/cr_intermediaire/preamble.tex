@@ -15,6 +15,7 @@
 \usepackage{float} % Allows putting an [H] in \begin{figure} to specify the exact location of the figure
 \usepackage{wrapfig} % Allows in-line images such as the example fish picture
 \usepackage{adjustbox} % Required for fitting table to page
+\usepackage{mathtools} % Arrows with text above and below
 \graphicspath{{./images/}}		%chemin vers les images
 
 %% tables
@@ -65,3 +66,6 @@
 
 \setcounter{secnumdepth}{4}
 \setcounter{tocdepth}{4}
+
+\newcommand{\weightedlinkright}[1]{$\xrightarrow{\text{\hspace{0.2cm}\scriptsize{#1}\hspace{0.2cm}}}$} % Intermediate state, should not be used directly
+\newcommand{\link}[3]{\mbox{#1 \weightedlinkright{#2} #3}} % link from #1 to #3 with weight #2
