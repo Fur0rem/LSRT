@@ -39,7 +39,7 @@ Comme les attaques statiques ne changent pas, on peut calculer les distances min
 Les graphes temporels sont assez difficiles à manipuler, notamment à cause de liens qui peuvent être bloqués à certains moments, mais pas à d'autres.
 La plupart des algorithmes de graphes classiques sont donc rendus inutilisables, car ils supposent que le graphe est statique, et ne voient pas dans le futur.
 Prenons notamment l'exemple de l'algorithme de Dijkstra, qui est très utile pour trouver les plus courts chemins, mais qui ne peut pas être utilisé dans notre implémentation actuelle.
-Soit le graphe temporel G ci-dessous~\ref{fig:exemple_dijkstra}, où chaque lien est étiqueté par sa distance, et considérons que nous voulons aller de 0 à 2 au temps 0.
+Soit le graphe temporel $GT$ ci-dessous~\ref{fig:exemple_dijkstra}, où chaque lien est étiqueté par sa distance, et considérons que nous voulons aller de 0 à 2 au temps 0.
 
 \begin{figure}[H]
     \centering
@@ -59,7 +59,7 @@ Soit le graphe temporel G ci-dessous~\ref{fig:exemple_dijkstra}, où chaque lien
             \centering
             \vspace{0.2cm}
             \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                \node[main] (0) {Temps 0};
+                \node[main] (0) {${GT_{0}}$};
             \end{tikzpicture}
         \end{minipage}
     \end{minipage}%
@@ -80,11 +80,11 @@ Soit le graphe temporel G ci-dessous~\ref{fig:exemple_dijkstra}, où chaque lien
             \centering
             \vspace{0.2cm}
             \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                \node[main] (0) {Temps 1..${t_{\max}}$};
+                \node[main] (0) {${GT_{1..{t_{\max}}}}$};
             \end{tikzpicture}
         \end{minipage}
     \end{minipage}
-    \caption{Graphe temporel G}\label{fig:exemple_dijkstra}
+    \caption{Graphe temporel $GT$}\label{fig:exemple_dijkstra}
 \end{figure}
 
 Pour Dijkstra, au temps 0, le seul noeud visitable est le noeud 1 et va donc passer par le lien \link{0}{1}{1}, une fois au noeud 1, le seul lien accessible à parcourir est le lien \link{1}{3}{2}, et il va donc prendre ce chemin, pour un coût total de 4.
