@@ -13,7 +13,7 @@ Sachant que ces deux solutions ne sont pas mutuellement exclusives, et qu'il est
 
 \subsubsubsection{Parallélisation de l'algorithme de Floyd-Warshall}\label{subsubsubsec:parallelisation_algorithme}
 Avec autant de calculs sur des parties différentes du graphe, on peut se douter que l'algorithme de Floyd-Warshall est parallélisable.
-Nous avons donc cherché sur internet et il existe des papiers sur un Floyd-Warshall multi-threadé\cite{Multithread_FW}, et même une implémentation GPU\cite{GPU_FW}, qui promettent des gains de performance considérables, jusqu'à 50 fois plus rapide.
+Nous avons donc cherché sur internet et il existe des papiers sur un Floyd-Warshall multi-threadé\cite{Multithread_FW}\cite{pradhan2013finding}, et même une implémentation GPU\cite{GPU_FW}, qui promettent des gains de performance considérables, jusqu'à 50 fois plus rapide.
 De plus, nous avons déjà écrit un wrapper sur l'API de Vulkan permettant de faire des calculs sur le GPU facilement depuis le programme C.
 
 \subsubsubsection{Parallélisation des simulations}\label{subsubsubsec:parallelisation_simulations} 

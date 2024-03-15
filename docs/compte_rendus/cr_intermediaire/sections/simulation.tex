@@ -1,2 +1,103 @@
 \section{Simulation}\label{sec:simulation}
-\todo{Expliquer comment on simule}
+
+\subsection{Structure Générale du programme C :}
+
+Le programme de Simulation, écrit en C a un fonctionnement assez simple. 
+Il prend en entrée un fichier de graphe généré par le script Python CityGraph.py et un 
+fichier d'attaque généré par le script Python Stategies.py. 
+
+L'execution du programme se déroule alors en 3 étapes :
+\begin{enumerate}
+    \item Génération d'un LinkStream représenté par une matrice creuse et un tableau associatif ayant pour clefs un lien et en valeur la liste des temps où il est supprimé. 
+    \item Calcul de l'évolution des plus courts chemins sur le LinkStream en utilisant l'algorithme de "Floyd Warshall Temporel".
+    \item Calcul de la mesure de robustesse du réseau en utilisant les plus courts chemins calculés précédemment et affichage/écriture de la robustesse.
+\end{enumerate}
+
+\subsection{Structures de données internes du programme C :}
+Le programme C utilise deux structures de données principales afin d'effectuer ces calculs. 
+La première est celle représentant le LinkStream, elle est composée de deux "sous-structures" :
+\begin{enumerate}
+    \item Une matrice creuse représentant le graphe associé au LinkStream (qui contient tous les noeuds et les liens qui apparaitront dans le LinkStream)
+    \item Un tableau associatif ayant pour clefs un lien et en valeur la liste des temps où il est supprimé.
+\end{enumerate}
+La seconde structure de données est celle représentant les plus courts chemins calculés par l'algorithme de "Floyd Warshall Temporel".
+Elle est composée d'une liste de matrices, chaque matrice représentant les plus courts chemins entre chaque liens.
+Cette structure est appelée "DistanceMatrixes" (ou DMA) dans le programme.
+pour indexer une DMA, on utilise la notation $dma.matrix[t][i][j]$ où t est le temps, i et j sont les sommets du graphe.
+
+
+\subsection{L'algorithme de "Floyd Warhsall Temporel" :}
+L'algorithme de "Floyd Warshall Temporel" est une adaptation de l'algorithme de "Floyd Warshall" pour un LinkStream. 
+Il permet de calculer les plus courts chemins, à chaque instant, entre chaque paire de sommets du LinkStream.
+La complexité de cet algorithme est en $O(t*n^3)$ où n est le nombre de sommets du LinkStream et t le nombre de "pas de temps" du LinkStream.
+
+L'algorithme de Floyd Warshall temporel calcule les plus courts chemins pour tout les sommets du LinkStream 
+pour chaque pas de temps en commençant par le dernier pas de temps jusqu'au premier pas de temps.
+En effet, la distance d'un sommet à un autre dépend de la distance entre ces deux sommets lors des temps suivants. 
+Pour calculer les distances à chaque pas de temps, l'algorithme compare 
+tout les chemins possibles entre deux sommets en passant par un troisième sommet. 
+
+\begin{equation}
+    dist(t,i,j) = min(dist(t,i,j), dist(t,i,k) + dist(t+ dist(t,i,j), k,j))
+\end{equation}
+
+\subsection{Calcul de la mesure de robustesse :}
+La mesure de robustesse est calulée à la fin du programme en sommant toutes 
+les distances minimales entre les sommets atteignables à chaque pas de temps. 
+Puis en divisant ce nombre par $tmax * nbNodes * (nbNodes - 1)$ où tmax est le temps maximal du LinkStream et nbNodes le nombre de sommets du LinkStream.
+On appelle sommets atteignables à un temps t les sommets pour lesquels il existe un chemin 
+minimal à une distance 
+$dist(t,i,j) < t + tmax$ où tmax est le temps maximal du LinkStream.
+Le nombre obtenu est ensuite renvoyé dans la sortie standard ou écrit dans un fichier.
+\subsection{Pseudocode de l'algorithme de Floyd Warshall Temporel et de l'initialisation des matrices de distances:}
+
+
+\begin{algorithm}[H]
+ \caption{$InitTFW(LinkStream \ lks, DistanceMatrixes \ dma$)}
+    \begin{algorithmic}
+        
+   
+	\For{matrix in dma :}
+		\For{$element \ in \ matrix :$}
+			\State $element \gets \infty$
+		\EndFor
+	\EndFor
+	\For{$tlink \ in \ lks :$}
+		\State $dma.matrix[tlink.time][tlink.link] \gets tlink.weight$ 
+	\EndFor
+
+	\For{$i \ in \ \ \{0..lks.nbnodes\}$ }
+		\For{$matrix \ in \ dma$ }
+			\State $matrix[i][i] \gets 1$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}[H]
+    \caption{$TemporalFloydWarshall(LinkStream \ lks, DistanceMatrixes \ dma)$}
+\begin{algorithmic}
+	\State $InitTFW(lks, dma)$
+
+	\For {$time \ in \ \{dma.NumMatrixes \ .. \ 0 \} $}
+		\For { $k \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+			\For { $i \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+				\For { $j \ in \ \{ 0 \ .. \ lks.NumNodes \ \} $}
+				
+					\State $distIJ \gets dma.matrix[t][ij]$
+					\State $distIK \gets dma.matrix[t][ik]$
+					\State $distKJ \gets dma.matrix[t+distIK][kj]$
+
+					\If{ $ distIJ > distIK + distKJ  $}
+						\State $dma.matrix[t][ij] \gets distIK + distKJ$
+					\EndIf
+				\EndFor
+			\EndFor
+		\EndFor
+		
+
+	\EndFor 
+\end{algorithmic}
+\end{algorithm}
+
