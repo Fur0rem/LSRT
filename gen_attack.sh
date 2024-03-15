@@ -90,6 +90,7 @@ while [[ $bug_cur -le $BUDGET_MAX ]]; do
 
     python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$bug_cur" "$DELTA" "$TMP_FILE"
     ./lsrt "$CITY"_graph "$TMP_FILE" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX"
+    sed -i "$ s/$/$bug_cur/"  "$TMP_FILE" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX"
 
     bug_cur=$((bug_cur * GROWTH_NUMERATOR))
     bug_cur=$((bug_cur / GROWTH_DENOMINATOR))

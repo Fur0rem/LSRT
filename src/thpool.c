@@ -4,8 +4,7 @@
 #include "utils.h"
 #include <pthread.h>
 
-#define DEF_THREAD_COUNT 4
-uint32_t global_nb_threads = DEF_THREAD_COUNT;
+#include "misc.h"
 
 #define f_running 1
 #define f_accepting 2

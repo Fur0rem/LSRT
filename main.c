@@ -48,9 +48,16 @@ int main(int argc, char* argv[]) {
         }
     }
 
-	// Check for good usage
+	// Check for good usage / help
 	if (opt_mask & FLAG_HELP || optind != 3) {
 		fprintf(flux,"Usage : lsrt <graph_file> <attack_file>\n");
+	
+		fprintf(flux,"Usage : lsrt [options] <graph_file> <attack_file>\n");
+		fprintf(flux, "options :\n");
+		fprintf(flux, "-h : display this help\n");
+		fprintf(flux, "-f <file> : output to file instead of stdout\n");
+		fprintf(flux, "-d : toggles debug mode, which prints additionnal infos (namely the DMA)\n");
+		fprintf(flux, "-b : toggles benchmark mode, which prints the time taken by each part of the program\n");
 		return ERR_OK;
 	}
 	
@@ -60,7 +67,7 @@ int main(int argc, char* argv[]) {
 	FILE* fattack = fopen_check(argv[2+opt_shift] , "r");
 
 
-	time_t total;
+	time_t total = 0 ;
 	time_t start; 
 	time_t end;
 	if (opt_mask & FLAG_BENCHMARK) {	
