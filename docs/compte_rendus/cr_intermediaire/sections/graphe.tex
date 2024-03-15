@@ -1,2 +1,25 @@
 \section{Génération du graphe}\label{sec:graphe}
-\todo{Expliquer comment on génère le graphe}
+	Le graphe récupéré par par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles.
+	
+	Afin de faciliter la maniplation du graphe, nous avons créé une classe $CityGraph$ dont le constructeur prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer des informations.\todo{rm le paragraphe ?}
+	% Présenter CityGraph ?
+
+\subsection{Transformation du graphe en Matrice creuse}
+	Le graphe est transformé en une matrice creuse au moment de l'écriture des fichiers pour le programme C\todo{expliquer sparse matrix}. Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut en constantes qui peuvent êtres modifiées
+	
+	\todo{expliquer algo}
+\begin{algorithm}
+\caption{Calcul de $V$}
+\begin{algorithmic}
+	\Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
+	\For{$i\in[\![0,G.NumNodes]\!]$}
+		\For{$j$ in $ROW\_INDEX[i,i+1]$}
+			\State $weigth \gets []$
+			\ForAll{$e$ in $G.edges[i][COL\_INDEX[j]]$}
+				\State $weigth.append\left(\frac{e.length}{e.maxspeed}\right)$
+			\EndFor
+			\State $V[j]\gets min(weigth)$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
