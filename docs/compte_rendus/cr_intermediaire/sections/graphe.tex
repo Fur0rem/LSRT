@@ -35,7 +35,7 @@ Nous transformons le graphe au moment de l'écriture des fichier. Pour cela, nou
 \end{algorithmic}
 \end{algorithm}
 
-L'algorithme~\ref{algo:poids} l'ensemble des couples $(u,v)\in V^2$ tels qu'il existe au moins un lien de $u$ à $v$. % $k,w\in\mathbb{N}$ tels que $(u,v,k,w)\in E$.
+L'algorithme~\ref{algo:poids} parcourt l'ensemble des couples $(u,v)\in V^2$ tels qu'il existe au moins un lien de $u$ à $v$. % $k,w\in\mathbb{N}$ tels que $(u,v,k,w)\in E$.
 	Après, il parcourt tout les liens de $u$ à $v$ et calcul le minimum des distances temporelles, donnés par la formule
 	\[\Delta t=\frac{d}{v}\]
 	Où la durée $\Delta t$ est la distance temporelle, $d$ la longueur du lien et $v$ la vitesse maximale.
