@@ -1,15 +1,19 @@
 \section{Génération du graphe}\label{sec:graphe}
 	Le graphe récupéré par par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles.
 	
-	Afin de faciliter la maniplation du graphe, nous avons créé une classe $CityGraph$ dont le constructeur prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer des informations.\todo{rm le paragraphe ?}
+	Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityGraph$ dont le constructeur prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer des informations.\todo{rm le paragraphe ?} Elle permet également de l'enregistrer dans un fichier pour le programme de simulation.
 	% Présenter CityGraph ?
 
 \subsection{Transformation du graphe en Matrice creuse}
-	Le graphe est transformé en une matrice creuse au moment de l'écriture des fichiers pour le programme C\todo{expliquer sparse matrix}. Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut en constantes qui peuvent êtres modifiées
-	
-	\todo{expliquer algo}
+	Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par deux tableau : \todo{Refaire l'explication}
+	\begin{itemize}
+		\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un sommet $s_i$ % aux adresses $i$ et $i+1$ les indices du début et de fin de la liste des voisins d'un sommet $s_i$
+		\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des sommets $s_i$ et le poids des liens, dont les valeurs se situent dans \\$[\![ROW\_INDEX[i],ROW\_INDEX[i+1]]\!]$ si $s_i$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$
+	\end{itemize}
+	Nous transformons le graphe au moment de l'écriture des fichier. Pour cela, nous utilisons les fonctions des librairies NetworkX et SciPy % qui permettent respectivement de transformer le graphe en une matrice creuse SciPy, puis d'obtenir
+	afin d'obtenir les tableaux $ROW\_INDEX$ et $COL\_INDEX$. Le tableau $V$ doit est calculé via l'algorithme~\ref{algo:poids} car nous utilisons des poids temporels et non la distance physique entre les deux nœuds. \todo{harmoniser distance/poids avec le reste}
 \begin{algorithm}
-\caption{Calcul de $V$}
+\caption{Calcul de $V$}\label{algo:poids}
 \begin{algorithmic}
 	\Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
 	\For{$i\in[\![0,G.NumNodes]\!]$}
@@ -23,3 +27,6 @@
 	\EndFor
 \end{algorithmic}
 \end{algorithm}
+
+\todo{expliquer algo}
+Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut en constantes qui peuvent êtres modifiées
