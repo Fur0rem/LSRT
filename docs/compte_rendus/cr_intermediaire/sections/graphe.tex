@@ -5,10 +5,13 @@ Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityG
 	% Présenter CityGraph ?
 
 \subsection{Transformation du graphe en Matrice creuse}
-Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par deux tableau~: \todo{Refaire l'explication}
+Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par deux tableau~: %\todo{Refaire l'explication}
 \begin{itemize}
-	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un sommet $s_i$. % aux adresses $i$ et $i+1$ les indices du début et de fin de la liste des voisins d'un sommet $s_i$
-	\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des sommets $s_i$ et le poids des liens, dont les valeurs se situent dans \\$[\![ROW\_INDEX[i],ROW\_INDEX[i+1]]\!]$ si $s_i$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$.
+	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un nœud $u$. % aux adresses $i$ et $i+1$ les indices du début et de fin de la liste des voisins d'un sommet $s_i$
+	\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des nœuds $u$ et le poids des liens. Pour un nœud $u$ d'indice $i$, ses liens sortants se situent dans les sous-tableaux correspondants aux indices
+	\[[\![ROW\_INDEX[i],ROW\_INDEX[i+1]-1]\!]\]
+	% si $u$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$.
+	Si $u$ n'a aucun lien sortant, $i=i+1$ et le sous-tableau est vide.
 \end{itemize}
 Nous transformons le graphe au moment de l'écriture des fichier. Pour cela, nous utilisons les fonctions des librairies NetworkX et SciPy % qui permettent respectivement de transformer le graphe en une matrice creuse SciPy, puis d'obtenir
 	afin d'obtenir les tableaux $ROW\_INDEX$ et $COL\_INDEX$. Le tableau $V$ doit est calculé via l'algorithme~\ref{algo:poids} car~: \begin{enumerate}
