@@ -1,13 +1,13 @@
 \section{Génération du graphe}\label{sec:graphe}
-Le graphe récupéré par par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles. Dans ce cas, $e\in E$ est tel que $e=(u,v,k,w)$ où $u,v\in V$, $w\in\mathbb{N}$ est la pondération du lien, et $k\mathbb{N}$ est un indice qui permet de différencier les multiples liens de $u$ à $v$.
+Le graphe récupéré par par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles. Dans ce cas, $e\in E$ est tel que $e=(u,v,k,w)$ où $u,v\in V$, $w\in\mathbb{N}$ est la pondération du lien, et $k\in\mathbb{N}$ est un indice qui permet de différencier les multiples liens de $u$ à $v$.
 	
 Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityGraph$ qui prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer les informations du graphe. Elle permet également de l'enregistrer dans un fichier pour le programme de simulation. \todo{keep paragraphe CityGraph ?}
 	% Présenter CityGraph ?
 
 \subsection{Transformation du graphe en Matrice creuse}
-Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par deux tableau~: %\todo{Refaire l'explication}
+Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par trois tableaux~: %\todo{Refaire l'explication}
 \begin{itemize}
-	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un nœud $u$. % aux adresses $i$ et $i+1$ les indices du début et de fin de la liste des voisins d'un sommet $s_i$
+	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un nœud $u$.
 	\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des nœuds $u$ et le poids des liens. Pour un nœud $u$ d'indice $i$, ses liens sortants se situent dans les sous-tableaux correspondants aux indices
 	\[[\![ROW\_INDEX[i],ROW\_INDEX[i+1]-1]\!]\]
 	% si $u$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$.
