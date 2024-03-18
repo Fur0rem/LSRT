@@ -1,41 +1,41 @@
 \section{Génération des attaques}\label{sec:attaques}
 
 \`A chaque pas de temps ${t_{i}}$, nous allons attaquer le graphe~\ref{sec:explication_attaques} en bloquant des liens jusqu'à un certain budget.
-Nous laissons le choix du prix de chaque lien à l'utilisateur, soit une constante, 1 dans notre cas, soit une fonction qui détermine le prix en fonction de la largeur de la rue bloquée,
-avec la largeur de la rue qui correspond à son nombre de voies de circulation.
+Nous laissons le choix du prix de chaque lien à l'utilisateur, soit une constante, 1 dans notre cas, soit une fonction qui détermine le prix en fonction de la largeur de la rue bloquée.
+Avec la largeur de la rue qui correspond à son nombre de voies de circulation.
 
 Nous avons choisi de séparer la gestion des attaques des stratégies d'attaques.
-Pour la gestion, nous avons la classe Attaque, avec 2 primitives:
+Pour la gestion, nous avons la classe Attaque, avec 2 primitives :
 \begin{itemize}
-    \item Bloquer un lien à un temps donné
-    \item Retranscrire l'attaque dans un fichier pour la simulation
+\item Bloquer un lien à un temps donné
+\item Retranscrire l'attaque dans un fichier pour la simulation
 \end{itemize}
 Comme ça, les stratégies peuvent se focaliser sur l'algorithme de choix des liens à supprimer, et la classe Attaque se charge de faire le reste.
 
-Nous classons les stratégies d'attaques en deux catégories: les attaques dynamiques et les attaques statiques.
+Nous classons les stratégies d'attaques en deux catégories : les attaques dynamiques et les attaques statiques.
 
 \subsection{Attaques dynamiques}\label{subsec:attaques_dynamiques}
 
-Les attaques dynamiques sont des attaques où un lien peut être bloqué puis débloqué plus tard, notamment car les obstacles se déplacent au cours du temps.
+Les attaques dynamiques sont des attaques où un lien peut être bloqué puis débloqué plus tard, notamment, car les obstacles se déplacent au cours du temps.
 
 \subsubsection{Attaque aléatoire}\label{subsubsec:attaque_aleatoire}
 
-La première stratégie que nous allons étudier est la plus bête et méchante d'entre toutes: l'attaque aléatoire.
+La première stratégie que nous allons étudier est la plus bête et méchante d'entre toutes : l'attaque aléatoire.
 Elle consiste à attaquer des liens aléatoirement, sans se soucier de leur importance.
 Cette attaque nous servira de base pour comparer les autres stratégies.
 \begin{algorithm}[H]
 \caption{Attaque aléatoire}
 \begin{algorithmic}
-\For{$t \gets 0$ to TempsMax}
-    \State $LiensRestants \gets$ Mélanger(Graphe.liens())
-    \State $BudgetRestant \gets$ Budget
-    \While{$BudgetRestant > 0 \land LiensRestants \neq \emptyset$}
-        \State $lienABloquer \gets$ $Liens$.pop()
-        \State $Attaque$.bloquer($lienABloquer$, $t$)
-        \State $Prix \gets$ $lienABloquer$.prix()
-        \State $BudgetRestant \gets BudgetRestant - Prix$
-    \EndWhile
-\EndFor
+    \For{$t \gets 0$ to TempsMax}
+        \State $LiensRestants \gets$ Mélanger(Graphe.liens())
+        \State $BudgetRestant \gets$ Budget
+        \While{$BudgetRestant > 0 \land LiensRestants \neq \emptyset$}
+            \State $lienABloquer \gets$ $Liens$.pop()
+            \State $Attaque$.bloquer($lienABloquer$, $t$)
+            \State $Prix \gets$ $lienABloquer$.prix()
+            \State $BudgetRestant \gets BudgetRestant - Prix$
+        \EndWhile
+    \EndFor
 \end{algorithmic}
 \end{algorithm}
 
@@ -46,21 +46,21 @@ Dans notre contexte de manifestations et de marches, cette stratégie est plus r
 \begin{algorithm}[H]
 \caption{Attaque mouvante}
 \begin{algorithmic}
-\State $LiensOriginaux \gets$ AttaqueAléatoire(Graphe, ${t_{\max}}$=1, Budget)
-\For{$t \gets 1$ to ${t_{\max}}$}
-    \State $NewLiens \gets$ $\emptyset$
-    \For{$lien \gets$ $LiensOriginaux$}
-        \State $Voisins \gets$ $lien$.voisins()
-        \For{$v \gets$ $Voisins$}
-            \If{$v \notin$ $NewLiens$}
-                \State $NewLiens$.bloquer($v$)
-                \State continue to next $lien$
-            \EndIf
+    \State $LiensOriginaux \gets$ AttaqueAléatoire(Graphe, ${t_{\max}}$=1, Budget)
+    \For{$t \gets 1$ to ${t_{\max}}$}
+        \State $NewLiens \gets$ $\emptyset$
+        \For{$lien \gets$ $LiensOriginaux$}
+            \State $Voisins \gets$ $lien$.voisins()
+            \For{$v \gets$ $Voisins$}
+                \If{$v \notin$ $NewLiens$}
+                    \State $NewLiens$.bloquer($v$)
+                    \State continue to next $lien$
+                \EndIf
+            \EndFor
+            \State $NewLiens$.bloquer($lien$)
         \EndFor
-        \State $NewLiens$.bloquer($lien$)
+        \State $LiensOriginaux \gets$ $NewLiens$
     \EndFor
-    \State $LiensOriginaux \gets$ $NewLiens$
-\EndFor
 \end{algorithmic}
 \end{algorithm}
 \subsection{Attaques statiques}\label{subsec:attaques_statiques}
@@ -74,25 +74,25 @@ La centralité intermédiaire est une mesure représentant l'importance d'un lie
 Elle est calculée en comptant le nombre de plus courts chemins passant par ce lien.
 
 Cette stratégie consiste donc à bloquer les liens les plus importants en les triant par centralité intermédiaire.
-Nous notons d'ailleurs que OSMnx contient des options pour récupérer les centralités intermédiaires des liens d'un graphe directement.
+Nous notons d'ailleurs qu'OSMnx contient des options pour récupérer les centralités intermédiaires des liens d'un graphe directement.
 \begin{algorithm}[H]
 \caption{Attaque par centralité intermédiaire}
 \begin{algorithmic}
 \State $Liens \gets$ Graphe.liens()
 \State $LiensTries \gets$ TrierParCentralité($Liens$)
 \For{$t \gets 0$ to TempsMax}
-    \State $BudgetRestant \gets$ Budget
-    \For{$lien \gets$ $LiensTries$}
-        \State $Attaque$.bloquer($lien$, $t$)
-        \State $Prix \gets$ $lien$.prix()
-        \State $BudgetRestant \gets BudgetRestant - Prix$
-        \If{$BudgetRestant \leq 0$}
-            \State break
-        \EndIf
-    \EndFor
+\State $BudgetRestant \gets$ Budget
+\For{$lien \gets$ $LiensTries$}
+\State $Attaque$.bloquer($lien$, $t$)
+\State $Prix \gets$ $lien$.prix()
+\State $BudgetRestant \gets BudgetRestant - Prix$
+\If{$BudgetRestant \leq 0$}
+\State break
+\EndIf
+\EndFor
 \EndFor
 \end{algorithmic}
 \end{algorithm}
 
-Remarque : Cette stratégie est en fait une stratégie générique, qui peut être utilisée pour trier les liens par n'importe quel critère, comme le nombre de voisins, le nombre de voies composant la rue, etc\dots
-Nous l'utilisons avec la centralité intermédiaire car c'est le critère le plus couramment utilisé dans la littérature.
+Remarque : cette stratégie est en fait une stratégie générique, qui peut être utilisée pour trier les liens par n'importe quel critère, comme le nombre de voisins, le nombre de voies composant la rue, etc\dots
+Nous l'utilisons avec la centralité intermédiaire, car c'est le critère le plus couramment utilisé dans la littérature.

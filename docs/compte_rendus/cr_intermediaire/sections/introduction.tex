@@ -10,20 +10,20 @@ Il est donc important de pouvoir savoir comment ces blocages vont impacter le tr
 Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens, que nous appellerons $GT$
 
 \bigskip
-Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, avec $GT_{t}$ l'état du graphe temporel à l'instant $t$.
+Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, avec $GT_{t_{i}}$ l'état du graphe temporel à l'instant $t$.
 ${t_{\max}}$ étant calculé en fonction du diamètre de la ville 
 \begin{equation*}
     {diametre = \max_{\forall u \forall v \in V} \{\text{longueur}(PlusCourtChemin(u,v))\}}
 \footnote{Cette formule ne marche que si le graphe est connexe, sinon il faut prendre le maximum des diamètres des composantes connexes.}
 \end{equation*}
-Nous appelerons le blocage d'un lien \link{u}{w}{v} à un temps $t$ par un obstacle le fait de rendre inaccessible le lien \link{u}{w}{v} de $GT_{t}$,
+Nous appelerons le blocage d'un lien \link{u}{w}{v} à un temps $t_{i}$ par un obstacle le fait de rendre inaccessible le lien \link{u}{w}{v} de $GT_{t_{i}}$,
 et une attaque $A$ l'ensemble des blocages de liens à chaque pas de temps.
 Nous avons donc
 \begin{equation*}
     GT = \{GT_{i}, \forall i \in [0, {t_{\max}}]\} 
     \equiv (G, A)
 \end{equation*}\label{sec:explication_attaques}
-Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité
+Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité\footnote{L'équation présente la version continue de la mesure, notre version discrète utilisera une somme à la place de l'intégrale.}
 \begin{equation*}
     \varepsilon = \int_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
 \end{equation*}

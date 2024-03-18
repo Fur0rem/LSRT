@@ -1,41 +1,40 @@
 \section{Perspectives}\label{sec:perspectives}
 Dans cette section, nous allons discuter de diverses propositions pour améliorer le projet.
-Elles ne sont obligatoires, mais elles pourraient être intéressantes à explorer.
+Elles ne sont pas obligatoires, mais elles pourraient être intéressantes à explorer.
 
 \subsection{Optimisation du programme}\label{subsec:optimisation_du_programme}
 
-Le programme actuel est très lent, dû à la complexité des algorithmes utilisés, dont l'algorithme de Floyd-Warshall temporel, qui a une complexité en $O(|V|^3*t_{\max})$.
-\todo{Reference vers la section correspondante}
-Pour améliorer la vitesse du programme, nous allons discuter des 2 extrémités du spectre de l'optimisation: Paralléliser les caluls ou faire moins de calculs.
+Le programme actuel est très lent, dû à la complexité des algorithmes utilisés, dont l'algorithme de Floyd-Warshall temporel, qui a une complexité en $O(|V|^3*t_{\max})$\ref{subsec:algo_floyd_warshall_temporel}.
+Pour améliorer la vitesse du programme, nous allons discuter des 2 extrémités du spectre de l'optimisation : paralléliser les caluls ou faire moins de calculs.
 Sachant que ces deux solutions ne sont pas mutuellement exclusives, et qu'il est possible de les combiner.
 
 \subsubsection{Parallélisation des calculs}\label{subsubsec:parallelisation}
 
-\subsubsubsection{Parallélisation de l'algorithme de Floyd-Warshall}\label{subsubsubsec:parallelisation_algorithme}
+\subsubsubsection*{Parallélisation de l'algorithme de Floyd-Warshall}\label{subsubsubsec:parallelisation_algorithme}
 Avec autant de calculs sur des parties différentes du graphe, on peut se douter que l'algorithme de Floyd-Warshall est parallélisable.
 Nous avons donc cherché sur internet et il existe des papiers sur un Floyd-Warshall multi-threadé\cite{Multithread_FW}\cite{pradhan2013finding}, et même une implémentation GPU\cite{GPU_FW}, qui promettent des gains de performance considérables, jusqu'à 50 fois plus rapide.
 De plus, nous avons déjà écrit un wrapper sur l'API de Vulkan permettant de faire des calculs sur le GPU facilement depuis le programme C.
 
-\subsubsubsection{Parallélisation des simulations}\label{subsubsubsec:parallelisation_simulations} 
+\subsubsubsection*{Parallélisation des simulations}\label{subsubsubsec:parallelisation_simulations} 
 Le but du projet est de calculer l'évolution de l'efficacité du graphe en fonction du budget, et chaque instance de la simulation est entièrement indépendante des autres.
-Nous pouvons donc facilement paralléliser les instances sur plusieurs coeurs, voire plusieures machines, et les faire tourner en même temps, pour maximiser l'utilisation du CPU, et attendre moins longtemps pour obtenir les résultats.
+Nous pouvons donc facilement paralléliser les instances sur plusieurs coeurs, voire plusieurs machines, et les faire tourner en même temps, pour maximiser l'utilisation du CPU, et attendre moins longtemps pour obtenir les résultats.
 
 % End of section parallellisation_simulations
 \bigskip
-Mais cela ne résoud pas le problème de la compléxité et le gain dépend du nombre de coeurs disponibles, sans parler du coût énergétique de l'opération.
+Mais cela ne résout pas le problème de la complexité et le gain dépend du nombre de coeurs disponibles, sans parler du coût énergétique de l'opération.
 
 \subsubsection{Moins de calculs}\label{subsubsec:moins_de_calculs}
 
-\subsubsubsection{Utilisation d'un cache}\label{subsubsubsec:cache}
+\subsubsubsection*{Utilisation d'un cache}\label{subsubsubsec:cache}
 Pour les attaques avec peu de budget, nous pouvons nous imaginer que la plupart des plus courts chemins ne changent pas, car ils ne passent pas par les liens bloqués.
 Nous pouvons donc mettre en place un système de stockage pour les plus courts chemins sur le graphe non-attaqué, et ne recalculer que les plus courts chemins qui ont changé.
-Cela nécessite de changer notre algortihme pour calculer les plus courts chemins plûtot que leurs distances, ainsi qu'un système efficace pour invalider les plus courts chemins impactés par les attaques.
+Cela nécessite de changer notre algorithme pour calculer les plus courts chemins plutôt que leurs distances, ainsi qu'un système efficace pour invalider les plus courts chemins impactés par les attaques.
 
-\subsubsubsection{Propriétés des attaques statiques}\label{subsubsubsec:proprietes_attaques_statiques}
+\subsubsubsection*{Propriétés des attaques statiques}\label{subsubsubsec:proprietes_attaques_statiques}
 Pour optimiser, il est important de prendre en compte toutes les propriétés de nos données, notamment les attaques statiques.
-Comme les attaques statiques ne changent pas, on peut calculer les distances minimales sur le graphe attaqué une fois pour toute, et les propager dans le temps, plutôt que de les recalculer à chaque pas de temps.
+Comme les attaques statiques ne changent pas, on peut calculer les distances minimales sur le graphe attaqué une fois pour toutes, et les propager dans le temps, plutôt que de les recalculer à chaque pas de temps.
 
-\subsubsubsection{Structure de données plus efficace}\label{subsubsubsec:structure_de_donnees_opti}
+\subsubsubsection*{Structure de données plus efficace}\label{subsubsubsec:structure_de_donnees_opti}
 Les graphes temporels sont assez difficiles à manipuler, notamment à cause de liens qui peuvent être bloqués à certains moments, mais pas à d'autres.
 La plupart des algorithmes de graphes classiques sont donc rendus inutilisables, car ils supposent que le graphe est statique, et ne voient pas dans le futur.
 Prenons notamment l'exemple de l'algorithme de Dijkstra, qui est très utile pour trouver les plus courts chemins, mais qui ne peut pas être utilisé dans notre implémentation actuelle.
@@ -119,12 +118,9 @@ Cette solution est la plus compliquée à implémenter, mais aussi très promett
 Notre implémentation prototype montre déjà des résultats encourageants, mais il faut encore vérifier la validité des résultats et tester la performance sur des graphes plus grands.
 
 \subsection{Nouvelles attaques}\label{subsec:nouvelles_attaques}
-L'équipe Complex Networks du Lip6 a travaillé sur des coupes de graphes, c'est-à-dire le diviser en sous-composantes connexes, et leur but est de minimiser le nombre de liens à supprimer pour obtenir cette division.
-Nous allons récupérer certaines de leurs coupes calculées, et les utiliser pour attaquer le graphe, afin de voir si elles sont pertinentes.
-\todo{reformuler}
-\todo{lien vers complex networks}
-\todo{préciser coupes de Paris très efficaces}
+L'équipe Complex Networks du Lip6\footnote{\url{https://www.lip6.fr/recherche/team.php?acronyme=ComplexNetworks}} travaille sur des coupes de graphes, c'est-à-dire découper le graphe en sous-composantes connexes, optimales sur des réseaux urbains tel que Paris.
+Nous pourrions donc utiliser ces coupes en tant qu'attaques, et comparer leur efficacité à d'autres attaques plus classiques.
 
 \subsection{Modification de la mesure}
 L'efficacité est une mesure intéressante, mais elle ne prend pas en compte la variation comparée à un graphe non-attaqué.
-Nous pourrions donc modifier la mesure pour prendre en compte cette variation, afin de comparer le changement d'efficacité plûtot que l'efficacité elle-même.
+Nous pourrions donc modifier la mesure pour prendre en compte cette variation, afin de comparer le changement d'efficacité plutôt que l'efficacité elle-même.

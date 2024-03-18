@@ -1,57 +1,58 @@
 \section{Simulation}\label{sec:simulation}
 
-\subsection{Structure Générale du programme C :}
+\subsection{Structure Générale du programme C}
 
 Le programme de Simulation, écrit en C a un fonctionnement assez simple. 
 Il prend en entrée un fichier de graphe généré par le script Python CityGraph.py et un 
 fichier d'attaque généré par le script Python Stategies.py. 
 
-L'execution du programme se déroule alors en 3 étapes :
+L'exécution du programme se déroule alors en 3 étapes:
 \begin{enumerate}
     \item Génération d'un graphe temporel représenté par une matrice creuse et un tableau associatif ayant pour clefs un lien et en valeur la liste des temps où il est supprimé. 
-    \item Calcul de l'évolution des plus courts chemins sur le graphe temporel en utilisant l'algorithme de "Floyd Warshall Temporel".
+    \item Calcul de l'évolution des plus courts chemins sur le graphe temporel en utilisant l'algorithme de ``Floyd Warshall Temporel``.
     \item Calcul de la mesure de robustesse du réseau en utilisant les plus courts chemins calculés précédemment et affichage/écriture de la robustesse.
 \end{enumerate}
 
-\subsection{Structures de données internes du programme C :}
+\subsection{Structures de données internes du programme C}
 Le programme C utilise deux structures de données principales afin d'effectuer ces calculs. 
-La première est celle représentant le graphe temporel, elle est composée de deux "sous-structures" :
+La première est celle représentant le graphe temporel, elle est composée de deux ``sous-structures``:
 \begin{enumerate}
     \item Une matrice creuse représentant le graphe associé au graphe temporel (qui contient tous les noeuds et les liens qui apparaitront dans le graphe temporel)
     \item Un tableau associatif ayant pour clefs un lien et en valeur la liste des temps où il est supprimé.
 \end{enumerate}
-La seconde structure de données est celle représentant les plus courts chemins calculés par l'algorithme de "Floyd Warshall Temporel".
+La seconde structure de données est celle représentant les plus courts chemins calculés par l'algorithme de ``Floyd Warshall Temporel``.
 Elle est composée d'une liste de matrices, chaque matrice représentant les plus courts chemins entre chaque liens.
-Cette structure est appelée "DistanceMatrixes" (ou DMA) dans le programme.
-pour indexer une DMA, on utilise la notation $dma.matrix[t][i][j]$ où t est le temps, i et j sont les sommets du graphe.
+Cette structure est appelée ``DistanceMatrixes`` (ou DMA) dans le programme, où $dma.matrix[t_{i}][u][v]$ contient la distance minimale trouvée entre les noeuds $u$ et $v$ à l'instant $t_{i}$.
+\footnote{Nous indexons la DMA directement avec des noeuds et des pas de temps, car chaque noeud est un nombre unique de 0 à |V| dans notre implémentation, de même pour les pas de temps.}.
 
 
-\subsection{L'algorithme de "Floyd Warhsall Temporel" :}
-L'algorithme de "Floyd Warshall Temporel" est une adaptation de l'algorithme de "Floyd Warshall"\cite{hougardy2010floyd} pour un graphe temporel. 
+\subsection{L'algorithme de ``Floyd Warhsall Temporel``}
+L'algorithme de ``Floyd Warshall Temporel`` est une adaptation de l'algorithme de ``Floyd Warshall``\cite{hougardy2010floyd} pour un graphe temporel. 
 Il permet de calculer les plus courts chemins, à chaque instant, entre chaque paire de sommets du graphe temporel.
-La complexité de cet algorithme est en $O(t*n^3)$ où n est le nombre de sommets du graphe temporel et t le nombre de "pas de temps" du graphe temporel.
 
 L'algorithme de Floyd Warshall est un algorithme permettant de calculer les plus courts chemins entre tous les noeuds d'un graphe 
-même si celui-ci contient des noeuds de poids négatifs. Il est facile à implémenter et et facile à adapter à notre problème.
+même si celui-ci contient des noeuds de poids négatifs, donc facilement adaptable à notre problème, en plus d'être simple à implémenter.
 C'est pour cela que nous nous sommes basé dessus pour notre algorithme de calculs de plus courts chemins. 
 
-L'algorithme de Floyd Warshall temporel calcule les plus courts chemins pour tout les sommets du graphe temporel 
+L'algorithme de Floyd Warshall temporel calcule les plus courts chemins pour tous les sommets du graphe temporel 
 pour chaque pas de temps en commençant par le dernier pas de temps jusqu'au premier pas de temps.
 En effet, la distance d'un sommet à un autre dépend de la distance entre ces deux sommets lors des temps suivants. 
 Pour calculer les distances à chaque pas de temps, l'algorithme compare 
-tout les chemins possibles entre deux sommets en passant par un troisième sommet. 
+tous les chemins possibles entre deux sommets en passant par un troisième sommet $k$. 
+Cet algorithme utilise donc 3 boucles imbriquées pour calculer les plus courts chemins entre chaque paire de sommets à chaque pas de temps, 
+et possède en conséquent une complexité temporelle de $O(|V|^3*t_{\max})$.\label{subsec:algo_floyd_warshall_temporel}
 
 \begin{equation}
-    dist(t,i,j) = min(dist(t,i,j), dist(t,i,k) + dist(t+ dist(t,i,j), k,j))
+    dist(t_{i},u,v) = \min(dist(t_{i},u,v), dist(t_{i},u,k) + dist(t + dist(t_{i},u,v), k,v))
 \end{equation}
 
-\subsection{Calcul de la mesure de robustesse :}
+\subsection{Calcul de la mesure de robustesse}
 La mesure de robustesse est calulée à la fin du programme en sommant toutes 
 les distances minimales entre les sommets atteignables à chaque pas de temps. 
-Puis en divisant ce nombre par $tmax * nbNodes * (nbNodes - 1)$ où tmax est le temps maximal du graphe temporel et nbNodes le nombre de sommets du graphe temporel.
+Puis en divisant ce nombre par $t_{\max} * |V| * (|V| - 1)$
 On appelle sommets atteignables à un temps t les sommets pour lesquels il existe un chemin 
 minimal à une distance 
-$dist(t,i,j) < t + tmax$ où tmax est le temps maximal du graphe temporel.
+$dist(t_{i},u,v) < t_{i} + t_{\max}$
 Le nombre obtenu est ensuite renvoyé dans la sortie standard ou écrit dans un fichier.
 \subsection{Pseudocode de l'algorithme de Floyd Warshall Temporel et de l'initialisation des matrices de distances:}
 
@@ -61,18 +62,18 @@ Le nombre obtenu est ensuite renvoyé dans la sortie standard ou écrit dans un 
     \begin{algorithmic}
         
    
-	\For{matrix in dma :}
-		\For{$element \ in \ matrix :$}
+	\For{matrix in dma:}
+		\For{$element \ in \ matrix:$}
 			\State $element \gets \infty$
 		\EndFor
 	\EndFor
-	\For{$tlink \ in \ GT :$}
+	\For{$tlink \ in \ GT:$}
 		\State $dma.matrix[tlink.time][tlink.link] \gets tlink.weight$ 
 	\EndFor
 
-	\For{$i \ in \ \ \{0..GT.nbnodes\}$ }
+	\For{$u\ in \ \ \{0..|GT.V|\}$ }
 		\For{$matrix \ in \ dma$ }
-			\State $matrix[i][i] \gets 1$
+			\State $matrix[u][u] \gets 1$
 		\EndFor
 	\EndFor
 \end{algorithmic}
@@ -85,16 +86,16 @@ Le nombre obtenu est ensuite renvoyé dans la sortie standard ou écrit dans un 
 	\State $InitTFW(GT, dma)$
 
 	\For {$time \ in \ \{dma.NumMatrixes \ .. \ 0 \} $}
-		\For { $k \ in \ \{ 0 \ .. \ GT.NumNodes \ \} $}
-			\For { $i \ in \ \{ 0 \ .. \ GT.NumNodes \ \} $}
-				\For { $j \ in \ \{ 0 \ .. \ GT.NumNodes \ \} $}
+		\For { $k \ in \ \{ 0 \ .. \ |GT.V| \ \} $}
+			\For { $u \ in \ \{ 0 \ .. \ |GT.V| \ \} $}
+				\For { $v \ in \ \{ 0 \ .. \ |GT.V| \ \} $}
 				
-					\State $distIJ \gets dma.matrix[t][ij]$
-					\State $distIK \gets dma.matrix[t][ik]$
-					\State $distKJ \gets dma.matrix[t+distIK][kj]$
+					\State $distUV \gets dma.matrix[t_{i}][u][v]$
+					\State $distUK \gets dma.matrix[t_{i}][u][k]$
+					\State $distKV \gets dma.matrix[t_{i}+distUK][k][v]$
 
-					\If{ $ distIJ > distIK + distKJ  $}
-						\State $dma.matrix[t][ij] \gets distIK + distKJ$
+					\If{$distUV > distUK + distKV$}
+						\State $dma.matrix[t_{i}][u][v] \gets distUK + distKV$
 					\EndIf
 				\EndFor
 			\EndFor

@@ -1,5 +1,5 @@
 \section{Génération du graphe}\label{sec:graphe}
-Le graphe récupéré par par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles. Dans ce cas, $e\in E$ est tel que $e=(u,v,k,w)$ où $u,v\in V$, $w\in\mathbb{N}$ est la pondération du lien, et $k\in\mathbb{N}$ est un indice qui permet de différencier les multiples liens de $u$ à $v$.
+Le graphe récupéré par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles. Dans ce cas, $e\in E$ est tel que $e=(u,v,k,w)$ où $u,v\in V$, $w\in\mathbb{N}$ est la pondération du lien, et $k\in\mathbb{N}$ est un indice qui permet de différencier les multiples liens de $u$ à $v$.
 	
 Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityGraph$ qui prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer les informations du graphe. Elle permet également de l'enregistrer dans un fichier pour le programme de simulation. % \todo{keep paragraphe CityGraph ?}
 	% Présenter CityGraph ?
@@ -7,15 +7,15 @@ Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityG
 \subsection{Transformation du graphe en Matrice creuse}
 Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par trois tableaux~: %\todo{Refaire l'explication}
 \begin{itemize}
-	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un nœud $u$.
-	\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des nœuds $u$ et le poids des liens. Pour un nœud $u$ d'indice $i$, ses liens sortants se situent dans les sous-tableaux correspondants aux indices
+	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un noeud $u$.
+	\item $COL\_INDEX$ et $V$ qui contiennent les sommets adjacents des noeuds $u$ et le poids des liens. Pour un noeud $u$ d'indice $i$, ses liens sortants se situent dans les sous-tableaux correspondants aux indices
 	\[[\![ROW\_INDEX[i],ROW\_INDEX[i+1]-1]\!]\]
 	% si $u$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$.
 	Si $u$ n'a aucun lien sortant, $i=i+1$ et le sous-tableau est vide.
 \end{itemize}
-Nous transformons le graphe au moment de l'écriture des fichier. Pour cela, nous utilisons les fonctions des librairies NetworkX et SciPy % qui permettent respectivement de transformer le graphe en une matrice creuse SciPy, puis d'obtenir
+Nous transformons le graphe au moment de l'écriture des fichiers. Pour cela, nous utilisons les fonctions des librairies NetworkX et SciPy % qui permettent respectivement de transformer le graphe en une matrice creuse SciPy, puis d'obtenir
 	afin d'obtenir les tableaux $ROW\_INDEX$ et $COL\_INDEX$. Le tableau $V$ doit est calculé via l'algorithme~\ref{algo:poids} car~: \begin{enumerate}
-	\item Nous utilisons des distances temporels et non la distance physique entre les deux nœuds. % \todo{harmoniser distance/poids avec le reste}
+	\item Nous utilisons des distances temporels et non la distance physique entre les deux noeuds. % \todo{harmoniser distance/poids avec le reste}
 	\item La ville est représentée sous la forme d'un multigraphe alors que les simulations sont faites sur un graphe avec au plus un lien d'un sommet $u$ à $v$.
 \end{enumerate}
 
@@ -25,7 +25,7 @@ Nous transformons le graphe au moment de l'écriture des fichier. Pour cela, nou
 	\Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
 	\For{$i\in[\![0,G.NumNodes]\!]$}
 		\For{$j\in ROW\_INDEX[i,i+1]$}
-			\State $weigth \gets []$
+			\State $weigth \gets \emptyset$
 			\ForAll{$e\in G.edges[i][COL\_INDEX[j]]$}
 				\State $weigth.append\left(\frac{e.length}{e.maxspeed}\right)$
 			\EndFor
