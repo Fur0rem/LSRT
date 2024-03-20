@@ -38,11 +38,13 @@ pub trait Attack : std::fmt::Debug {
 #[derive(Debug)]
 pub struct DynamicAttack {
     blocked_links: Vec<Vec<((Node, Node), Vec<Time>)>>,
+    delta: Time
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
     blocked_links: Vec<Vec<Node>>,
+    delta: Time,
 }
 
 impl dyn Attack {
@@ -73,20 +75,21 @@ impl StaticAttack {
         //let (nb_blocks, _delta) = scanf!(line, "{} {} ", usize, usize).unwrap();
         let iter = line.split_whitespace();
         let mut iter = iter.map(|x| x.parse().unwrap());
-        let nb_blocks : usize = iter.next().unwrap();
-        let _delta = iter.next().unwrap();
+        let nb_blocks = iter.next().unwrap();
+        let delta = iter.next().unwrap();
 
         // while there is new line, read it and append to the result
         let mut blocked_links = Vec::with_capacity(graph.nb_nodes);
         for _ in 0..graph.nb_nodes {
             let mut line = String::new();
             reader.read_line(&mut line).unwrap();
-            let blocks : Vec<Node> = line.split_whitespace().map(|x| x.parse().unwrap()).collect();
+            let blocks = line.split_whitespace().map(|x| x.parse().unwrap()).collect();
             blocked_links.push(blocks);
         }
 
         return Self {
             blocked_links,
+            delta
         };
     }
 }
@@ -97,6 +100,7 @@ impl DynamicAttack {
     pub fn from_file(reader: &mut BufReader<File>, graph: &Graph) -> Self {
         return Self {
             blocked_links: Vec::new(),
+            delta: 0
         };
     }
 }
