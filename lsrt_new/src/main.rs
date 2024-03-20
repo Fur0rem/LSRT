@@ -1,6 +1,9 @@
 mod graph;
 use graph::{Graph, SubPathsPyramid};
 
+mod attack;
+use attack::{Attack, DynamicAttack, StaticAttack};
+
 use crate::graph::dijkstra;
 
 macro_rules! benchmark {
@@ -16,9 +19,14 @@ macro_rules! benchmark {
 fn main() {
     let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
     //graph.print();
-    let (distance_matrix, shortest_paths) = benchmark!("all_pairs_shortest_paths", graph.all_pairs_shortest_paths(255));
-    println!("{:?}", distance_matrix);
+    //let (distance_matrix, shortest_paths) = benchmark!("all_pairs_shortest_paths", graph.all_pairs_shortest_paths(255));
+    //println!("{:?}", distance_matrix);
+    let attack = <dyn Attack>::from_file("../attack.M62VNJ", &graph);
 
+    println!("{:?}", attack);
+    let (efficiency, reachables) = benchmark!("efficiency", attack.efficiency(&graph, 255));
+    println!("efficiency: {}, reachables: {}", efficiency, reachables);
+    
     // let path = dijkstra(&graph, 0, 80);
     // path.print();
 

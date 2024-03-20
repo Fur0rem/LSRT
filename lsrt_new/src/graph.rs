@@ -6,8 +6,9 @@ use std::io::{BufRead, BufReader};
 use std::collections::BinaryHeap;
 use fibonacii_heap::Heap;
 
-type Node = u16;
-type Weight = u16;
+pub type Node = u16;
+pub type Weight = u16;
+pub type Time = u16;
 
 // Adjacency list representation of a graph
 
@@ -17,10 +18,10 @@ pub struct Neighbour {
     weight: Weight,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Graph {
-    nb_nodes: usize,
-    edges: Vec<Vec<Neighbour>>,
+    pub nb_nodes: usize,
+    pub edges: Vec<Vec<Neighbour>>,
 }
 
 impl Graph {
@@ -68,8 +69,6 @@ impl Graph {
             edges,
         })
     }
-        
-    
 
     pub fn print(&self) {
         for (i, row) in self.edges.iter().enumerate() {
@@ -78,6 +77,17 @@ impl Graph {
                 print!("{}--{}-->{} ", i, neighbour.weight, neighbour.node);
             }
             println!();
+        }
+    }
+
+    pub fn remove_link(&mut self, from: Node, to: Node) {
+        let mut i = 0;
+        while i < self.edges[from as usize].len() {
+            if self.edges[from as usize][i].node == to {
+                self.edges[from as usize].remove(i);
+                return;
+            }
+            i += 1;
         }
     }
 
@@ -202,7 +212,7 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
     let mut prev = vec![u16::MAX; graph.nb_nodes as usize];
     let mut visited = vec![false; graph.nb_nodes as usize];
     dist[start as usize] = 0;
-    let mut heap = Heap::new();
+    let mut heap = BinaryHeap::new();
     heap.push(DijkstraState {
         node: start,
         distance: 0,

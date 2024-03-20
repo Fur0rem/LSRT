@@ -77,7 +77,7 @@ while true; do
 done
 
 # Generate a new temporary filename for the attack
-TMP_FILE=$(mktemp -q /tmp/attack.XXXXXX)
+TMP_FILE=$(mktemp -q ./attack.XXXXXX)
 if [ $? -ne 0 ]; then
     echo "$0: Can't create temp file"
     exit 1
@@ -95,4 +95,6 @@ while [[ $bug_cur -le $BUDGET_MAX ]]; do
     bug_cur=$((bug_cur / GROWTH_DENOMINATOR))
 done
 
-rm "$TMP_FILE"
+#rm "$TMP_FILE"
+
+# ./gen_attack.sh -c Saints -a random -x 2 TODO
