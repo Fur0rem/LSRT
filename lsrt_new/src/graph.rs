@@ -3,6 +3,8 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use crate::paths::{Path, SubPath, SubPathsPyramid};
+
 use std::collections::BinaryHeap;
 use fibonacii_heap::Heap;
 
@@ -12,13 +14,25 @@ pub type Time = u16;
 
 // Adjacency list representation of a graph
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Neighbour {
-    node: Node,
-    weight: Weight,
+    pub node: Node,
+    pub weight: Weight,
 }
 
-#[derive(Debug, Clone)]
+// TODO : use that cause it's a better practice
+impl Neighbour {
+    pub fn weight(&self) -> Weight {
+        self.weight
+    }
+    pub fn node(&self) -> Node {
+        self.node
+    }
+}
+
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Graph {
     pub nb_nodes: usize,
     pub edges: Vec<Vec<Neighbour>>,
@@ -93,41 +107,11 @@ impl Graph {
 
 }
 
-pub struct Path<'a> {
-    graph: &'a Graph,
-    start: Node,
-    steps: Vec<&'a Neighbour>,
-}
-
-impl Path<'_> {
-
-    pub fn cost(&self) -> Weight {
-        self.steps.iter().map(|x| x.weight).sum()
-    }
-
-    pub fn print(&self) {
-        //print the start, then each step, then the end
-        print!("{} ", self.start);
-        for step in &self.steps {
-            print!("--{}-->{} ", step.weight, step.node);
-        }
-        println!();
-    }
-
-    pub fn empty(graph: &Graph) -> Path {
-        Path {
-            graph,
-            start: 0,
-            steps: vec![],
-        }
-    }
-
-}
 
 #[derive(Copy, Clone, Eq, PartialEq)]
-struct DijkstraState {
-    node: Node,
-    distance: u16,
+pub struct DijkstraState {
+    pub node: Node,
+    pub distance: u16,
 }
 
 impl Ord for DijkstraState {
@@ -257,203 +241,23 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct SubPath {
-    start: Node,
-    end: Node,
-    total_weight: Weight,
-}
-
-pub struct SubPathsPyramid<'a> {
-    pub graph: &'a Graph,
-    pub subpaths: Vec<SubPath>,
-}
-
-
-impl SubPathsPyramid<'_> {
-
-    fn get_prof(idx : usize) -> usize {
-        //stack exchange get inverse of formula for sum of intergers from 1 to n?
-        return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize + 1;
-    }
-
-    fn get_idx_left_son(idx : usize) -> usize {
-        return idx + Self::get_prof(idx);
-    }
-
-    pub fn get_idx_right_son(idx : usize) -> usize {
-        return Self::get_idx_left_son(idx) + 1;
-    }
-
-    pub fn get_idx_parents(idx : usize) -> (Option<usize>, Option<usize>) {
-        if idx == 0 {
-            return (None, None);
-        }
-        let prof = Self::get_prof(idx);
-        let (minr, maxr) = Self::get_range(prof);
-        let left_parent = if idx == minr {
-            None
-        } else {
-            Some(idx - prof)
-        };
-        let right_parent = if idx == maxr {
-            None
-        } else {
-            Some(idx - prof + 1)
-        };
-        return (left_parent, right_parent);
-    }
-
-    fn get_range(prof : usize) -> (usize, usize) {
-        if prof == 0 {
-            return (0,0)
-        }
-        let truc = ((prof + 1) * prof) / 2;
-        return (truc - prof, truc - 1);
-    }
-
-    // FIXME : ca fait de la merde
-    /*pub fn from_path<'a>(graph: &'a Graph, path: &Path) -> SubPathsPyramid<'a> {
-
-        let nb_elems = (path.steps.len() * (path.steps.len() + 1)) / 2;
-        let mut subpaths = vec![SubPath {
-            start: 0,
-            end: 0,
-            total_weight: 0,
-        }; nb_elems];
-        let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2 - 1;
-        let mut prev_node = path.start;
-        for step in &path.steps {
-            subpaths[leaf_index] = SubPath {
-                start: prev_node,
-                end: step.node,
-                total_weight: step.weight,
-            };
-            prev_node = step.node;
-            leaf_index -= 1;
-        }
-        println!("{:?}", subpaths);
-        for p in (0..SubPathsPyramid::get_prof(leaf_index) - 1).rev() {
-            println!("Profondeur {}", p);
-            let (minr, maxr) = SubPathsPyramid::get_range(p + 1);
-            for i in minr..=maxr {
-                let il = SubPathsPyramid::get_idx_left_son(i);
-                let ir = SubPathsPyramid::get_idx_right_son(i);
-                let shared = SubPathsPyramid::get_idx_left_son(ir);
-                let shared_len = if shared < nb_elems {
-                    println!("shared : {}", shared);
-                    println!("shared_len : {}", subpaths[shared].total_weight);
-                    subpaths[shared].total_weight
-                } else {
-                    0
-                };
-                println!("i : {}, il : {}, ir : {}, shared : {}, shared_len : {}, nb_elems : {}", i, il, ir, shared, shared_len, nb_elems);
-                let left = &subpaths[il];
-                let right = &subpaths[ir];
-                let new_path = SubPath {
-                    start: left.start,
-                    end: right.end,
-                    total_weight: (left.total_weight + right.total_weight) - shared_len,
-                };
-                subpaths[i] = new_path;
-            }
-        }
-        SubPathsPyramid {
-            graph,
-            subpaths,
-        }
-    }*/
-
-    // TODO : clean this up
-    pub fn from_path<'a>(graph: &'a Graph, path: &Path) -> SubPathsPyramid<'a> {
-        if path.steps.is_empty() {
-            return SubPathsPyramid {
-                graph,
-                subpaths: vec![],
-            }
-        }
-        let nb_elems = (path.steps.len() * (path.steps.len() + 1)) / 2;
-        let mut elems = vec![ SubPath {
-            start: 0,
-            end: 0,
-            total_weight: 0,
-        } ; nb_elems];
-        //println!("{:?}", path);
-        //let leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
-        //println!("Leaf start {}", leaf_index);
-        // for (i, step) in path.steps.iter().enumerate() {
-        //     //println!("elems[{}] = {:?}", leaf_index + i, step);
-        //     elems[leaf_index + i] = SubPath {
-        //         from : step.0,
-        //         to : step.2,
-        //         time_start : 0,
-        //         total_length : step.1
-        //     };
-        // }
-
-        let mut prev_node = path.start;
-        let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
-        for step in &path.steps {
-            elems[leaf_index] = SubPath {
-                start: prev_node,
-                end: step.node,
-                total_weight: step.weight,
-            };
-            prev_node = step.node;
-            leaf_index += 1;
-        }
-
-        let leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
-
-        //println!("{:?}", elems);
-
-        for p in (0..SubPathsPyramid::get_prof(leaf_index)-1).rev() {
-            let (minr, maxr) = SubPathsPyramid::get_range(p+1);
-            for i in minr..=maxr {
-                let il = SubPathsPyramid::get_idx_left_son(i);
-                let ir = SubPathsPyramid::get_idx_right_son(i);
-    
-                let shared = SubPathsPyramid::get_idx_left_son(ir);
-                let shared_len = if shared < nb_elems {
-                    elems[shared].total_weight
-                } else {
-                    0
-                };
-                let left = &elems[il];
-                let right = &elems[ir];
-                //println!("left {} + right {} - shared {} with len {}", left.total_length, right.total_length, shared, shared_len);
-                // let new_path = SubPath {
-                //     from : left.from,
-                //     to : right.to,
-                //     time_start : 0,
-                //     // TODO : fix that because they get doubled up
-                //     total_length : (left.total_length + right.total_length) - shared_len
-                // };
-                //println!("total_weight : {} + {} - {}",
-                    //left.total_weight, right.total_weight, shared_len);
-                //println!(" = {}", (left.total_weight + right.total_weight) - shared_len);
-                let new_path = SubPath {
-                    start: left.start,
-                    end: right.end,
-                    total_weight: (left.total_weight + right.total_weight) - shared_len,
-                };
-                //println!("elems[{i}] = {new_path:?} = {il} + {ir}");
-                elems[i] = new_path;
-            }
-        }
-    
-        //println!("Done {:?}", elems);
-        
-        return SubPathsPyramid {
-            graph,
-            subpaths: elems,
-        }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DistanceMatrix {
     pub distances: Vec<Vec<Weight>>,
+}
+
+// TODO : i can index the first time with u16 but not the other times i have to cast to usize, kinda ugly
+impl std::ops::Index<Node> for DistanceMatrix {
+    type Output = Vec<Weight>;
+
+    fn index(&self, index: Node) -> &Self::Output {
+        return &self.distances[index as usize];
+    }
+}
+impl std::ops::IndexMut<Node> for DistanceMatrix {
+    fn index_mut(&mut self, index: Node) -> &mut Self::Output {
+        return &mut self.distances[index as usize];
+    }
 }
 
 /*

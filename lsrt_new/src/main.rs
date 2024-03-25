@@ -1,11 +1,14 @@
 mod graph;
-use graph::{Graph, SubPathsPyramid};
+use graph::Graph;
 
 mod attack;
 use attack::{Attack, DynamicAttack, StaticAttack};
 
+mod paths;
+
 use crate::graph::dijkstra;
 
+#[macro_use]
 macro_rules! benchmark {
     ($name:expr, $block:expr) => {{
         let start = std::time::Instant::now();
