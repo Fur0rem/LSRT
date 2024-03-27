@@ -432,7 +432,7 @@ impl Graph {
                 paths.push(subpaths);
             }
             // TODO : si path pas trouvé, alors mettre a infini
-            println!("Dijkstras done for node {} : {}", node, nb_dijkstras_done);
+            //println!("Dijkstras done for node {} : {}", node, nb_dijkstras_done);
             /*if (*node < 5) {
                 print_matrix(&dst_mat);
             }*/

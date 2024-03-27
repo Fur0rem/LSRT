@@ -1,3 +1,4 @@
+use core::time;
 use std::{fs::File, io::{BufRead, BufReader}};
 
 use crate::{graph::{DistanceMatrix, Graph, Neighbour, Node, Time, Weight}, paths::{invalidate_path_pyramid, invalidate_temporal_path_pyramid, SubPathsPyramid, TemporalPath, TemporalSubPathsPyramid}};
@@ -5,7 +6,6 @@ use crate::paths::Path;
 
 use std::collections::BinaryHeap;
 
-#[macro_use]
 macro_rules! benchmark {
     ($name:expr, $block:expr) => {{
         let start = std::time::Instant::now();
@@ -23,6 +23,9 @@ use sscanf::scanf;
 pub trait Attack : std::fmt::Debug {
     // efficiency + reachables
     fn efficiency(&self, graph: &Graph) -> (f64, usize);
+    fn max_time(&self) -> Time;
+    fn blocked_links(&self) -> &Vec<DeletedLink>;
+    fn delta(&self) -> Time;
     /*
     err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_ARRAY * dma){
     def_err_handler(!(ret_sum && dma && ret_reachables), "sum_dma", ERR_NULL);
@@ -123,6 +126,19 @@ impl StaticAttack {
 }
 
 impl Attack for StaticAttack {
+
+    fn max_time(&self) -> Time {
+        return self.max_time;
+    }
+    
+    fn delta(&self) -> Time {
+        return self.delta;
+    }
+
+    fn blocked_links(&self) -> &Vec<DeletedLink> {
+        unimplemented!();
+    }
+
     // Create a graph without the links that got blocked
     fn efficiency(&self, graph: &Graph) -> (f64, usize) {
         let mut new_graph = graph.clone();
@@ -243,43 +259,21 @@ fn temporal_dijkstra<'a>(graph: &'a TimeVaryingGraph, start: Node, end: Node, ma
             continue;
         }
         visited[node as usize] = true;
-        /*for edge in &graph.nodes {
-            if edge.start == node {
-                if dist[node as usize] == Weight::MAX {
-                    continue;
-                }
-                let alt = dist[node as usize] + edge.weights[time as usize];
-                if alt < dist[edge.end as usize] {
-                    dist[edge.end as usize] = alt;
-                    prev[edge.end as usize] = node;
-                    heap.push(DijkstraState {
-                        node: edge.end,
-                        distance: alt,
-                    });
-                }
-            }
-        }*/
-        for neighbour in &graph.nodes[node as usize] {
-            if dist[node as usize] == Weight::MAX {
+        for (neighbour, edge) in &graph.nodes[node as usize] {
+            if (distance as u64 + time) >= max_time {
                 continue;
             }
-            if neighbour.1.weights[time as usize] == Weight::MAX {
+            let weight = edge.weights[distance as usize + time as usize];
+            if weight == Weight::MAX {
                 continue;
             }
-            if time as Weight + dist[node as usize] >= max_time as Weight {
-                continue;
-            }
-            let alt = dist[node as usize] as u32 + neighbour.1.weights[time as usize] as u32;
-            if alt > max_time as u32 {
-                continue;
-            }
-            let alt = alt as u16;
-            if alt < dist[neighbour.0.node as usize] {
-                dist[neighbour.0.node as usize] = alt;
-                prev[neighbour.0.node as usize] = node;
+            let new_distance = distance + weight;
+            if new_distance < dist[neighbour.node as usize] {
+                dist[neighbour.node as usize] = new_distance;
+                prev[neighbour.node as usize] = node;
                 heap.push(DijkstraState {
-                    node: neighbour.0.node,
-                    distance: alt,
+                    node: neighbour.node,
+                    distance: new_distance,
                 });
             }
         }
@@ -343,17 +337,9 @@ fn recompute_all_distance_matrix(graph: &mut TimeVaryingGraph) {
                         }
                     }
                 }
-                // Remove the distance if it is too high
-                // TODO TAG PROUT
-                if graph.dst_mat_del[t as usize][i as Node][j] == Weight::MAX {
-                    continue;
-                }
-                if graph.dst_mat_del[t as usize][i as Node][j] + t as Weight > graph.max_time as Weight {
-                    graph.dst_mat_del[t as usize][i as Node][j] = Weight::MAX;
-                }
             }
         }
-        println!("Time {} nb dijkstras : {}", t, nb_dijkstras);
+        //println!("Time {} nb dijkstras : {}", t, nb_dijkstras);
     }
 }
 
@@ -369,7 +355,7 @@ fn sum_dma(dma : &Vec<DistanceMatrix>, max_time: Time) -> (f64, u64) {
                     continue;
                 }
                 let distance = dma[t as usize][i as Node][j as usize];
-                if distance <= max_time && distance != 0 {
+                if distance < max_time && distance != 0 {
                     //sum_int += distance as u64;
                     sum += 1.0 / (distance as f64);
                     reachables += 1;
@@ -421,7 +407,7 @@ fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<Delet
                 for deleted_edge in deleted_edges {
                     if deleted_edge.from == node_idx as Node && deleted_edge.to == neighbour.node {
                         // FIXME : i think delta is here ???
-                        while deleted_edge.times.contains(&((t + wait) / delta)) {
+                        while deleted_edge.times.contains(&((t + wait) / delta)) { // maybe we shouldnt divide by delta here
                             wait += 1; // maybe use delta here instead ?
                         }
                     }
@@ -471,11 +457,197 @@ fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedL
     }
 }
 
+fn print_dma(dma: &Vec<DistanceMatrix>) {
+    for t in 0..dma.len() {
+        println!("Time : {}", t);
+        for i in 0..dma[t as usize].distances.len() {
+            for j in 0..dma[t as usize].distances[i as usize].len() {
+                let distance_to_str = if dma[t as usize][i as Node][j as usize] == Weight::MAX {
+                    "∞".to_string()
+                } else {
+                    dma[t as usize][i as Node][j as usize].to_string()
+                };
+                print!("{} ", distance_to_str);
+            }
+            println!();
+        }
+    }
+}
+
 impl Attack for DynamicAttack {
+
+    fn max_time(&self) -> Time {
+        return self.max_time;
+    }
+
+    fn delta(&self) -> Time {
+        return self.delta;
+    }
+
+    fn blocked_links(&self) -> &Vec<DeletedLink> {
+        return &self.blocked_links;
+    }
+
     fn efficiency(&self, graph: &Graph) -> (f64, usize) {
         let mut time_graph= graph_to_temporal(&graph, self.max_time, &self.blocked_links, self.delta);
         recompute_all_distance_matrix(&mut time_graph);
+        cap_times(&mut time_graph.dst_mat_del, self.max_time);
         let (a,b) = sum_dma(&time_graph.dst_mat_del, self.max_time);
+        print_dma(&time_graph.dst_mat_del);
         return (a,b as usize);
     }
+}
+
+pub fn cap_times(dma: &mut Vec<DistanceMatrix>, max_time: Time) {
+    for t in 0..dma.len() {
+        for i in 0..dma[t as usize].distances.len() {
+            for j in 0..dma[t as usize].distances[i as usize].len() {
+                if i == j {
+                    dma[t as usize][i as Node][j as usize] = 1;
+                }
+                let weight = dma[t as usize][i as Node][j as usize];
+                if weight == 0 || weight == Weight::MAX {
+                    dma[t as usize][i as Node][j as usize] = Weight::MAX;
+                    continue;
+                }
+                let weight = dma[t as usize][i as Node][j as usize];
+                let weight = weight as usize + t as usize;
+                if weight >= max_time as usize {
+                    dma[t as usize][i as Node][j as usize] = Weight::MAX;
+                }
+                else {
+                    dma[t as usize][i as Node][j as usize] = weight as Weight - t as Weight;
+                }
+            }
+        }
+    }
+}
+
+// FIXME : it looks like it doesnt take into account phantom edges or smth????, probably something wrong with dijkstra
+pub fn dumb_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, Vec<DistanceMatrix>) {
+    // create phantom edges
+    let mut time_graph = graph_to_temporal(&graph, attack.max_time(), &attack.blocked_links(), attack.delta());
+    // recompute all distance matrices from scratch
+    for t in 0..time_graph.max_time {
+        for i in 0..time_graph.dst_mat_undel.distances.len() {
+            for j in 0..time_graph.dst_mat_undel.distances[i as usize].len() {
+                // write infinity in the distance matrix
+                time_graph.dst_mat_del[t as usize][i as Node][j as usize] = Weight::MAX;
+                let path = temporal_dijkstra(&time_graph, i as Node, j as Node, time_graph.max_time, t, time_graph.nodes.len().try_into().unwrap(), &time_graph.dst_mat_del[t as usize]);
+                if path.steps.len() == 0 {
+                    continue;
+                }
+                if i == 8 && j == 16 {
+                    print!("Path from 8 to 16 at time {} : ", t);
+                    path.print();
+                }
+                // write the length of the path in the distance matrix
+                let mut total_length = 0;
+                for subpath in &path.steps {
+                    if subpath.1.weights[t as usize] == Weight::MAX {
+                        total_length = Weight::MAX;
+                        break;
+                    }
+                    if (subpath.1.weights[t as usize] as usize + t as usize) >= time_graph.max_time as usize {
+                        total_length = Weight::MAX;
+                        break;
+                    }
+                    let weight = subpath.0.weight;
+                    total_length += weight;
+                }
+                if i == 8 && j == 16 {
+                    println!("Total length : {}", total_length);
+                }
+                /*if total_length >= time_graph.max_time as Weight {
+                    total_length = Weight::MAX;
+                }
+                if total_length + t as Weight >= time_graph.max_time as Weight {
+                    total_length = Weight::MAX;
+                }
+                if total_length == 0 {
+                    total_length = Weight::MAX;
+                }*/
+                time_graph.dst_mat_del[t as usize][i as Node][j as usize] = total_length;
+            }
+        }
+    }
+    cap_times(&mut time_graph.dst_mat_del, time_graph.max_time.try_into().unwrap());
+    print_dma(&time_graph.dst_mat_del);
+    let (a,b) = sum_dma(&time_graph.dst_mat_del, time_graph.max_time.try_into().unwrap());
+    return (a,b as usize, time_graph.dst_mat_del);
+}
+
+pub fn improved_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, Vec<DistanceMatrix>) {
+    // create phantom edges
+    let mut time_graph = graph_to_temporal(&graph, attack.max_time(), &attack.blocked_links(), attack.delta());
+    // print the phantom edges
+    for (node_idx, node) in time_graph.nodes.iter().enumerate() {
+        for neighbour in node {
+            println!("{} -> {} : {:?}", node_idx, neighbour.0.node, neighbour.1.weights);
+        }
+    }
+    // recompute all distance matrices from scratch
+    for t in 0..time_graph.max_time {
+        for i in 0..time_graph.dst_mat_undel.distances.len() {
+            for j in 0..time_graph.dst_mat_undel.distances[i as usize].len() {
+                // write infinity in the distance matrix
+                /*time_graph.dst_mat_del[t as usize][i as Node][j as usize] = Weight::MAX;
+                let path = temporal_dijkstra(&time_graph, i as Node, j as Node, time_graph.max_time, t, time_graph.nodes.len().try_into().unwrap(), &time_graph.dst_mat_del[t as usize]);
+                // write the length of the path in the distance matrix
+                let mut total_length = 0;
+                for subpath in &path.steps {
+                    total_length += subpath.1.weights[t as usize];
+                }*/
+                /*if total_length >= time_graph.max_time as Weight {
+                    total_length = Weight::MAX;
+                }
+                if total_length + t as Weight >= time_graph.max_time as Weight {
+                    total_length = Weight::MAX;
+                }
+                if total_length == 0 {
+                    total_length = Weight::MAX;
+                }*/
+                //time_graph.dst_mat_del[t as usize][i as Node][j as usize] = total_length;
+                /*
+                let path = temporal_dijkstra(graph, i as Node, j as Node, graph.max_time, t, max_node_index.try_into().unwrap(), &graph.dst_mat_del[t as usize]);
+                    nb_dijkstras += 1;
+                    let subpaths = TemporalSubPathsPyramid::from_path(graph, &path);
+                    for subpath in &subpaths.subpaths {
+                        let (from, to, time_start, total_length) = (subpath.start, subpath.end, t, subpath.total_weight);
+                        let new_time = t + time_start;
+                        if new_time < graph.max_time {
+                            graph.dst_mat_del[new_time as usize][from][to as usize] = total_length;
+                        }
+                } */
+
+                let path = temporal_dijkstra(&time_graph, i as Node, j as Node, time_graph.max_time, t, time_graph.nodes.len().try_into().unwrap(), &time_graph.dst_mat_del[t as usize]);
+                if path.steps.len() == 0 {
+                    continue;
+                }
+                if i == 8 && j == 16 {
+                    print!("Path from 8 to 16 at time {} : ", t);
+                    path.print();
+                }
+                
+                let subpaths = TemporalSubPathsPyramid::from_path(&time_graph, &path);
+                for subpath in &subpaths.subpaths {
+                    let (from, to, time_start, total_length) = (subpath.start, subpath.end, t /*+ (subpath.total_weight as u64)*/, subpath.total_weight);
+                    if from == 8 && to == 16 {
+                        println!("{:?}", subpath);
+                        println!("Total length : {}", total_length);
+                        println!("From : {}, to : {}, time_start : {}, total_length : {}", from, to, time_start, total_length);
+                    }
+                    let old_distance = time_graph.dst_mat_del[t as usize][from][to as usize];
+                    //if total_length < old_distance || old_distance == 0 {
+                    if ((time_start as usize) < (time_graph.max_time as usize)) && (total_length < old_distance || old_distance == 0) {
+                        time_graph.dst_mat_del[time_start as usize][from][to as usize] = total_length;
+                    }
+                }
+            }
+        }
+    }
+    cap_times(&mut time_graph.dst_mat_del, time_graph.max_time.try_into().unwrap());
+    print_dma(&time_graph.dst_mat_del);
+    let (a,b) = sum_dma(&time_graph.dst_mat_del, time_graph.max_time.try_into().unwrap());
+    return (a,b as usize, time_graph.dst_mat_del);
 }

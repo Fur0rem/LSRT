@@ -137,7 +137,8 @@ class CityGraph :
 					elif "maxspeed" in edge.keys() and "length" not in edge.keys():
 						weights.append(1)
 					else:
-						weights.append(int(float(edge["length"])/cast_tmp(edge["maxspeed"])))
+						# TODO : marche pas avec les notations anglaises (20 mph par exemple)
+						weights.append(int(3.6 * float(edge["length"])/cast_tmp(edge["maxspeed"])))
 
 					weights[-1]=max(1,weights[-1])
 

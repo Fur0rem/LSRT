@@ -2,7 +2,7 @@ mod graph;
 use graph::Graph;
 
 mod attack;
-use attack::{Attack, DynamicAttack, StaticAttack};
+use attack::*;
 
 mod paths;
 
@@ -20,21 +20,76 @@ macro_rules! benchmark {
 }
 
 fn main() {
-    let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
-    //graph.print();
-    //let (distance_matrix, shortest_paths) = benchmark!("all_pairs_shortest_paths", graph.all_pairs_shortest_paths(255));
-    //println!("{:?}", distance_matrix);
-    //let attack = <dyn Attack>::from_file("../attack.M62VNJ", &graph);
-    let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
-    println!("{:?}", attack);
-    let (efficiency, reachables) = benchmark!("efficiency", attack.efficiency(&graph));
-    println!("efficiency: {}, reachables: {}", efficiency, reachables);
-    
-    // let path = dijkstra(&graph, 0, 80);
-    // path.print();
+    let old_efficiency;
+    let new_efficiency;
+    let imp_efficiency;
+    let old_distance_matrix;
+    let imp_distance_matrix;
 
-    // let pyr_path = SubPathsPyramid::from_path(&graph, &path);
-    
-    // println!("{:?}", pyr_path.subpaths);
+    benchmark!("everything", {
+        let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
+        let (efficiency, reachables) = attack.efficiency(&graph);
+        println!("efficiency: {}, reachables: {}", efficiency, reachables);
+        new_efficiency = efficiency;
+    });
 
+    println!("NEW");
+
+    benchmark!("everything old", {
+        let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
+        let (efficiency, reachables, distance_matrix) = dumb_efficiency(&graph, &*attack);
+        println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
+        old_distance_matrix = distance_matrix;
+        old_efficiency = efficiency;
+    });
+    println!("IMPROVED");
+    benchmark!("everything improved", {
+        let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
+        let (efficiency, reachables, distance_matrix) = improved_efficiency(&graph, &*attack);
+        println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
+        imp_distance_matrix = distance_matrix;
+        imp_efficiency = efficiency;
+    });
+
+    /*
+    benchmark!("everything", {
+        let graph = Graph::from_sparse_row_format("../Maza_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.7N80g5", &graph);
+        let (efficiency, reachables) = attack.efficiency(&graph);
+        println!("efficiency: {}, reachables: {}", efficiency, reachables);
+        new_efficiency = efficiency;
+    });
+    println!("NEW");
+    benchmark!("everything old", {
+        let graph = Graph::from_sparse_row_format("../Maza_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.7N80g5", &graph);
+        let (efficiency, reachables, distance_matrix) = dumb_efficiency(&graph, &*attack);
+        println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
+        old_efficiency = efficiency;
+        old_distance_matrix = distance_matrix;
+    });
+    println!("IMPROVED");
+    benchmark!("everything improved", {
+        let graph = Graph::from_sparse_row_format("../Maza_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.7N80g5", &graph);
+        let (efficiency, reachables, distance_matrix) = improved_efficiency(&graph, &*attack);
+        println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
+        imp_efficiency = efficiency;
+        imp_distance_matrix = distance_matrix;
+    });*/
+
+    println!("new: {}, old: {}, improved: {}", new_efficiency, old_efficiency, imp_efficiency);
+
+    for t in 0..old_distance_matrix.len() {
+        for i in 0..old_distance_matrix[t].distances.len() {
+            for j in 0..old_distance_matrix[t][i as u16].len() {
+                if old_distance_matrix[t][i as u16][j] != imp_distance_matrix[t][i as u16][j] {
+                    println!("t : {}  i : {}  j : {}  old : {}  imp : {}", t, i, j, old_distance_matrix[t][i as u16][j], imp_distance_matrix[t][i as u16][j]);
+                }
+            }
+        }
+    }
 }
