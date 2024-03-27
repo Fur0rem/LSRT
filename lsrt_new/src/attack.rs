@@ -1,6 +1,6 @@
 use std::{fs::File, io::{BufRead, BufReader}};
 
-use crate::{graph::{DistanceMatrix, Graph, Neighbour, Node, Time, Weight}, paths::{invalidate_temporal_path_pyramid, SubPathsPyramid, TemporalPath, TemporalSubPathsPyramid}};
+use crate::{graph::{DistanceMatrix, Graph, Neighbour, Node, Time, Weight}, paths::{invalidate_path_pyramid, invalidate_temporal_path_pyramid, SubPathsPyramid, TemporalPath, TemporalSubPathsPyramid}};
 use crate::paths::Path;
 
 use std::collections::BinaryHeap;
@@ -22,7 +22,7 @@ use sscanf::scanf;
 
 pub trait Attack : std::fmt::Debug {
     // efficiency + reachables
-    fn efficiency(&self, graph: &Graph, max_time: Time) -> (f64, usize);
+    fn efficiency(&self, graph: &Graph) -> (f64, usize);
     /*
     err_code sum_dma(double * ret_sum, uint64_t * ret_reachables,  DISTANCE_MATRIX_ARRAY * dma){
     def_err_handler(!(ret_sum && dma && ret_reachables), "sum_dma", ERR_NULL);
@@ -53,22 +53,24 @@ pub trait Attack : std::fmt::Debug {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct DeletedLink {
-    from: Node,
-    to: Node,
-    times: Vec<Time>,
+pub struct DeletedLink {
+    pub from: Node,
+    pub to: Node,
+    pub times: Vec<Time>,
 }
 
 #[derive(Debug)]
 pub struct DynamicAttack {
     pub blocked_links: Vec<DeletedLink>,
-    pub delta: Time
+    pub delta: Time,
+    pub max_time: Time,
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
     blocked_links: Vec<Vec<Node>>,
-    delta: Time,
+    pub delta: Time,
+    pub max_time: Time,
 }
 
 impl dyn Attack {
@@ -101,6 +103,7 @@ impl StaticAttack {
         let mut iter = iter.map(|x| x.parse().unwrap());
         let nb_blocks = iter.next().unwrap();
         let delta = iter.next().unwrap();
+        let max_time = iter.next().unwrap();
 
         // while there is new line, read it and append to the result
         let mut blocked_links = Vec::with_capacity(graph.nb_nodes);
@@ -113,14 +116,15 @@ impl StaticAttack {
 
         return Self {
             blocked_links,
-            delta
+            delta,
+            max_time,
         };
     }
 }
 
 impl Attack for StaticAttack {
     // Create a graph without the links that got blocked
-    fn efficiency(&self, graph: &Graph, max_time: Time) -> (f64, usize) {
+    fn efficiency(&self, graph: &Graph) -> (f64, usize) {
         let mut new_graph = graph.clone();
         for i in 0..self.blocked_links.len() {
             for j in 0..self.blocked_links[i].len() {
@@ -128,20 +132,20 @@ impl Attack for StaticAttack {
             }
         }
 
-        let (distance_matrix, _shortest_paths) = new_graph.all_pairs_shortest_paths(max_time);
+        let (distance_matrix, _shortest_paths) = new_graph.all_pairs_shortest_paths(self.max_time);
         println!("{:?}", distance_matrix);
         let mut sum = 0.0;
         let mut reachables = 0;
-        for t in 0..max_time {
+        for t in 0..self.max_time {
             for i in 0..distance_matrix.distances.len() {
                 for j in 0..distance_matrix.distances[i].len() {
 
                     let value = distance_matrix.distances[i][j];
-                    if value > max_time {
+                    if value > self.max_time {
                         continue;
                     }
                     let value = value + t;
-                    if value > max_time {
+                    if value > self.max_time {
                         continue;
                     }
                     sum += 1.0 / (value as f64);
@@ -150,18 +154,61 @@ impl Attack for StaticAttack {
             }
         }
 
-        let efficiency = sum / ((max_time as f64) * (graph.nb_nodes * (graph.nb_nodes - 1)) as f64);
+        let efficiency = sum / ((self.max_time as f64) * (graph.nb_nodes * (graph.nb_nodes - 1)) as f64);
         return (efficiency, reachables);
     }
 }
 
 
-// TODO : that
+// TODO : ew it's ugly af
 impl DynamicAttack {
     pub fn from_file(reader: &mut BufReader<File>, graph: &Graph) -> Self {
+        // First line : nb_edges, delta, max_time
+        let mut line = String::new();
+        reader.read_line(&mut line).unwrap();
+        //let (nb_edges, delta, max_time) = scanf!(line, "{} {} {}", usize, u16, u16).unwrap();
+        let iter = line.split_whitespace();
+        let mut iter = iter.map(|x| x.parse().unwrap());
+        let nb_edges = iter.next().unwrap();
+        let delta = iter.next().unwrap();
+        let max_time = iter.next().unwrap();
+
+        // Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
+        // For example : 4 (0,2) 5 9 17 18
+        let mut blocked_links = vec![];
+        for _ in 0..nb_edges {
+            let mut line = String::new();
+            reader.read_line(&mut line).unwrap();
+            //println!("Line : {}", line);
+            //let (nb_blocked, from, to) = scanf!(line, "{} ({}, {}) ", usize, usize, usize).unwrap();
+            let mut iter = line.split_whitespace();
+            let nb_blocked = iter.next().unwrap();
+            let from = iter.next().unwrap();
+            let to = iter.next().unwrap();
+
+            let nb_blocked = nb_blocked.parse().unwrap();
+            // remove the paranthesis and comma
+            let from : usize = from[1..from.len()-1].parse().unwrap();
+            let to : usize = to[0..to.len()-1].parse().unwrap();
+
+
+            let mut times = vec![];
+            for _ in 0..nb_blocked {
+                let time = iter.next().unwrap().parse().unwrap();
+                times.push(time);
+            }
+
+            blocked_links.push(DeletedLink {
+                from: from as Node,
+                to: to as Node,
+                times,
+            });
+        }
+
         return Self {
-            blocked_links: Vec::new(),
-            delta: 0
+            blocked_links,
+            delta: delta as Time,
+            max_time: max_time as Time,
         };
     }
 }
@@ -216,7 +263,17 @@ fn temporal_dijkstra<'a>(graph: &'a TimeVaryingGraph, start: Node, end: Node, ma
             if dist[node as usize] == Weight::MAX {
                 continue;
             }
-            let alt = dist[node as usize] + neighbour.1.weights[time as usize + distance_matrix[node][neighbour.0.node as usize] as usize];
+            if neighbour.1.weights[time as usize] == Weight::MAX {
+                continue;
+            }
+            if time as Weight + dist[node as usize] >= max_time as Weight {
+                continue;
+            }
+            let alt = dist[node as usize] as u32 + neighbour.1.weights[time as usize] as u32;
+            if alt > max_time as u32 {
+                continue;
+            }
+            let alt = alt as u16;
             if alt < dist[neighbour.0.node as usize] {
                 dist[neighbour.0.node as usize] = alt;
                 prev[neighbour.0.node as usize] = node;
@@ -267,6 +324,7 @@ fn temporal_dijkstra<'a>(graph: &'a TimeVaryingGraph, start: Node, end: Node, ma
 
 fn recompute_all_distance_matrix(graph: &mut TimeVaryingGraph) {
     let max_node_index = graph.nodes.len();
+    let mut nb_dijkstras = 0;
     for t in 0..graph.max_time {
         for i in 0..graph.dst_mat_undel.distances.len() {
             for j in 0..graph.dst_mat_undel[i as Node].len() {
@@ -275,6 +333,7 @@ fn recompute_all_distance_matrix(graph: &mut TimeVaryingGraph) {
                     // TODO : take adventage of the fact that we already have the shortest path from a bunch of other nodes
                     // FIXME : what the fuck is happening
                     let path = temporal_dijkstra(graph, i as Node, j as Node, graph.max_time, t, max_node_index.try_into().unwrap(), &graph.dst_mat_del[t as usize]);
+                    nb_dijkstras += 1;
                     let subpaths = TemporalSubPathsPyramid::from_path(graph, &path);
                     for subpath in &subpaths.subpaths {
                         let (from, to, time_start, total_length) = (subpath.start, subpath.end, t, subpath.total_weight);
@@ -294,12 +353,13 @@ fn recompute_all_distance_matrix(graph: &mut TimeVaryingGraph) {
                 }
             }
         }
-        println!("Time {}", t);
+        println!("Time {} nb dijkstras : {}", t, nb_dijkstras);
     }
 }
 
 fn sum_dma(dma : &Vec<DistanceMatrix>, max_time: Time) -> (f64, u64) {
     let mut sum = 0.0;
+    //let mut sum_int = 0;
     let mut reachables = 0;
     let distances_len = dma[0 as usize].distances.len();
     for t in 0..dma.len() {
@@ -309,13 +369,15 @@ fn sum_dma(dma : &Vec<DistanceMatrix>, max_time: Time) -> (f64, u64) {
                     continue;
                 }
                 let distance = dma[t as usize][i as Node][j as usize];
-                if distance != Time::MAX && distance != 0 {
+                if distance <= max_time && distance != 0 {
+                    //sum_int += distance as u64;
                     sum += 1.0 / (distance as f64);
                     reachables += 1;
                 }
             }
         }
     }
+    //println!("Sum int : {}", sum_int);
     sum -= distances_len as f64;
     sum /= dma.len() as f64 * (distances_len * (distances_len - 1)) as f64;
     return (sum, reachables);
@@ -325,7 +387,7 @@ struct DeletedLinksMatrix {
     links: Vec<Vec<Vec<u64>>>
 }
 
-fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>, dst_mat_del: &mut Vec<DistanceMatrix>) -> Vec<Vec<(Neighbour, TimeVaryingEdge)>> {
+fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>, dst_mat_del: &mut Vec<DistanceMatrix>, delta : u16) -> Vec<Vec<(Neighbour, TimeVaryingEdge)>> {
     let mut annex_edges = vec![];
     /*for edge in &graph.edges {
         let mut weights = vec![];
@@ -358,8 +420,9 @@ fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<Delet
                 let mut wait = 0;
                 for deleted_edge in deleted_edges {
                     if deleted_edge.from == node_idx as Node && deleted_edge.to == neighbour.node {
-                        while deleted_edge.times.contains(&((t + wait))) {
-                            wait += 1;
+                        // FIXME : i think delta is here ???
+                        while deleted_edge.times.contains(&((t + wait) / delta)) {
+                            wait += 1; // maybe use delta here instead ?
                         }
                     }
                 }
@@ -377,7 +440,7 @@ fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<Delet
     return annex_edges;
 }
 
-fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>) -> TimeVaryingGraph {
+fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>, delta : u16) -> TimeVaryingGraph {
     let mut edges : Vec<TimeVaryingEdge> = vec![];
     let (mut dst_mat_undel, mut paths) = benchmark!("apsp", graph.all_pairs_shortest_paths(max_time));
     //let (paths,_) = benchmark!("johnson", johnson(graph, max_time));
@@ -386,8 +449,20 @@ fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedL
     // TODO : change that to infinity once debuggin is done
     let mut dst_mat_del = vec![dst_mat_undel.clone(); max_time as usize];
 
-    let annex_edges = benchmark!("create_phantom_edges", create_phantom_edges(&graph, max_time, &deleted_edges, &mut dst_mat_del));
-    
+    // TODO : yeah this is very space consuming, probably better to switch to a sparse matrix or hashmap
+    let deleted_edges_matrix = benchmark!("deleted_edges_matrix", {
+        let max_node_index = graph.nb_nodes as u64;
+        let mut deleted_edges_matrix = vec![vec![vec![]; max_node_index as usize]; max_node_index as usize];
+        for deleted_link in deleted_edges {
+            for t in &deleted_link.times {
+                deleted_edges_matrix[deleted_link.from as usize][deleted_link.to as usize].push(*t);
+            }
+        }
+        deleted_edges_matrix
+    });
+
+    let annex_edges = benchmark!("create_phantom_edges", create_phantom_edges(&graph, max_time, &deleted_edges, &mut dst_mat_del, delta));
+    benchmark!("invalidate_deleted_edges", invalidate_path_pyramid(&mut paths, deleted_edges_matrix, max_time, &mut dst_mat_del));
     TimeVaryingGraph {
         max_time : max_time.into(),
         nodes: annex_edges,
@@ -397,10 +472,10 @@ fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedL
 }
 
 impl Attack for DynamicAttack {
-    fn efficiency(&self, graph: &Graph, max_time: Time) -> (f64, usize) {
-        let mut time_graph= graph_to_temporal(&graph, max_time, &self.blocked_links);
+    fn efficiency(&self, graph: &Graph) -> (f64, usize) {
+        let mut time_graph= graph_to_temporal(&graph, self.max_time, &self.blocked_links, self.delta);
         recompute_all_distance_matrix(&mut time_graph);
-        let (a,b) = sum_dma(&time_graph.dst_mat_del, max_time);
+        let (a,b) = sum_dma(&time_graph.dst_mat_del, self.max_time);
         return (a,b as usize);
     }
 }

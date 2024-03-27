@@ -24,10 +24,10 @@ fn main() {
     //graph.print();
     //let (distance_matrix, shortest_paths) = benchmark!("all_pairs_shortest_paths", graph.all_pairs_shortest_paths(255));
     //println!("{:?}", distance_matrix);
-    let attack = <dyn Attack>::from_file("../attack.M62VNJ", &graph);
-
+    //let attack = <dyn Attack>::from_file("../attack.M62VNJ", &graph);
+    let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
     println!("{:?}", attack);
-    let (efficiency, reachables) = benchmark!("efficiency", attack.efficiency(&graph, 255));
+    let (efficiency, reachables) = benchmark!("efficiency", attack.efficiency(&graph));
     println!("efficiency: {}, reachables: {}", efficiency, reachables);
     
     // let path = dijkstra(&graph, 0, 80);

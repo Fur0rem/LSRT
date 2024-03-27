@@ -76,7 +76,8 @@ impl SubPathsPyramid<'_> {
         let right_parent = if idx == maxr {
             None
         } else {
-            Some(idx - prof + 1)
+            //println!("idx {} prof {} minr {} maxr {}", idx, prof, minr, maxr);
+            Some(idx - (prof - 1) + 1)
         };
         return (left_parent, right_parent);
     }
@@ -164,7 +165,7 @@ impl SubPathsPyramid<'_> {
 }
 
 
-fn invalidate_node_and_parents(idx : usize, pyramid : &mut SubPathsPyramid, dst_mat_del: &mut Vec<DistanceMatrix>, max_time: u64) {
+fn invalidate_node_and_parents(idx : usize, pyramid : &mut SubPathsPyramid, dst_mat_del: &mut Vec<DistanceMatrix>, max_time: Time) {
     if pyramid.subpaths[idx].total_weight == Weight::MAX {
         return;
     }
@@ -186,7 +187,7 @@ fn invalidate_node_and_parents(idx : usize, pyramid : &mut SubPathsPyramid, dst_
         invalidate_node_and_parents(right_parent, pyramid, dst_mat_del, max_time);
     }
 }
-fn invalidate_path_pyramid(pyramids: &mut Vec<SubPathsPyramid>, blocked_links: Vec<Vec<((Node, Node), Vec<Time>)>>, max_time: u64, dst_mat_del: &mut Vec<DistanceMatrix>) {
+pub fn invalidate_path_pyramid(pyramids: &mut Vec<SubPathsPyramid>, blocked_links: Vec<Vec<Vec<Time>>>, max_time: Time, dst_mat_del: &mut Vec<DistanceMatrix>) {
     //let mut i = 0;
     for pyramid in pyramids {
         //println!("Invalidating path {:?}", path.fields);
@@ -207,7 +208,7 @@ fn invalidate_path_pyramid(pyramids: &mut Vec<SubPathsPyramid>, blocked_links: V
                 break;
             }*/
             // TODO : why did i store the (Node, Node) again?
-            if !(&blocked_links[subpath.start as usize][subpath.end as usize].1.is_empty()) {
+            if !(&blocked_links[subpath.start as usize][subpath.end as usize].is_empty()) {
                 invalidate_node_and_parents(i, pyramid, dst_mat_del, max_time);
             }
         }

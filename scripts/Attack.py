@@ -93,7 +93,7 @@ class Attack :
             file.write("D\n")
             file.write(f"{len(edges_deleted)} {self.delta} {max_time}\n")
             for edge, times in edges_deleted :
-                file.write(f"{len(times)} {' '.join(map(str, times))}\n")
+                file.write(f"{len(times)} {edge} {' '.join(map(str, times))}\n")
             
         print(f"Attacks have been written to {file_path}")
                 
