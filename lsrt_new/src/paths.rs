@@ -265,11 +265,12 @@ pub struct TemporalSubPath {
     pub start: Node,
     pub end: Node,
     pub total_weight: Weight,
+    pub start_time: Time,
 }
 
 pub struct TemporalSubPathsPyramid<'a> {
     pub graph: &'a TimeVaryingGraph,
-    pub subpaths: Vec<SubPath>,
+    pub subpaths: Vec<TemporalSubPath>,
 }
 
 impl TemporalSubPathsPyramid<'_> {
@@ -323,20 +324,24 @@ impl TemporalSubPathsPyramid<'_> {
             }
         }
         let nb_elems = (path.steps.len() * (path.steps.len() + 1)) / 2;
-        let mut elems = vec![ SubPath {
+        let mut elems = vec![ TemporalSubPath {
             start: 0,
             end: 0,
             total_weight: 0,
+            start_time: 0,
         } ; nb_elems];
 
         let mut prev_node = path.start;
         let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
+        let mut wait = path.start_time;
         for step in &path.steps {
-            elems[leaf_index] = SubPath {
+            elems[leaf_index] = TemporalSubPath {
                 start: prev_node,
                 end: step.0.node,
                 total_weight: step.0.weight,
+                start_time: wait,
             };
+            wait += step.0.weight;
             prev_node = step.0.node;
             leaf_index += 1;
         }
@@ -370,13 +375,16 @@ impl TemporalSubPathsPyramid<'_> {
                 //println!("total_weight : {} + {} - {}",
                     //left.total_weight, right.total_weight, shared_len);
                 //println!(" = {}", (left.total_weight + right.total_weight) - shared_len);
-                let new_path = SubPath {
+                let new_path = TemporalSubPath {
                     start: left.start,
                     end: right.end,
                     total_weight: (left.total_weight + right.total_weight) - shared_len,
+                    start_time: left.start_time,
                 };
+
                 //println!("elems[{i}] = {new_path:?} = {il} + {ir}");
                 elems[i] = new_path;
+                
             }
         }
         //println!("Done {:?}", elems);

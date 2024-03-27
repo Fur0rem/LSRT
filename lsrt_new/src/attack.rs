@@ -523,6 +523,9 @@ pub fn cap_times(dma: &mut Vec<DistanceMatrix>, max_time: Time) {
     }
 }
 
+const TEST_FROM: usize = 61;
+const TEST_TO: usize = 15;
+
 // FIXME : it looks like it doesnt take into account phantom edges or smth????, probably something wrong with dijkstra
 pub fn dumb_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, Vec<DistanceMatrix>) {
     // create phantom edges
@@ -537,8 +540,8 @@ pub fn dumb_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, Vec<D
                 if path.steps.len() == 0 {
                     continue;
                 }
-                if i == 8 && j == 16 {
-                    print!("Path from 8 to 16 at time {} : ", t);
+                if i == TEST_FROM && j == TEST_TO {
+                    print!("Path from {} to {} at time {} : ", TEST_FROM, TEST_TO, t);
                     path.print();
                 }
                 // write the length of the path in the distance matrix
@@ -555,7 +558,7 @@ pub fn dumb_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, Vec<D
                     let weight = subpath.0.weight;
                     total_length += weight;
                 }
-                if i == 8 && j == 16 {
+                if i == TEST_FROM && j == TEST_TO {
                     println!("Total length : {}", total_length);
                 }
                 /*if total_length >= time_graph.max_time as Weight {
@@ -624,23 +627,27 @@ pub fn improved_efficiency(graph: &Graph, attack: &dyn Attack) -> (f64, usize, V
                 if path.steps.len() == 0 {
                     continue;
                 }
-                if i == 8 && j == 16 {
-                    print!("Path from 8 to 16 at time {} : ", t);
+                if i == TEST_FROM && j == TEST_TO {
+                    print!("Path from {} to {} at time {} : ", TEST_FROM, TEST_TO, t);
                     path.print();
                 }
                 
                 let subpaths = TemporalSubPathsPyramid::from_path(&time_graph, &path);
+                //println!("Protu");
                 for subpath in &subpaths.subpaths {
-                    let (from, to, time_start, total_length) = (subpath.start, subpath.end, t /*+ (subpath.total_weight as u64)*/, subpath.total_weight);
-                    if from == 8 && to == 16 {
-                        println!("{:?}", subpath);
+                    let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
+                    //println!("PATH : {:?}", subpath);
+                    if from == TEST_FROM as Node && to == TEST_TO as Node {
+                        println!("PATH : {:?}", subpath);
                         println!("Total length : {}", total_length);
                         println!("From : {}, to : {}, time_start : {}, total_length : {}", from, to, time_start, total_length);
                     }
-                    let old_distance = time_graph.dst_mat_del[t as usize][from][to as usize];
-                    //if total_length < old_distance || old_distance == 0 {
-                    if ((time_start as usize) < (time_graph.max_time as usize)) && (total_length < old_distance || old_distance == 0) {
+                    let old_value = time_graph.dst_mat_del[time_start as usize][from][to as usize];
+                    if old_value == Weight::MAX || old_value == 0 {
                         time_graph.dst_mat_del[time_start as usize][from][to as usize] = total_length;
+                    }
+                    else {
+                        time_graph.dst_mat_del[time_start as usize][from][to as usize] = std::cmp::min(old_value, total_length);
                     }
                 }
             }
