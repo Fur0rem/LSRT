@@ -29,6 +29,9 @@ class CityGraph :
 		self.city_name = city_name
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
+		# print the number of nodes and edges
+		# TODO : remove this
+		print("nodes :", self.graph.number_of_nodes(), "edges: ", self.graph.number_of_edges())
 
 	def get_node_index(self, node : int) :
 		"""Returns the index in the matrix of the node through it's OSmnx numero"""
@@ -120,8 +123,9 @@ class CityGraph :
 		nodeList=list(self.graph.nodes); # Should be changed
 		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)
-		coef=STEP/3.6 # 
+		coef=STEP/3.6 # TODO : put the coef in normalize_speed
 
+		# For each neighbors
 		for i in range(len(csr.indptr)-1):
 			for j in range(csr.indptr[i], csr.indptr[i+1]):
 				weights=[]
@@ -136,6 +140,7 @@ class CityGraph :
 					else:
 						speed=LOWEST_MAX_SPEED
 
+					# TODO : put the coef in normalize_speed
 					weights.append(max(int((length*coef)/speed), 1))
 
 				V[j]=np.min(weights)
