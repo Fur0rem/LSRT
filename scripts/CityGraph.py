@@ -3,6 +3,8 @@ import networkx as nx
 import numpy as np
 
 LOWEST_MAX_SPEED=30
+STEP=60 # The duration of a weigth of 1 in the sparse matrix (in seconds)
+        # 1 minute here
 
 class CityGraph :
 	"""
@@ -121,60 +123,29 @@ class CityGraph :
 		nodeList=list(self.graph.nodes); # Should be changed
 		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)
-		
+		coef=STEP/3.6 # TODO : put the coef in normalize_speed
 
+		# For each neighbors
 		for i in range(len(csr.indptr)-1):
 			for j in range(csr.indptr[i], csr.indptr[i+1]):
 				weights=[]
-				d=[] # in case of no maxspeed
-				# print(list(self.graph.succ.keys())[0],nodeList[i])
-				#print(self.graph.succ[nodeList[i]], nodeList[csr.indices[j]])
 				for edge in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
-					if "maxspeed" not in edge.keys() and "length" not in edge.keys():
-						weights.append(1)
-					elif "maxspeed" not in edge.keys() and "length" in edge.keys():
-						weights.append(int(edge["length"])/LOWEST_MAX_SPEED)
-					elif "maxspeed" in edge.keys() and "length" not in edge.keys():
-						weights.append(1)
+					if("length" in edge.keys()):
+						length=edge["length"]
 					else:
-						# TODO : marche pas avec les notations anglaises (20 mph par exemple)
-						weights.append(int(3.6 * float(edge["length"])/cast_tmp(edge["maxspeed"])))
+						edge["length"]=euclidian_distance(self.graph.nodes[nodeList[i]],self.graph.nodes[nodeList[csr.indices[j]]])
 
-					weights[-1]=max(1,weights[-1])
+					if "maxspeed" in edge.keys() :
+						speed=normalize_speed(edge["maxspeed"])
+					else:
+						speed=LOWEST_MAX_SPEED
 
-				if(len(weights)==0):
-					V[j]=int(np.min(d)/LOWEST_MAX_SPEED)
-				else:
-					V[j]=np.min(weights)
+					# TODO : put the coef in normalize_speed
+					weights.append(max(int((length*coef)/speed), 1))
 
-
-		"""
-		i=0;
-		print(nodeList)
-		for j in range(len(csr.indices)):
-			weights=[]
-			d=[] # in case of no maxspeed
-			print(list(self.graph.succ.keys())[0],nodeList[i])
-			print(self.graph.succ[nodeList[i]], nodeList[i])
-			for e in self.graph.succ[nodeList[i]][nodeList[j]].values():
-				if "weight" in e.keys():
-					weights.append(e["weight"])
-				elif "maxspeed" in e.keys():
-					weights.append(int(e["length"]*100000)/e["maxspeed"]);
-				else:
-					d.append(e["length"])
-			if(len(weights)==0):
-				V[j]=int(np.min(d)*100000)/e["maxspeed"];
-			else:
-				V[j]=np.min(weights);
-			j+=1;
-			while((i+1<len(csr.indptr)) and (j>=csr.indptr[i+1])): # if ? (while in case of a node without succ)
-				i+=1;
-		"""
+				V[j]=np.min(weights)
 
 		f=open(file_path, "w");
-		# f.write("%d %d %d\n".format(len(V), len(csr.indices), len(csr.indptr)));
-		# f.write(" ".join([str(x) for x in (len(V), len(csr.indices), len(csr.indptr), delta)])+"\n") # TODO change this line
 		f.write(" ".join([str(x) for x in (len(V), len(csr.indptr))])+"\n")
 		for i in V:
 			f.write(str(i)+" ");
@@ -190,14 +161,19 @@ class CityGraph :
 
 		f.close();
 
-def cast_tmp(var):
-	"""TODO : Change this function"""
+def normalize_speed(var):
+	"""Make sure that the weigth of a node become an int with the same unit, whatever it was"""
+	# TODO mph
 	if(type(var)==int):
 		return var
 	elif((type(var)==float) or (type(var)==str)):
 		return int(var)
 	elif((type(var)==list) or (type(var)==tuple)):
-		return np.min([cast_tmp(x) for x in var])
+		return np.min([normalize_speed(x) for x in var])
+
+def euclidian_distance(a,b):
+	"""Give the euclidian distance between two nodes"""
+	return np.sqrt((a["x"]-b["x"])**2+(a["y"]-b["y"])**2)
 
 # Exemple utilisation
 # graph = CityGraph("Sainte")
