@@ -105,6 +105,21 @@ impl Graph {
         }
     }
 
+    pub fn from_neighbours(neighbours: Vec<Vec<(Node, Weight)>>) -> Graph {
+        let mut edges = vec![];
+        for neighbours_of_node in neighbours {
+            let mut node_edges = vec![];
+            for (node, weight) in neighbours_of_node {
+                node_edges.push(Neighbour { node, weight });
+            }
+            edges.push(node_edges);
+        }
+        Graph {
+            nb_nodes: edges.len(),
+            edges,
+        }
+    }
+
 }
 
 
@@ -244,6 +259,29 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DistanceMatrix {
     pub distances: Vec<Vec<Weight>>,
+}
+
+impl DistanceMatrix {
+    pub fn new(graph: &Graph) -> DistanceMatrix {
+        let mut distances = vec![vec![u16::MAX; graph.nb_nodes]; graph.nb_nodes];
+        for i in 0..graph.nb_nodes {
+            distances[i][i] = 0;
+        }
+        DistanceMatrix { distances }
+    }
+
+    pub fn print(&self) {
+        for row in &self.distances {
+            for distance in row {
+                if *distance == u16::MAX {
+                    print!("inf ");
+                } else {
+                    print!("{} ", distance);
+                }
+            }
+            println!();
+        }
+    }
 }
 
 // TODO : i can index the first time with u16 but not the other times i have to cast to usize, kinda ugly

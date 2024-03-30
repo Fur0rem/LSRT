@@ -5,6 +5,7 @@ mod attack;
 use attack::*;
 
 mod paths;
+mod tests;
 
 use crate::graph::dijkstra;
 
@@ -26,6 +27,7 @@ fn main() {
     let old_distance_matrix;
     let imp_distance_matrix;
 
+    println!("INTELLIGENT");
     benchmark!("everything", {
         let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
         let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
@@ -34,7 +36,7 @@ fn main() {
         new_efficiency = efficiency;
     });
 
-    println!("NEW");
+    println!("DUMB");
 
     benchmark!("everything old", {
         let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
@@ -81,15 +83,17 @@ fn main() {
         imp_distance_matrix = distance_matrix;
     });*/
 
-    println!("new: {}, old: {}, improved: {}", new_efficiency, old_efficiency, imp_efficiency);
+    println!("intelligent: {}, dumb: {}, improved: {}", new_efficiency, old_efficiency, imp_efficiency);
 
     for t in 0..old_distance_matrix.len() {
         for i in 0..old_distance_matrix[t].distances.len() {
             for j in 0..old_distance_matrix[t][i as u16].len() {
                 if old_distance_matrix[t][i as u16][j] != imp_distance_matrix[t][i as u16][j] {
-                    println!("t : {}  i : {}  j : {}  old : {}  imp : {}", t, i, j, old_distance_matrix[t][i as u16][j], imp_distance_matrix[t][i as u16][j]);
+                    println!("t : {}  i : {}  j : {}  dumb : {}  imp : {}", t, i, j, old_distance_matrix[t][i as u16][j], imp_distance_matrix[t][i as u16][j]);
                 }
             }
         }
     }
+
+    println!("dumb {}, improved {}", old_distance_matrix[0][1][2], imp_distance_matrix[0][1][2]);
 }

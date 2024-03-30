@@ -165,6 +165,7 @@ impl SubPathsPyramid<'_> {
 }
 
 
+// TODO : ca marche pas peut etre car y a pas delta
 fn invalidate_node_and_parents(idx : usize, pyramid : &mut SubPathsPyramid, dst_mat_del: &mut Vec<DistanceMatrix>, max_time: Time) {
     if pyramid.subpaths[idx].total_weight == Weight::MAX {
         return;
@@ -224,6 +225,7 @@ pub fn invalidate_path_pyramid(pyramids: &mut Vec<SubPathsPyramid>, blocked_link
     pub start_time: Time,
 }*/
 
+#[derive(Debug, Clone)]
 pub struct TemporalPath<'a> {
     pub graph: &'a  TimeVaryingGraph,
     pub start: Node,
@@ -235,16 +237,44 @@ pub struct TemporalPath<'a> {
 impl<'a> TemporalPath<'a> {
 
     pub fn cost(&self) -> Weight {
-        self.steps.iter().map(|x| x.0.weight).sum()
+        if self.steps.is_empty() {
+            return Weight::MAX;
+        }
+        let mut current_time = self.start_time;
+        let mut total_weight = 0;
+        for step in &self.steps {
+            if current_time as usize >= self.graph.max_time as usize {
+                return Weight::MAX;
+            }
+            total_weight += step.1.weights[current_time as usize];
+            current_time += step.1.weights[current_time as usize];
+        }
+        return total_weight;
     }
 
     pub fn print(&self) {
-        //print the start, then each step, then the end
-        print!("{} ", self.start);
-        for step in &self.steps {
-            print!("--{}-->{} ", step.0.weight, step.0.node);
+        println!("{}", self.print_str());
+    }
+
+    pub fn print_str(&self) -> String {
+        if self.steps.is_empty() {
+            return "No path".to_string();
         }
-        println!();
+        if self.cost() == Weight::MAX {
+            return "No path".to_string();
+        }
+        let to = self.steps.last().unwrap().0.node;
+        let mut res = format!("{} -> {} : {} at time {}\n", self.start, to, self.cost(), self.start_time);
+        //print the start, then each step, then the end
+        res.push_str(&format!("{} ", self.start));
+        let mut current_time = self.start_time;
+        for step in &self.steps {
+            let weight = step.1.weights[current_time as usize];
+            res.push_str(&format!("--{}-->{} ", weight, step.0.node));
+            current_time += weight;
+        }
+        res.push_str("\n");
+        return res;
     }
 
     pub fn empty(graph: &'a TimeVaryingGraph) -> Self {
@@ -266,6 +296,12 @@ pub struct TemporalSubPath {
     pub end: Node,
     pub total_weight: Weight,
     pub start_time: Time,
+}
+
+impl TemporalSubPath {
+    pub fn print(&self) {
+        println!("Subpath {} -> {} : weight {} at time {}", self.start, self.end, self.total_weight, self.start_time);
+    }
 }
 
 pub struct TemporalSubPathsPyramid<'a> {
@@ -334,14 +370,25 @@ impl TemporalSubPathsPyramid<'_> {
         let mut prev_node = path.start;
         let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
         let mut wait = path.start_time;
+        //let mut current_time = path.start_time;
         for step in &path.steps {
-            elems[leaf_index] = TemporalSubPath {
-                start: prev_node,
-                end: step.0.node,
-                total_weight: step.0.weight,
-                start_time: wait,
-            };
-            wait += step.0.weight;
+            if wait as usize >= graph.max_time as usize {
+                elems[leaf_index] = TemporalSubPath {
+                    start: prev_node,
+                    end: step.0.node,
+                    total_weight: Weight::MAX,
+                    start_time: wait,
+                };
+            }
+            else {
+                elems[leaf_index] = TemporalSubPath {
+                    start: prev_node,
+                    end: step.0.node,
+                    total_weight: step.1.weights[wait as usize],
+                    start_time: wait,
+                };
+                wait += step.1.weights[wait as usize];
+            }
             prev_node = step.0.node;
             leaf_index += 1;
         }
@@ -384,7 +431,7 @@ impl TemporalSubPathsPyramid<'_> {
 
                 //println!("elems[{i}] = {new_path:?} = {il} + {ir}");
                 elems[i] = new_path;
-                
+
             }
         }
         //println!("Done {:?}", elems);
