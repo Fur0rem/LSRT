@@ -18,6 +18,29 @@ pub fn print_dma(dma: &[DistanceMatrix]) {
 	}
 }
 
+pub fn sum_dma_static(dma: &DistanceMatrix, max_time: Time) -> (f64, u64) {
+	let mut sum = 0.0;
+	let mut reachables = 0;
+	let distances_len = dma.distances.len();
+	for i in 0..distances_len {
+		for j in 0..distances_len {
+			let distance = dma[i][j];
+			// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
+			if distance < max_time && distance != 0 {
+				let difference = max_time - distance;
+				sum += (difference as f64) / (distance as f64); // Sum from 1 to max_time of 1/distance = (max_time - distance)/distance
+				reachables += difference as u64;
+			}
+		}
+	}
+
+	// Normalise the sum
+	sum -= distances_len as f64;
+	sum /= max_time as f64 * (distances_len * (distances_len - 1)) as f64;
+
+	return (sum, reachables);
+}
+
 /// Computes the sum of the inverse of the distances in the distance matrix
 /// Which is a measure of the efficiency of the time varying graph
 pub fn sum_dma(dma: &[DistanceMatrix], max_time: Time) -> (f64, u64) {

@@ -6,7 +6,7 @@ use std::{
 
 use sscanf::scanf;
 
-use crate::distance_matrix::{print_dma, sum_dma, DistanceMatrix};
+use crate::distance_matrix::{print_dma, sum_dma, sum_dma_static, DistanceMatrix};
 use crate::time_varying_graph::{graph_to_temporal, temporal_dijkstra};
 use crate::{
 	graph::{Graph, Node, Time},
@@ -121,7 +121,8 @@ impl Attack for StaticAttack {
 		// Compute the distance matrix
 		let distance_matrix = new_graph.all_pairs_distances(self.max_time);
 
-		let (efficiency, reachables) = sum_dma(&vec![distance_matrix.clone(); self.max_time as usize], self.max_time);
+		//let (efficiency, reachables) = sum_dma(&vec![distance_matrix.clone(); self.max_time as usize], self.max_time);
+		let (efficiency, reachables) = sum_dma_static(&distance_matrix, self.max_time);
 		return (efficiency, reachables as usize);
 	}
 }

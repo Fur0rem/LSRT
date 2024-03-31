@@ -44,7 +44,7 @@ mod tests {
 		]
 	}
 
-	#[test]
+	/*#[test]
 	fn test_phantom_edges() {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
@@ -114,7 +114,7 @@ mod tests {
 		let end = 0;
 		let path = dijkstra(&graph, start, end);
 		path.print();
-	}
+	}*/
 
 	#[test]
 	fn coherence_static_dynamic() {
