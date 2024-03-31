@@ -397,13 +397,13 @@ impl TemporalSubPathsPyramid<'_> {
 
         //println!("{:?}", elems);
 
-        for p in (0..SubPathsPyramid::get_prof(leaf_index)-1).rev() {
-            let (minr, maxr) = SubPathsPyramid::get_range(p+1);
+        for p in (0..TemporalSubPathsPyramid::get_prof(leaf_index)-1).rev() {
+            let (minr, maxr) = TemporalSubPathsPyramid::get_range(p+1);
             for i in minr..=maxr {
-                let il = SubPathsPyramid::get_idx_left_son(i);
-                let ir = SubPathsPyramid::get_idx_right_son(i);
+                let il = TemporalSubPathsPyramid::get_idx_left_son(i);
+                let ir = TemporalSubPathsPyramid::get_idx_right_son(i);
     
-                let shared = SubPathsPyramid::get_idx_left_son(ir);
+                let shared = TemporalSubPathsPyramid::get_idx_left_son(ir);
                 let shared_len = if shared < nb_elems {
                     elems[shared].total_weight
                 } else {
@@ -441,6 +441,7 @@ impl TemporalSubPathsPyramid<'_> {
             subpaths: elems,
         }
     }
+
 }
 
 
