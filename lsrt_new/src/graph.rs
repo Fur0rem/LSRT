@@ -265,7 +265,34 @@ impl DistanceMatrix {
     pub fn new(graph: &Graph) -> DistanceMatrix {
         let mut distances = vec![vec![u16::MAX; graph.nb_nodes]; graph.nb_nodes];
         for i in 0..graph.nb_nodes {
-            distances[i][i] = 0;
+            distances[i][i] = 1;
+        }
+        DistanceMatrix { distances }
+    }
+
+    pub fn zero(graph: &Graph) -> DistanceMatrix {
+        let mut distances = vec![vec![0; graph.nb_nodes]; graph.nb_nodes];
+        for i in 0..graph.nb_nodes {
+            for j in 0..graph.nb_nodes {
+                if i == j {
+                    distances[i][j] = 1;
+                }
+                else {
+                    distances[i][j] = 0;
+                }
+            }
+        }
+        DistanceMatrix { distances }
+    }
+
+    pub fn size(size: usize) -> DistanceMatrix {
+        let mut distances = vec![vec![0; size]; size];
+        for i in 0..size {
+            for j in 0..size {
+                if i == j {
+                    distances[i][j] = 1;
+                }
+            }
         }
         DistanceMatrix { distances }
     }

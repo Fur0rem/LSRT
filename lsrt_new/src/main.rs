@@ -21,7 +21,7 @@ macro_rules! benchmark {
 }
 
 fn main() {
-    let old_efficiency;
+    /*let old_efficiency;
     let new_efficiency;
     let imp_efficiency;
     let old_distance_matrix;
@@ -36,15 +36,15 @@ fn main() {
         new_efficiency = efficiency;
     });
 
-    println!("DUMB");
+    println!("DUMB");*/
 
     benchmark!("everything old", {
         let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
         let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
         let (efficiency, reachables, distance_matrix) = dumb_efficiency(&graph, &*attack);
         println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
-        old_distance_matrix = distance_matrix;
-        old_efficiency = efficiency;
+        //old_distance_matrix = distance_matrix;
+        //old_efficiency = efficiency;
     });
     println!("IMPROVED");
     benchmark!("everything improved", {
@@ -52,9 +52,36 @@ fn main() {
         let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
         let (efficiency, reachables, distance_matrix) = improved_efficiency(&graph, &*attack);
         println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
-        imp_distance_matrix = distance_matrix;
-        imp_efficiency = efficiency;
+        //imp_distance_matrix = distance_matrix;
+        //imp_efficiency = efficiency;
     });
+    println!("EVEN BETTER");
+    benchmark!("everything even better", {
+        let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
+        let (efficiency, reachables, distance_matrix) = even_better_efficiency(&graph, &*attack);
+        println!("new efficiency: {}, new reachables: {}", efficiency, reachables);
+        //imp_distance_matrix = distance_matrix;
+        //imp_efficiency = efficiency;
+    });
+
+    /*benchmark!("everything", {
+        let graph = Graph::from_sparse_row_format("../Coulommiers_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.4JG0Yd", &graph);
+        let (efficiency, reachables, distance_matrix) = improved_efficiency(&graph, &*attack);
+        println!("efficiency: {}, reachables: {}", efficiency, reachables);
+        //println!("distance matrix: {:?}", distance_matrix);
+        //print_dma(&distance_matrix);
+    });
+
+    benchmark!("everything even better", {
+        let graph = Graph::from_sparse_row_format("../Coulommiers_graph").unwrap();
+        let attack = <dyn Attack>::from_file("../attack.4JG0Yd", &graph);
+        let (efficiency, reachables, distance_matrix) = even_better_efficiency(&graph, &*attack);
+        println!("efficiency: {}, reachables: {}", efficiency, reachables);
+        //println!("distance matrix: {:?}", distance_matrix);
+        //print_dma(&distance_matrix);
+    });*/
 
     /*
     benchmark!("everything", {
@@ -83,7 +110,7 @@ fn main() {
         imp_distance_matrix = distance_matrix;
     });*/
 
-    println!("intelligent: {}, dumb: {}, improved: {}", new_efficiency, old_efficiency, imp_efficiency);
+    /*println!("intelligent: {}, dumb: {}, improved: {}", new_efficiency, old_efficiency, imp_efficiency);
 
     for t in 0..old_distance_matrix.len() {
         for i in 0..old_distance_matrix[t].distances.len() {
@@ -95,5 +122,5 @@ fn main() {
         }
     }
 
-    println!("dumb {}, improved {}", old_distance_matrix[0][1][2], imp_distance_matrix[0][1][2]);
+    println!("dumb {}, improved {}", old_distance_matrix[0][1][2], imp_distance_matrix[0][1][2]);*/
 }

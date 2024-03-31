@@ -1,0 +1,11 @@
+Time elapsed in create_phantom_edges() is: 365.475µs
+new efficiency: 0.016207059562928516, new reachables: 11402
+Time elapsed in everything old() is: 30.281708ms
+IMPROVED
+Time elapsed in create_phantom_edges() is: 357.17µs
+new efficiency: 0.016207059562928516, new reachables: 11402
+Time elapsed in everything improved() is: 27.865136ms
+EVEN BETTER
+Time elapsed in create_phantom_edges() is: 391.114µs
+new efficiency: 0.008986271297891386, new reachables: 5084
+Time elapsed in everything even better() is: 245.445618ms
