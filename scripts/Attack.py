@@ -8,11 +8,13 @@ class StaticAttack :
     graph : CityGraph
     attacked_links : list[(int, int)]
     delta : int
+    max_time : int
 
-    def __init__(self, graph : CityGraph, delta : int = 0) :
+    def __init__(self, graph : CityGraph, max_time : int, delta : int = 0) :
         self.graph = graph
         self.attacked_links = []
         self.delta = delta
+        self.max_time = max_time
 
     def set_delta(self, delta : int) -> None :
         """Sets the delta"""
@@ -26,11 +28,10 @@ class StaticAttack :
         """Writes the attacks to a file"""
         with open(file_path, "w") as file :
             file.write("S\n")
-            file.write(f"{len(self.attacked_links)} {self.delta}\n")
+            file.write(f"{self.max_time} {self.delta}\n")
 
             deleted_neighbours = [[] for i in range(self.graph.nb_nodes())]
             for block in self.attacked_links :
-                print(block)
                 deleted_neighbours[block[0]].append(block[1])
             
             for i in range(self.graph.nb_nodes()):
@@ -40,7 +41,7 @@ class StaticAttack :
 
 
 
-class Attack :
+class DynamicAttack :
     """
     Represents an attack on a graph
     --- Attributes ---
@@ -52,7 +53,7 @@ class Attack :
     attacks : list[tuple[int, int]] # Format : [time, edge_idx]
     delta : int
 
-    def __init__(self, graph : CityGraph, delta : int = 0) :
+    def __init__(self, graph : CityGraph, max_time : int, delta : int = 0) :
         self.graph = graph
         self.attacks = []
         self.delta = delta
@@ -85,13 +86,11 @@ class Attack :
 
         edges_deleted : list[tuple[tuple[int, int], list[int]]] = [((edge[0], edge[1]), edges_deleted[edge]) for edge in edges_deleted]
         edges_deleted.sort(key = lambda x : (x[0][0], x[0][1]))
-        #print(edges_deleted)
         
         # Writing
         with open(file_path, "w") as file :
-            max_time = self.attacks[-1][0] + 1
             file.write("D\n")
-            file.write(f"{len(edges_deleted)} {self.delta} {max_time}\n")
+            file.write(f"{len(edges_deleted)} {self.delta} {self.max_time}\n")
             for edge, times in edges_deleted :
                 file.write(f"{len(times)} {edge} {' '.join(map(str, times))}\n")
             
