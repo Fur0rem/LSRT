@@ -42,6 +42,9 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		if visited[node as usize] {
 			continue;
 		}
+		if node == end {
+			break;
+		}
 		visited[node as usize] = true;
 		for phantom_edge in &time_graph.nodes[node as usize] {
 			let edge = &phantom_edge.weights;

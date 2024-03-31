@@ -66,47 +66,6 @@ impl DistanceMatrix {
 		}
 		DistanceMatrix { distances }
 	}
-
-	pub fn zero(graph: &Graph) -> DistanceMatrix {
-		let mut distances = vec![vec![0; graph.nb_nodes()]; graph.nb_nodes()];
-		for i in 0..graph.nb_nodes() {
-			for j in 0..graph.nb_nodes() {
-				if i == j {
-					distances[i][j] = 1;
-				}
-				else {
-					distances[i][j] = 0;
-				}
-			}
-		}
-		DistanceMatrix { distances }
-	}
-
-	pub fn size(size: usize) -> DistanceMatrix {
-		let mut distances = vec![vec![0; size]; size];
-		for i in 0..size {
-			for j in 0..size {
-				if i == j {
-					distances[i][j] = 1;
-				}
-			}
-		}
-		DistanceMatrix { distances }
-	}
-
-	pub fn print(&self) {
-		for row in &self.distances {
-			for distance in row {
-				if *distance == u16::MAX {
-					print!("inf ");
-				}
-				else {
-					print!("{} ", distance);
-				}
-			}
-			println!();
-		}
-	}
 }
 
 impl std::ops::Index<usize> for DistanceMatrix {

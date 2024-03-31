@@ -3,11 +3,10 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use crate::distance_matrix::DistanceMatrix;
 use crate::paths::{Path, SubPathsPyramid};
 
 use std::collections::BinaryHeap;
-
-use crate::distance_matrix::DistanceMatrix;
 
 pub type Node = u16;
 pub type Weight = u16;
@@ -106,16 +105,8 @@ impl Graph {
 		}
 	}
 
-	pub fn from_neighbours(neighbours: Vec<Vec<(Node, Weight)>>) -> Graph {
-		let mut edges = vec![];
-		for neighbours_of_node in neighbours {
-			let mut node_edges = vec![];
-			for (node, weight) in neighbours_of_node {
-				node_edges.push(Neighbour { node, weight });
-			}
-			edges.push(node_edges);
-		}
-		Graph { edges }
+	pub fn from_neighbours(neighbours: Vec<Vec<Neighbour>>) -> Graph {
+		Graph { edges: neighbours }
 	}
 }
 
@@ -139,50 +130,44 @@ impl PartialOrd for DijkstraState {
 
 // FIXME : probably wrong cause distance is unused
 pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
-	let mut dist = vec![u16::MAX; graph.nb_nodes()];
-	let mut prev = vec![u16::MAX; graph.nb_nodes()];
-	let mut visited = vec![false; graph.nb_nodes()];
-	dist[start as usize] = 0;
 	let mut heap = BinaryHeap::new();
-	heap.push(DijkstraState { node: start, distance: 0 });
+	let mut previous = vec![None; graph.nb_nodes()];
+	heap.push(DijkstraState { node: start, distance: 1 });
 
-	while let Some(DijkstraState { node, distance: _ }) = heap.pop() {
-		if visited[node as usize] {
-			continue;
-		}
-		visited[node as usize] = true;
-		for neighbour in &graph.edges[node as usize] {
-			if dist[node as usize] == u16::MAX {
-				continue;
-			}
-			let alt = dist[node as usize] + neighbour.weight;
-			if alt < dist[neighbour.node as usize] {
-				dist[neighbour.node as usize] = alt;
-				prev[neighbour.node as usize] = node;
-				heap.push(DijkstraState {
-					node: neighbour.node,
-					distance: alt,
-				});
-			}
-		}
-	}
-	let mut steps = vec![];
-	let mut node = end;
-	while node != start {
-		let prev_node = prev[node as usize];
-		if prev_node == u16::MAX {
+	let mut distances = vec![u16::MAX; graph.nb_nodes()];
+	distances[start as usize] = 1;
+
+	while let Some(DijkstraState { node, distance }) = heap.pop() {
+		if node == end {
 			break;
 		}
-		let weight = dist[node as usize] - dist[prev_node as usize];
-		steps.push(Neighbour { node, weight });
-		node = prev_node;
+		if distance > distances[node as usize] {
+			continue;
+		}
+		for neighbour in &graph.edges[node as usize] {
+			let new_distance = distance + neighbour.weight;
+			if new_distance < distances[neighbour.node as usize] {
+				distances[neighbour.node as usize] = new_distance;
+				heap.push(DijkstraState {
+					node: neighbour.node,
+					distance: new_distance,
+				});
+				previous[neighbour.node as usize] = Some(node);
+			}
+		}
 	}
-	steps.reverse();
-	Path {
-		steps,
-		start: start as Node,
-		graph,
+
+	let mut path = vec![];
+	let mut current = end;
+	while let Some(prev) = previous[current as usize] {
+		path.push(Neighbour {
+			node: current,
+			weight: distances[current as usize] - distances[prev as usize],
+		});
+		current = prev;
 	}
+	path.reverse();
+	return Path { graph, start, steps: path };
 }
 
 impl Graph {

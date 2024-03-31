@@ -1,15 +1,26 @@
 #[cfg(test)]
 mod tests {
 
-	use crate::graph::Graph;
+	use crate::graph::{dijkstra, Graph, Neighbour};
+	use crate::paths::TemporalSubPathsPyramid;
 	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
-	use crate::{paths::TemporalSubPathsPyramid, DeletedLink};
+	use crate::DeletedLink;
+	use crate::{Attack, DynamicAttack, StaticAttack};
 
 	fn make_test_graph() -> Graph {
-		let neighbours_of_0 = vec![(1, 2)];
-		let neighbours_of_1 = vec![(0, 2), (2, 3)];
-		let neighbours_of_2 = vec![(0, 1), (1, 3)];
-		let neighbours_of_3 = vec![(1, 2)];
+		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 2, weight: 2 }];
+		let neighbours_of_1 = vec![
+			Neighbour { node: 0, weight: 1 },
+			Neighbour { node: 2, weight: 1 },
+			Neighbour { node: 3, weight: 1 },
+		];
+		let neighbours_of_2 = vec![
+			Neighbour { node: 0, weight: 3 },
+			Neighbour { node: 1, weight: 1 },
+			Neighbour { node: 3, weight: 1 },
+		];
+		let neighbours_of_3 = vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 2, weight: 1 }];
+
 		Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3])
 	}
 
@@ -92,5 +103,61 @@ mod tests {
 	}
 
 	#[test]
-	fn test_pyramid() {}
+	fn test_dijkstra() {
+		let graph = make_test_graph();
+		let start = 0;
+		let end = 3;
+		let path = dijkstra(&graph, start, end);
+		path.print();
+
+		let start = 2;
+		let end = 0;
+		let path = dijkstra(&graph, start, end);
+		path.print();
+	}
+
+	#[test]
+	fn coherence_static_dynamic() {
+		let graph = make_test_graph();
+		let max_time = 10;
+		let deleted_links = vec![(0, 1), (1, 2), (3, 1)];
+		let delta = 1;
+
+		// Build up a dynamic attack with the same deleted links
+		let deleted_links_dynamic = deleted_links
+			.iter()
+			.map(|(from, to)| DeletedLink {
+				from: *from,
+				to: *to,
+				times: (0..max_time).collect(),
+			})
+			.collect();
+		let attack_dynamic = DynamicAttack {
+			blocked_links: deleted_links_dynamic,
+			delta,
+			max_time,
+		};
+
+		// Build up a static attack with the same deleted links
+		let mut blocked_links = vec![vec![]; graph.edges.len()];
+		for (from, to) in deleted_links {
+			blocked_links[from as usize].push(to);
+		}
+		let attack_static = StaticAttack {
+			blocked_links,
+			delta,
+			max_time,
+		};
+
+		println!("Dynamic attack: {:?}", attack_dynamic.blocked_links());
+		println!("Static attack: {:?}", attack_static.blocked_links());
+
+		let (efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(&graph);
+		let (efficiency_static, reach_static) = attack_static.efficiency(&graph);
+
+		println!("Dynamic efficiency: {}, reach: {}", efficiency_dynamic, reach_dynamic);
+		println!("Static efficiency: {}, reach: {}", efficiency_static, reach_static);
+		assert_eq!(efficiency_dynamic, efficiency_static);
+		assert_eq!(reach_dynamic, reach_static);
+	}
 }

@@ -20,14 +20,6 @@ impl Path<'_> {
 		}
 		println!();
 	}
-
-	pub fn empty(graph: &Graph) -> Path {
-		Path {
-			graph,
-			start: 0,
-			steps: vec![],
-		}
-	}
 }
 
 #[derive(Debug, Clone)]
@@ -75,7 +67,6 @@ impl SubPathsPyramid<'_> {
 		return (most_right - prof, most_right - 1);
 	}
 
-	// TODO : clean this up
 	pub fn from_path<'a>(graph: &'a Graph, path: &Path) -> SubPathsPyramid<'a> {
 		if path.steps.is_empty() {
 			return SubPathsPyramid { graph, subpaths: vec![] };
@@ -235,7 +226,6 @@ impl TemporalSubPathsPyramid<'_> {
 		return (truc - prof, truc - 1);
 	}
 
-	// TODO : clean this up
 	pub fn from_path<'a>(graph: &'a TimeVaryingGraph, path: &TemporalPath) -> TemporalSubPathsPyramid<'a> {
 		if path.steps.is_empty() {
 			return TemporalSubPathsPyramid { graph, subpaths: vec![] };

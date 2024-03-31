@@ -1,4 +1,5 @@
 use std::{
+	borrow::Cow,
 	fs::File,
 	io::{BufRead, BufReader},
 };
@@ -16,7 +17,7 @@ pub trait Attack: std::fmt::Debug {
 	// efficiency + reachables
 	fn efficiency(&self, graph: &Graph) -> (f64, usize);
 	fn max_time(&self) -> Time;
-	fn blocked_links(&self) -> &Vec<DeletedLink>;
+	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
 	fn delta(&self) -> Time;
 }
 
@@ -36,7 +37,7 @@ pub struct DynamicAttack {
 
 #[derive(Debug)]
 pub struct StaticAttack {
-	blocked_links: Vec<Vec<Node>>,
+	pub blocked_links: Vec<Vec<Node>>,
 	pub delta: Time,
 	pub max_time: Time,
 }
@@ -94,8 +95,18 @@ impl Attack for StaticAttack {
 		return self.delta;
 	}
 
-	fn blocked_links(&self) -> &Vec<DeletedLink> {
-		unreachable!("Static attack does not have blocked links");
+	fn blocked_links(&self) -> Cow<Vec<DeletedLink>> {
+		let mut blocked_links = vec![];
+		for i in 0..self.blocked_links.len() {
+			for j in 0..self.blocked_links[i].len() {
+				blocked_links.push(DeletedLink {
+					from: i as Node,
+					to: self.blocked_links[i][j],
+					times: (0..self.max_time).collect(),
+				});
+			}
+		}
+		return Cow::Owned(blocked_links);
 	}
 
 	fn efficiency(&self, graph: &Graph) -> (f64, usize) {
@@ -110,7 +121,7 @@ impl Attack for StaticAttack {
 		// Compute the distance matrix
 		let distance_matrix = new_graph.all_pairs_distances(self.max_time);
 
-		let (efficiency, reachables) = sum_dma(&[distance_matrix], self.max_time);
+		let (efficiency, reachables) = sum_dma(&vec![distance_matrix.clone(); self.max_time as usize], self.max_time);
 		return (efficiency, reachables as usize);
 	}
 }
@@ -168,14 +179,14 @@ impl Attack for DynamicAttack {
 		return self.delta;
 	}
 
-	fn blocked_links(&self) -> &Vec<DeletedLink> {
-		return &self.blocked_links;
+	fn blocked_links(&self) -> Cow<Vec<DeletedLink>> {
+		return Cow::Borrowed(&self.blocked_links);
 	}
 
 	fn efficiency(&self, graph: &Graph) -> (f64, usize) {
 		// Create the time varying graph
-		let time_graph = graph_to_temporal(graph, self.max_time(), self.blocked_links(), self.delta());
-		let distance_matrix = DistanceMatrix::init(&graph);
+		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
+		let distance_matrix = DistanceMatrix::init(graph);
 		let mut dma = vec![distance_matrix.clone(); self.max_time as usize];
 		// Compute all distance matrices
 		for t in 0..time_graph.max_time {
