@@ -1,30 +1,34 @@
-use crate::distance_matrix::DistanceMatrix;
+use crate::graph::DijkstraState;
 use crate::graph::{Graph, Neighbour, Node, Time, Weight};
 use crate::paths::TemporalPath;
 use crate::DeletedLink;
+
 use std::collections::BinaryHeap;
 
-use crate::graph::DijkstraState;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct TimeVaryingEdge {
 	pub weights: Vec<Weight>,
 }
 
 /// A phantom edge is used to replace a blocked edge with an edge with an equivalent weight + waiting time
-/// This allows us to remove the time dimension from the graph, and use classical algorithms
-type PhantomEdge = (Node, TimeVaryingEdge);
-
+/// This allows us to remove the time dimension from the graph, and use classical algorithms on it
+/// The weight of the edge is now a vector of weights, where we can index the weight by the time
+#[derive(Debug, Clone)]
+pub struct PhantomEdge {
+	pub node: Node,
+	pub weights: TimeVaryingEdge,
+}
 
 /// The TimeVaryingGraph is a graph where the edges can be blocked at certain times
 /// The graph is represented as an adjacency list, where each edge is a PhantomEdge
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct TimeVaryingGraph {
 	pub max_time: u64,
 	pub nodes: Vec<Vec<PhantomEdge>>,
 }
 
 pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, max_time: u64, time_start: u64) -> TemporalPath<'_> {
+	// Initialize the distance, previous node and visited arrays
 	let max_node_index = time_graph.nodes.len();
 	let mut dist = vec![Weight::MAX; max_node_index];
 	let mut prev = vec![Weight::MAX; max_node_index];
@@ -32,12 +36,16 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 	dist[start as usize] = 0;
 	let mut heap = BinaryHeap::new();
 	heap.push(DijkstraState { node: start, distance: 0 });
+
+	// Dijkstra's algorithm
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
 		if visited[node as usize] {
 			continue;
 		}
 		visited[node as usize] = true;
-		for (neighbour, edge) in &time_graph.nodes[node as usize] {
+		for phantom_edge in &time_graph.nodes[node as usize] {
+			let edge = &phantom_edge.weights;
+			let neighbour = &phantom_edge.node;
 			if (distance as u64 + time_start) >= max_time {
 				continue;
 			}
@@ -57,6 +65,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		}
 	}
 
+	// Reconstruct the path
 	let mut steps = vec![];
 	let mut node = end;
 	while node != start {
@@ -64,11 +73,17 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		if prev_node == u16::MAX {
 			break;
 		}
-		let (neighbour_node, tve) = time_graph.nodes[prev_node as usize].iter().find(|x| x.0 == node).unwrap();
-        steps.push(Neighbour { node : *neighbour_node, weight: tve.weights[(dist[prev_node as usize] + time_start as Weight) as usize] });
+		let phantom_edge = time_graph.nodes[prev_node as usize].iter().find(|x| x.node == node).unwrap();
+		let tve = &phantom_edge.weights;
+		let neighbour_node = &phantom_edge.node;
+		steps.push(Neighbour {
+			node: *neighbour_node,
+			weight: tve.weights[(dist[prev_node as usize] + time_start as Weight) as usize],
+		});
 		node = prev_node;
 	}
 	steps.reverse();
+
 	TemporalPath {
 		steps,
 		time_graph,
@@ -104,7 +119,10 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<D
 				let weight_t = weight + wait;
 				weights.push(if weight_t + t as Time <= max_time { weight_t } else { Weight::MAX });
 			}
-			edges.push((neighbour.node, TimeVaryingEdge { weights }));
+			edges.push(PhantomEdge {
+				node: neighbour.node,
+				weights: TimeVaryingEdge { weights },
+			});
 		}
 		phantoms.push(edges);
 	}

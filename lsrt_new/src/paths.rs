@@ -1,5 +1,5 @@
 use crate::graph::{Graph, Neighbour, Node, Time, Weight};
-use crate::time_varying_graph::{TimeVaryingEdge, TimeVaryingGraph};
+use crate::time_varying_graph::TimeVaryingGraph;
 
 pub struct Path<'a> {
 	pub graph: &'a Graph,
@@ -128,14 +128,12 @@ impl SubPathsPyramid<'_> {
 	}
 }
 
-
 /// A path in a time varying graph
 #[derive(Debug, Clone)]
 pub struct TemporalPath<'a> {
 	pub time_graph: &'a TimeVaryingGraph,
 	pub start: Node,
-	//pub steps: Vec<&'a (Neighbour, TimeVaryingEdge)>,
-    pub steps: Vec<Neighbour>,
+	pub steps: Vec<Neighbour>,
 	pub start_time: Time,
 }
 
@@ -151,7 +149,7 @@ impl<'a> TemporalPath<'a> {
 				return Weight::MAX;
 			}
 			total_weight += step.weight;
-            current_time += step.weight;
+			current_time += step.weight;
 		}
 		return total_weight;
 	}
@@ -171,18 +169,16 @@ impl<'a> TemporalPath<'a> {
 		let mut res = format!("{} -> {} : {} at time {}\n", self.start, to, self.cost(), self.start_time);
 		//print the start, then each step, then the end
 		res.push_str(&format!("{} ", self.start));
-		let mut current_time = self.start_time;
 		for step in &self.steps {
 			let weight = step.weight;
 			res.push_str(&format!("--{}-->{} ", weight, step.node));
-			current_time += weight;
 		}
 		res.push('\n');
 		return res;
 	}
 }
 
-// TODO : mix it with the other subpaths pyramid
+/// A subpath from a temporal path
 #[derive(Debug, Clone)]
 pub struct TemporalSubPath {
 	pub start: Node,
@@ -197,6 +193,10 @@ impl TemporalSubPath {
 	}
 }
 
+/// A pyramid of subpaths
+/// This is used to store all the subpaths of a path
+/// And efficiently re-use already computed subpaths
+/// For example, if we have a path 0--1--2--3, we can store the subpaths 0--1, 1--2, 2--3, 0--1--2, 1--2--3, 0--1--2--3
 pub struct TemporalSubPathsPyramid<'a> {
 	pub graph: &'a TimeVaryingGraph,
 	pub subpaths: Vec<TemporalSubPath>,
@@ -240,6 +240,8 @@ impl TemporalSubPathsPyramid<'_> {
 		if path.steps.is_empty() {
 			return TemporalSubPathsPyramid { graph, subpaths: vec![] };
 		}
+
+		// Initialise the subpath pyramid
 		let nb_elems = (path.steps.len() * (path.steps.len() + 1)) / 2;
 		let mut elems = vec![
 			TemporalSubPath {
@@ -251,10 +253,10 @@ impl TemporalSubPathsPyramid<'_> {
 			nb_elems
 		];
 
+		// Fill the leaves of the pyramid
 		let mut prev_node = path.start;
 		let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
 		let mut wait = path.start_time;
-		//let mut current_time = path.start_time;
 		for step in &path.steps {
 			if wait as usize >= graph.max_time as usize {
 				elems[leaf_index] = TemporalSubPath {
@@ -277,8 +279,8 @@ impl TemporalSubPathsPyramid<'_> {
 			leaf_index += 1;
 		}
 
+		// Fill the rest of the pyramid
 		let leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
-
 		for p in (0..TemporalSubPathsPyramid::get_prof(leaf_index) - 1).rev() {
 			let (minr, maxr) = TemporalSubPathsPyramid::get_range(p + 1);
 			for i in minr..=maxr {
@@ -299,7 +301,6 @@ impl TemporalSubPathsPyramid<'_> {
 				elems[i] = new_path;
 			}
 		}
-		//println!("Done {:?}", elems);
 
 		return TemporalSubPathsPyramid { graph, subpaths: elems };
 	}

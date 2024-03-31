@@ -175,8 +175,8 @@ impl Attack for DynamicAttack {
 	fn efficiency(&self, graph: &Graph) -> (f64, usize) {
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_time(), self.blocked_links(), self.delta());
-        let distance_matrix = DistanceMatrix::init(&graph);
-        let mut dma = vec![distance_matrix.clone(); self.max_time as usize];
+		let distance_matrix = DistanceMatrix::init(&graph);
+		let mut dma = vec![distance_matrix.clone(); self.max_time as usize];
 		// Compute all distance matrices
 		for t in 0..time_graph.max_time {
 			for i in 0..time_graph.nodes.len() {

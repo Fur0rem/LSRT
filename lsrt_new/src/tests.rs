@@ -44,7 +44,7 @@ mod tests {
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
 		for (i, phantom_edge) in phantom_edges.iter().enumerate() {
 			for edge in phantom_edge {
-				println!("Phantom edge from {} to {} at time {:?}: ", i, edge.0, edge.1.weights);
+				println!("Phantom edge from {} to {} at time {:?}: ", i, edge.node, edge.weights);
 			}
 		}
 	}
@@ -56,12 +56,11 @@ mod tests {
 
 		let max_time = 10;
 		let delta = 2;
-		let max_node_index = graph.edges.len();
 
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
 		for (i, phantom_edge) in phantom_edges.iter().enumerate() {
 			for edge in phantom_edge {
-				println!("Phantom edge from {} to {} at time {:?}: ", i, edge.0, edge.1.weights);
+				println!("Phantom edge from {} to {} with {:?}: ", i, edge.node, edge.weights);
 			}
 		}
 

@@ -29,11 +29,10 @@ pub struct Graph {
 }
 
 impl Graph {
-
-    /// Returns the number of nodes in the graph
-    pub fn nb_nodes(&self) -> usize {
-        self.edges.len()
-    }
+	/// Returns the number of nodes in the graph
+	pub fn nb_nodes(&self) -> usize {
+		self.edges.len()
+	}
 
 	// TODO : change the python file to make it a adjacency list to begin with
 	pub fn from_sparse_row_format(filename: &str) -> Result<Graph, Box<dyn Error>> {
@@ -83,9 +82,7 @@ impl Graph {
 			}
 		}
 
-		Ok(Graph {
-			edges,
-		})
+		Ok(Graph { edges })
 	}
 
 	pub fn print(&self) {
@@ -118,9 +115,7 @@ impl Graph {
 			}
 			edges.push(node_edges);
 		}
-		Graph {
-			edges,
-		}
+		Graph { edges }
 	}
 }
 
@@ -191,28 +186,26 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 }
 
 impl Graph {
-
-    /// Computes the distance matrix of the graph
-    /// The distance matrix is initialised with 0's and the diagonal is filled with 1's
-    /// 0 means the value has not been computed yet
-    /// It does dijkstra for each pair of nodes, and stores the result in a matrix
-    /// For each path computed, it also stores all the subpaths present in the path
-    /// This should reduce the number of dijkstra calls, since a path of length n has n(n+1)/2 subpaths
+	/// Computes the distance matrix of the graph
+	/// The distance matrix is initialised with 0's and the diagonal is filled with 1's
+	/// 0 means the value has not been computed yet
+	/// It does dijkstra for each pair of nodes, and stores the result in a matrix
+	/// For each path computed, it also stores all the subpaths present in the path
+	/// This should reduce the number of dijkstra calls, since a path of length n has n(n+1)/2 subpaths
 	pub fn all_pairs_distances(&self, max_time: Weight) -> DistanceMatrix {
 		let mut dst_mat = DistanceMatrix::init(self);
 
 		for node in 0..self.nb_nodes() {
 			for node2 in 0..self.nb_nodes() {
-
-                // If the value is already computed, skip
+				// If the value is already computed, skip
 				if dst_mat[node][node2] != 0 {
 					continue;
 				}
 
-                // Compute the path from node to node2
+				// Compute the path from node to node2
 				let path = dijkstra(self, node as Node, node2 as Node);
 
-                // If the path is too long, set the value to infinity (max of possible weight)
+				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
 				for subpath in &subpaths.subpaths {
 					if subpath.total_weight > max_time {
