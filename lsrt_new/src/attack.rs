@@ -121,7 +121,6 @@ impl Attack for StaticAttack {
 		// Compute the distance matrix
 		let distance_matrix = new_graph.all_pairs_distances(self.max_time);
 
-		//let (efficiency, reachables) = sum_dma(&vec![distance_matrix.clone(); self.max_time as usize], self.max_time);
 		let (efficiency, reachables) = sum_dma_static(&distance_matrix, self.max_time);
 		return (efficiency, reachables as usize);
 	}
