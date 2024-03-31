@@ -1,0 +1,5 @@
+hard_tabs = true
+fn_params_layout = "compressed"
+max_width = 140
+unstable_features = true
+control_brace_style = "ClosingNextLine"
