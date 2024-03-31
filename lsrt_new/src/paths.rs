@@ -1,10 +1,10 @@
-use crate::graph::{Weight, Graph, Neighbour, Time, Node, DistanceMatrix};
-use crate::attack::{TimeVaryingEdge, TimeVaryingGraph};
+use crate::graph::{Weight, Graph, Neighbour, Time, Node};
+use crate::time_varying_graph::{TimeVaryingEdge, TimeVaryingGraph};
 
 pub struct Path<'a> {
     pub graph: &'a Graph,
     pub start: Node,
-    pub steps: Vec<&'a Neighbour>,
+    pub steps: Vec<Neighbour>,
 }
 
 
@@ -16,7 +16,7 @@ impl Path<'_> {
 
     pub fn print(&self) {
         //print the start, then each step, then the end
-        print!("{} ", self.start);
+        print!("P {} ", self.start);
         for step in &self.steps {
             print!("--{}-->{} ", step.weight, step.node);
         }
@@ -76,7 +76,6 @@ impl SubPathsPyramid<'_> {
         let right_parent = if idx == maxr {
             None
         } else {
-            //println!("idx {} prof {} minr {} maxr {}", idx, prof, minr, maxr);
             Some(idx - (prof - 1) + 1)
         };
         return (left_parent, right_parent);
@@ -119,7 +118,6 @@ impl SubPathsPyramid<'_> {
 
         let leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
 
-        //println!("{:?}", elems);
 
         for p in (0..SubPathsPyramid::get_prof(leaf_index)-1).rev() {
             let (minr, maxr) = SubPathsPyramid::get_range(p+1);
@@ -135,27 +133,15 @@ impl SubPathsPyramid<'_> {
                 };
                 let left = &elems[il];
                 let right = &elems[ir];
-                //println!("left {} + right {} - shared {} with len {}", left.total_length, right.total_length, shared, shared_len);
-                // let new_path = SubPath {
-                //     from : left.from,
-                //     to : right.to,
-                //     time_start : 0,
-                //     // TODO : fix that because they get doubled up
-                //     total_length : (left.total_length + right.total_length) - shared_len
-                // };
-                //println!("total_weight : {} + {} - {}",
-                    //left.total_weight, right.total_weight, shared_len);
-                //println!(" = {}", (left.total_weight + right.total_weight) - shared_len);
+
                 let new_path = SubPath {
                     start: left.start,
                     end: right.end,
                     total_weight: (left.total_weight + right.total_weight) - shared_len,
                 };
-                //println!("elems[{i}] = {new_path:?} = {il} + {ir}");
                 elems[i] = new_path;
             }
         }
-        //println!("Done {:?}", elems);
         
         return SubPathsPyramid {
             graph,
@@ -164,70 +150,9 @@ impl SubPathsPyramid<'_> {
     }
 }
 
-
-// TODO : ca marche pas peut etre car y a pas delta
-fn invalidate_node_and_parents(idx : usize, pyramid : &mut SubPathsPyramid, dst_mat_del: &mut Vec<DistanceMatrix>, max_time: Time) {
-    if pyramid.subpaths[idx].total_weight == Weight::MAX {
-        return;
-    }
-    for t in 0..max_time {
-        let old_val = dst_mat_del[t as usize][pyramid.subpaths[idx].start][pyramid.subpaths[idx].end as usize];
-        if old_val != Weight::MAX {
-            //println!("Invalidating path from {} to {} at time {} with total length {}", pyramid.subpaths[idx].start, pyramid.subpaths[idx].to, t, pyramid.subpaths[idx].total_length);
-            dst_mat_del[t as usize][pyramid.subpaths[idx].start][pyramid.subpaths[idx].end as usize] = 0;
-        }
-    }
-    pyramid.subpaths[idx].total_weight = Weight::MAX;
-    let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(idx);
-    if let Some(left_parent) = left_parent {
-        //println!("Invalidating left parent {}", left_parent);
-        invalidate_node_and_parents(left_parent, pyramid, dst_mat_del, max_time);
-    }
-    if let Some(right_parent) = right_parent {
-        //println!("Invalidating right parent {}", right_parent);
-        invalidate_node_and_parents(right_parent, pyramid, dst_mat_del, max_time);
-    }
-}
-pub fn invalidate_path_pyramid(pyramids: &mut Vec<SubPathsPyramid>, blocked_links: Vec<Vec<Vec<Time>>>, max_time: Time, dst_mat_del: &mut Vec<DistanceMatrix>) {
-    //let mut i = 0;
-    for pyramid in pyramids {
-        //println!("Invalidating path {:?}", path.fields);
-        let (leaf_min_index, leaf_max_index) = SubPathsPyramid::get_range(SubPathsPyramid::get_prof(pyramid.subpaths.len()-1));
-        //println!("Leaf min index {} and max index {}", leaf_min_index, leaf_max_index);
-        for i in leaf_min_index..=leaf_max_index {
-            let subpath = &pyramid.subpaths[i];
-            /*for t in 0..max_time {
-                if deleted_edges.links[subpath.from as usize][subpath.to as usize].contains(&t) {
-                    // invalidate the distance matrix
-                    //println!("Invalidating path from {} to {} at time {} with total length {}", subpath.from, subpath.to, t, subpath.total_length);
-                    invalidate_node_and_parents(i, path, dst_mat_del, max_time);
-                    break;
-                }
-            }*/
-            /*for t in &deleted_edges.links[subpath.from as usize][subpath.to as usize] {
-                invalidate_node_and_parents(i, path, dst_mat_del, max_time);
-                break;
-            }*/
-            // TODO : why did i store the (Node, Node) again?
-            if !(&blocked_links[subpath.start as usize][subpath.end as usize].is_empty()) {
-                invalidate_node_and_parents(i, pyramid, dst_mat_del, max_time);
-            }
-        }
-        //i += 1;
-        //println!("Invalidated path {}", i);
-    }
-}
-
-/*pub struct TemporalPath<'a> {
-    pub graph: &'a TimeVaryingGraph,
-    pub start: Node,
-    pub steps: Vec<&'a (Neighbour, TimeVaryingEdge)>,
-    pub start_time: Time,
-}*/
-
 #[derive(Debug, Clone)]
 pub struct TemporalPath<'a> {
-    pub graph: &'a  TimeVaryingGraph,
+    pub graph: &'a TimeVaryingGraph,
     pub start: Node,
     pub steps: Vec<&'a (Neighbour, TimeVaryingEdge)>,
     pub start_time: Time,
@@ -253,10 +178,10 @@ impl<'a> TemporalPath<'a> {
     }
 
     pub fn print(&self) {
-        println!("{}", self.print_str());
+        println!("TP {}", self.to_str());
     }
 
-    pub fn print_str(&self) -> String {
+    pub fn to_str(&self) -> String {
         if self.steps.is_empty() {
             return "No path".to_string();
         }
@@ -277,15 +202,6 @@ impl<'a> TemporalPath<'a> {
         return res;
     }
 
-    pub fn empty(graph: &'a TimeVaryingGraph) -> Self {
-        TemporalPath {
-            graph,
-            start: 0,
-            steps: vec![],
-            start_time: 0,
-        }
-    }
-
 }
 
 
@@ -300,7 +216,7 @@ pub struct TemporalSubPath {
 
 impl TemporalSubPath {
     pub fn print(&self) {
-        println!("Subpath {} -> {} : weight {} at time {}", self.start, self.end, self.total_weight, self.start_time);
+        println!("TSP {}--{}-->{} @ {}", self.start, self.total_weight, self.end, self.start_time);
     }
 }
 
@@ -395,8 +311,6 @@ impl TemporalSubPathsPyramid<'_> {
 
         let leaf_index = ((path.steps.len() - 1) * (path.steps.len()))/ 2;
 
-        //println!("{:?}", elems);
-
         for p in (0..TemporalSubPathsPyramid::get_prof(leaf_index)-1).rev() {
             let (minr, maxr) = TemporalSubPathsPyramid::get_range(p+1);
             for i in minr..=maxr {
@@ -411,17 +325,6 @@ impl TemporalSubPathsPyramid<'_> {
                 };
                 let left = &elems[il];
                 let right = &elems[ir];
-                //println!("left {} + right {} - shared {} with len {}", left.total_length, right.total_length, shared, shared_len);
-                // let new_path = SubPath {
-                //     from : left.from,
-                //     to : right.to,
-                //     time_start : 0,
-                //     // TODO : fix that because they get doubled up
-                //     total_length : (left.total_length + right.total_length) - shared_len
-                // };
-                //println!("total_weight : {} + {} - {}",
-                    //left.total_weight, right.total_weight, shared_len);
-                //println!(" = {}", (left.total_weight + right.total_weight) - shared_len);
                 let new_path = TemporalSubPath {
                     start: left.start,
                     end: right.end,
@@ -429,7 +332,6 @@ impl TemporalSubPathsPyramid<'_> {
                     start_time: left.start_time,
                 };
 
-                //println!("elems[{i}] = {new_path:?} = {il} + {ir}");
                 elems[i] = new_path;
 
             }
@@ -442,58 +344,4 @@ impl TemporalSubPathsPyramid<'_> {
         }
     }
 
-}
-
-
-fn invalidate_temporal_node_and_parents(idx : usize, pyramid : &mut TemporalSubPathsPyramid, dst_mat_del: &mut Vec<DistanceMatrix>, max_time: Time) {
-    if pyramid.subpaths[idx].total_weight == Weight::MAX {
-        return;
-    }
-    for t in 0..max_time {
-        let old_val = dst_mat_del[t as usize][pyramid.subpaths[idx].start][pyramid.subpaths[idx].end as usize];
-        if old_val != Weight::MAX {
-            //println!("Invalidating path from {} to {} at time {} with total length {}", pyramid.subpaths[idx].start, pyramid.subpaths[idx].to, t, pyramid.subpaths[idx].total_length);
-            dst_mat_del[t as usize][pyramid.subpaths[idx].start][pyramid.subpaths[idx].end as usize] = 0;
-        }
-    }
-    pyramid.subpaths[idx].total_weight = Weight::MAX;
-    let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(idx);
-    if let Some(left_parent) = left_parent {
-        //println!("Invalidating left parent {}", left_parent);
-        invalidate_temporal_node_and_parents(left_parent, pyramid, dst_mat_del, max_time);
-    }
-    if let Some(right_parent) = right_parent {
-        //println!("Invalidating right parent {}", right_parent);
-        invalidate_temporal_node_and_parents(right_parent, pyramid, dst_mat_del, max_time);
-    }
-}
-
-pub fn invalidate_temporal_path_pyramid(pyramids: &mut Vec<TemporalSubPathsPyramid>, blocked_links: Vec<Vec<((Node, Node), Vec<Time>)>>, max_time: Time, dst_mat_del: &mut Vec<DistanceMatrix>) {
-    //let mut i = 0;
-    for pyramid in pyramids {
-        //println!("Invalidating path {:?}", path.fields);
-        let (leaf_min_index, leaf_max_index) = SubPathsPyramid::get_range(SubPathsPyramid::get_prof(pyramid.subpaths.len()-1));
-        //println!("Leaf min index {} and max index {}", leaf_min_index, leaf_max_index);
-        for i in leaf_min_index..=leaf_max_index {
-            let subpath = &pyramid.subpaths[i];
-            /*for t in 0..max_time {
-                if deleted_edges.links[subpath.from as usize][subpath.to as usize].contains(&t) {
-                    // invalidate the distance matrix
-                    //println!("Invalidating path from {} to {} at time {} with total length {}", subpath.from, subpath.to, t, subpath.total_length);
-                    invalidate_node_and_parents(i, path, dst_mat_del, max_time);
-                    break;
-                }
-            }*/
-            /*for t in &deleted_edges.links[subpath.from as usize][subpath.to as usize] {
-                invalidate_node_and_parents(i, path, dst_mat_del, max_time);
-                break;
-            }*/
-            // TODO : why did i store the (Node, Node) again?
-            if !(&blocked_links[subpath.start as usize][subpath.end as usize].1.is_empty()) {
-                invalidate_temporal_node_and_parents(i, pyramid, dst_mat_del, max_time);
-            }
-        }
-        //i += 1;
-        //println!("Invalidated path {}", i);
-    }
 }
