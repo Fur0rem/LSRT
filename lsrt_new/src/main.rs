@@ -26,7 +26,7 @@ macro_rules! benchmark {
 fn main() {
 	benchmark!("Measurement", {
 		let graph = Graph::from_sparse_row_format("../Saints_graph").unwrap();
-		let attack = <dyn Attack>::from_file("../attack.tQL7hx", &graph);
+		let attack = <dyn Attack>::from_file("../attack.0xv8q2", &graph);
 		let (efficiency, reachables) = attack.efficiency(&graph);
 		println!("Efficiency: {}, Reachables: {}", efficiency, reachables);
 	});

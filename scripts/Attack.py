@@ -52,11 +52,13 @@ class DynamicAttack :
     graph : CityGraph
     attacks : list[tuple[int, int]] # Format : [time, edge_idx]
     delta : int
+    max_time : int
 
     def __init__(self, graph : CityGraph, max_time : int, delta : int = 0) :
         self.graph = graph
         self.attacks = []
         self.delta = delta
+        self.max_time = max_time
 
     def set_delta(self, delta : int) -> None :
         """Sets the delta"""
