@@ -164,12 +164,19 @@ class CityGraph :
 def normalize_speed(var):
 	"""Make sure that the weigth of a node become an int with the same unit, whatever it was"""
 	# TODO mph
-	if(type(var)==int):
+
+	if(var=='FR:zone30'): # TODO : Don't keep this
+		return 30
+	if(var=='FR:zone20'): # TODO : Don't keep this
+		return 20
+	elif(type(var)==int):
 		return var
-	elif((type(var)==float) or (type(var)==str)):
+	elif((type(var)==float) or ((type(var)==str)) and var.isnumeric()):
 		return int(var)
 	elif((type(var)==list) or (type(var)==tuple)):
-		return np.min([normalize_speed(x) for x in var])
+		return np.min([normalize_speed(x) for x in var if(x!='walk')])
+	else:
+		return LOWEST_MAX_SPEED
 
 def euclidian_distance(a,b):
 	"""Give the euclidian distance between two nodes"""
