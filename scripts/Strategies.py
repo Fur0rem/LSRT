@@ -1,3 +1,4 @@
+import math
 import random
 import networkx as nx
 
@@ -8,7 +9,7 @@ from Attack import DynamicAttack, print_suppression_edge, StaticAttack
 # Juste pour test pour l'instant
 ville="Melun"
 
-def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> DynamicAttack :
+def random_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
     """Each time, it removes a random edge from the graph until the budget is reached or no more edges are available"""
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
@@ -16,7 +17,7 @@ def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
     attacks = DynamicAttack(graph, nbTimes)
     edges = list(graph.edges())
     
-    for time in range(nbTimes) :
+    for time in range(math.ceil(nbTimes / delta)):
         edges_t = edges.copy()
         budget_used = 0
         nb_retires = 0
@@ -32,7 +33,7 @@ def random_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
     return attacks
 
 
-def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, sort_by : callable, costPerLane : bool) -> StaticAttack :
+def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, sort_by : callable, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge that is the most affected by the sort_by function until the budget is reached or no more edges are available"""
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
@@ -55,26 +56,26 @@ def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, sort_by : call
 
     return attack
 
-def min_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> StaticAttack :
+def min_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the least lanes until the budget is reached or no more edges are available"""
-    return sorted_attack(graph, nbTimes, budget, lambda x : -graph.get_nb_lanes_of_edge(x), costPerLane)
+    return sorted_attack(graph, nbTimes, budget, delta, lambda x : -graph.get_nb_lanes_of_edge(x), costPerLane)
 
-def max_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> StaticAttack :
+def max_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the most lanes until the budget is reached or no more edges are available"""
-    return sorted_attack(graph, nbTimes, budget, lambda x : graph.get_nb_lanes_of_edge(x), costPerLane)
+    return sorted_attack(graph, nbTimes, budget, delta, lambda x : graph.get_nb_lanes_of_edge(x), costPerLane)
 
-def betweenness_centralities_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> StaticAttack :
+def betweenness_centralities_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the highest betweenness centrality until the budget is reached or no more edges are available"""
-    return sorted_attack(graph, nbTimes, budget, lambda x : graph.get_edge_betweenness_centrality(x), costPerLane)
+    return sorted_attack(graph, nbTimes, budget, delta, lambda x : graph.get_edge_betweenness_centrality(x), costPerLane)
 
-def moving_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : bool) -> DynamicAttack :
+def moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
     """We start with random edges, and then with each time the attacks are moved to a neighbor edge"""
     
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
     edges = list(graph.edges())
     
     # First time
-    attacks = random_attack(graph, 1, budget, costPerLane, is_dynamic=True)
+    attacks = random_attack(graph, 1, budget, delta, costPerLane)
     
     # Next times
     # First, find the neighbours of the concerned edges
@@ -100,7 +101,7 @@ def moving_attack(graph : CityGraph, nbTimes : int, budget : int, costPerLane : 
     #print(nb_people_on_edges)
 
 
-    for time in range(1, nbTimes) :
+    for time in range(1, math.ceil(nbTimes / delta)) :
         for edge_idx in range(graph.nb_edges()) :
             if nb_people_on_edges[edge_idx] > 0 :
                 # Move the people
@@ -232,6 +233,7 @@ def main():
         args.times = max_diameter
 
     # TODO : Peut etre transformer en variable dynamiquement si ca devient trop
+    # TODO : Random a l'air de pas marcher : meme avec un budget de 40000, il n'arrive pas a tout retirer
     switch = {
         "random" : random_attack,
         "min_lanes" : min_lanes_attack,
@@ -248,12 +250,13 @@ def main():
     print(args)
 
     # Write graph to file
-    graph.write_to_file(f"{args.nom_ville}_graph")
+    FILES_DIR_NAME = "intermediate_files"
+    graph.write_to_file(f"{FILES_DIR_NAME}/{args.nom_ville}/graph")
     if args.budget > graph.nb_edges(): 
-        args.budget = graph.nb_edges() - 1 
+        args.budget = graph.nb_edges()
 
     # Write attack to file
-    a = switch[args.type_attack](graph, args.times, args.budget, False)
+    a = switch[args.type_attack](graph, args.times, args.budget, args.delta, False)
     a.set_delta(args.delta)
     a.write_to_file(f"{args.output_file}")
 

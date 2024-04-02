@@ -14,4 +14,6 @@ else
 	echo -e "Test $GREEN${test##*/}$NO_COLOR passed"
 fi
 done
+
+cargo test -- --nocapture
 exit $error

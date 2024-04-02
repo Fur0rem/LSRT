@@ -1,4 +1,0 @@
-IMPROVED
-Time elapsed in create_phantom_edges() is: 361.077µs
-new efficiency: 0.016207059562928516, new reachables: 11402
-Time elapsed in everything improved() is: 28.989204ms

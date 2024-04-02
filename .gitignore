@@ -6,4 +6,7 @@ bin/
 test/bin/
 scripts/__pycache__/
 cache/
-lsrt_new/target/
+lsrt_new/*
+target/
+tstex_modules/*
+tstex_modules

@@ -26,8 +26,8 @@ pub fn sum_dma_static(dma: &DistanceMatrix, max_time: Time) -> (f64, u64) {
 		for j in 0..distances_len {
 			let distance = dma[i][j];
 			// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-			if distance < max_time && distance != 0 {
-				let difference = max_time - distance;
+			if distance <= max_time && distance != 0 {
+				let difference = max_time - distance + 1;
 				sum += (difference as f64) / (distance as f64); // Sum from 1 to max_time of 1/distance = (max_time - distance)/distance
 				reachables += difference as u64;
 			}
@@ -35,8 +35,9 @@ pub fn sum_dma_static(dma: &DistanceMatrix, max_time: Time) -> (f64, u64) {
 	}
 
 	// Normalise the sum
-	sum -= distances_len as f64;
+	sum -= distances_len as f64 * max_time as f64;
 	sum /= max_time as f64 * (distances_len * (distances_len - 1)) as f64;
+	reachables -= distances_len as u64 * max_time as u64;
 
 	return (sum, reachables);
 }
@@ -53,17 +54,17 @@ pub fn sum_dma(dma: &[DistanceMatrix], max_time: Time) -> (f64, u64) {
 				let distance = dma[t as usize][i][j];
 
 				// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-				if distance + t < max_time && distance != 0 {
+				if distance + t <= max_time && distance != 0 {
 					sum += 1.0 / (distance as f64);
 					reachables += 1;
 				}
 			}
 		}
 	}
-
 	// Normalise the sum
-	sum -= distances_len as f64;
+	sum -= distances_len as f64 * max_time as f64;
 	sum /= dma.len() as f64 * (distances_len * (distances_len - 1)) as f64;
+	reachables -= distances_len as u64 * max_time as u64;
 
 	return (sum, reachables);
 }

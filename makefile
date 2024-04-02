@@ -10,6 +10,7 @@ DEBUG_FLAGS := -g -fsanitize=address -fsanitize=object-size -fno-optimize-siblin
 CFLAGS := -O2 -std=gnu17 -Wall -Wextra -Wpedantic -Wno-unused-parameter 
 
 SRCS := $(wildcard src/*.c)
+FILES_DIR_NAME := intermediate_files
 
 all: $(TARGET)
 
@@ -28,3 +29,10 @@ $(TEST): $(SRCS) $(wildcard test/*.c)
 clean: 
 	rm -f lsrt lsrt_debug test/bin/*
 
+clean_data:
+	rm -rf $(FILES_DIR_NAME)/*
+	rmdir $(FILES_DIR_NAME)
+
+rust:
+	rm -f lsrt
+	cargo build --release && mv target/release/lsrt_new lsrt

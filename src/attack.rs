@@ -13,9 +13,22 @@ use crate::{
 	paths::TemporalSubPathsPyramid,
 };
 
+pub enum AttackResult {
+	Static(DistanceMatrix),
+	Dynamic(Vec<DistanceMatrix>),
+}
+
 pub trait Attack: std::fmt::Debug {
 	// efficiency + reachables
-	fn efficiency(&self, graph: &Graph) -> (f64, usize);
+	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult;
+	fn efficiency(&self, graph: &Graph) -> (f64, u64) {
+		let distance_matrix = self.all_pairs_distances(graph);
+		match distance_matrix {
+			AttackResult::Static(dm) => sum_dma_static(&dm, self.max_time()),
+			AttackResult::Dynamic(dma) => sum_dma(&dma, self.max_time()),
+		}
+	}
+		
 	fn max_time(&self) -> Time;
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
 	fn delta(&self) -> Time;
@@ -109,7 +122,7 @@ impl Attack for StaticAttack {
 		return Cow::Owned(blocked_links);
 	}
 
-	fn efficiency(&self, graph: &Graph) -> (f64, usize) {
+	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create a graph without the links that got blocked
 		let mut new_graph = graph.clone();
 		for i in 0..self.blocked_links.len() {
@@ -120,9 +133,7 @@ impl Attack for StaticAttack {
 
 		// Compute the distance matrix
 		let distance_matrix = new_graph.all_pairs_distances(self.max_time);
-
-		let (efficiency, reachables) = sum_dma_static(&distance_matrix, self.max_time);
-		return (efficiency, reachables as usize);
+		return AttackResult::Static(distance_matrix);
 	}
 }
 
@@ -183,7 +194,7 @@ impl Attack for DynamicAttack {
 		return Cow::Borrowed(&self.blocked_links);
 	}
 
-	fn efficiency(&self, graph: &Graph) -> (f64, usize) {
+	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {		
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
 		let distance_matrix = DistanceMatrix::init(graph);
@@ -214,8 +225,6 @@ impl Attack for DynamicAttack {
 			}
 		}
 
-		let (a, b) = sum_dma(&dma, time_graph.max_time.try_into().unwrap());
-
-		return (a, b as usize);
+		return AttackResult::Dynamic(dma);
 	}
 }

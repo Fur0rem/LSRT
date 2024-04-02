@@ -76,25 +76,51 @@ while true; do
     esac
 done
 
+FILES_DIR_NAME="intermediate_files"
+
+# If $FILES_DIR_NAME doesn't exist, create it
+if [ ! -d "$FILES_DIR_NAME" ]; then
+    mkdir $FILES_DIR_NAME
+fi
+
+# If the city doesn't exist, create it
+if [ ! -d "./$FILES_DIR_NAME/$CITY" ]; then
+    mkdir ./$FILES_DIR_NAME/$CITY
+fi
+
 # Generate a new temporary filename for the attack
-TMP_FILE=$(mktemp -q ./attack.XXXXXX)
+FILE_FORMAT=$(mktemp -d ./$FILES_DIR_NAME/$CITY"/"$ATTACK"_XXXXXX")
 if [ $? -ne 0 ]; then
     echo "$0: Can't create temp file"
     exit 1
 fi
 
-bug_cur=$BUDGET_MIN
+cur_budg=$BUDGET_MIN
+attack_string=""
 
-while [[ $bug_cur -le $BUDGET_MAX ]]; do
-    echo "Execution with budget=$bug_cur"
+# Like a pool thread that limits the number of subprocesses
+function max_n {
+    NB_MAX=4
+    while [ `jobs | wc -l` -ge $NB_MAX ]; do
+        sleep 1
+    done
+}
 
-    python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$bug_cur" "$DELTA" "$TMP_FILE"
-    ./lsrt "$CITY"_graph "$TMP_FILE" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX"
+i=0
+while [[ $cur_budg -le $BUDGET_MAX ]]; do
+    max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"/$cur_budg &
 
-    bug_cur=$((bug_cur * GROWTH_NUMERATOR))
-    bug_cur=$((bug_cur / GROWTH_DENOMINATOR))
+    attack_string="$attack_string $cur_budg"
+    cur_budg=$((cur_budg * GROWTH_NUMERATOR))
+    cur_budg=$((cur_budg / GROWTH_DENOMINATOR))
+    i=$((i + 1))
 done
 
-#rm "$TMP_FILE"
+# Wait for all the attacks to finish
+wait
 
-# ./gen_attack.sh -c Saints -a random -x 2 TODO
+#python3 scripts/Strategies.py $CITY $ATTACK $TIMES $DELTA $FILE_FORMAT $attack_string
+echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
+CITY_BASENAME=$(basename "$CITY")
+FILE_FORMAT_BASENAME=$(basename "$FILE_FORMAT")
+./lsrt "$CITY_BASENAME" "$FILE_FORMAT_BASENAME" "$attack_string" 

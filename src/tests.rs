@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod tests {
 
-	use crate::graph::{dijkstra, Graph, Neighbour};
+	use crate::distance_matrix::{print_dma, sum_dma};
+use crate::graph::{dijkstra, Graph, Neighbour};
 	use crate::paths::TemporalSubPathsPyramid;
 	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
-	use crate::DeletedLink;
+	use crate::{AttackResult, DeletedLink};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 
 	fn make_test_graph() -> Graph {
@@ -44,7 +45,7 @@ mod tests {
 		]
 	}
 
-	/*#[test]
+	#[test]
 	fn test_phantom_edges() {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
@@ -53,14 +54,22 @@ mod tests {
 		let delta = 2;
 
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
-		for (i, phantom_edge) in phantom_edges.iter().enumerate() {
-			for edge in phantom_edge {
-				println!("Phantom edge from {} to {} at time {:?}: ", i, edge.node, edge.weights);
-			}
-		}
+
+		// FIXME : index timevaryingedge
+		assert_eq!(phantom_edges[0][0].node, 1);
+		assert_eq!(phantom_edges[0][0].weights.weights[0], 5);
+		assert_eq!(phantom_edges[0][0].weights.weights[1], 4);
+		assert_eq!(phantom_edges[0][0].weights.weights[2], 3);
+		assert_eq!(phantom_edges[0][0].weights.weights[3], 2);
+		assert_eq!(phantom_edges[0][0].weights.weights[4], 1);
+		assert_eq!(phantom_edges[0][0].weights.weights[5], 1);
+		assert_eq!(phantom_edges[0][0].weights.weights[6], 1);
+		assert_eq!(phantom_edges[0][1].node, 2);
+		assert_eq!(phantom_edges[0][1].weights.weights[0], 2);
+		assert_eq!(phantom_edges[0][1].weights.weights[1], 2);
 	}
 
-	#[test]
+	/*#[test]
 	fn test_temporal_dijkstra() {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
@@ -69,11 +78,6 @@ mod tests {
 		let delta = 2;
 
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
-		for (i, phantom_edge) in phantom_edges.iter().enumerate() {
-			for edge in phantom_edge {
-				println!("Phantom edge from {} to {} with {:?}: ", i, edge.node, edge.weights);
-			}
-		}
 
 		let tvg = TimeVaryingGraph {
 			max_time: max_time.into(),
@@ -100,21 +104,35 @@ mod tests {
 		println!("Total weight: {}", path_from_1_to_2_at_time_7.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_1_to_2_at_time_7);
 		println!("Pyramid: {:?}", pyr.subpaths);
-	}
+	}*/
 
 	#[test]
 	fn test_dijkstra() {
 		let graph = make_test_graph();
+
 		let start = 0;
 		let end = 3;
 		let path = dijkstra(&graph, start, end);
-		path.print();
+		assert_eq!(path.cost(), 2);
+		assert_eq!(path.start, start);
+		assert_eq!(
+			path.steps,
+			vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 3, weight: 1 },]
+		);
 
 		let start = 2;
 		let end = 0;
 		let path = dijkstra(&graph, start, end);
-		path.print();
-	}*/
+		assert_eq!(
+			path.steps,
+			vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 0, weight: 1 },]
+		);
+
+		let start = 1;
+		let end = 0;
+		let path = dijkstra(&graph, start, end);
+		assert_eq!(path.steps, vec![Neighbour { node: 0, weight: 1 },]);
+	}
 
 	#[test]
 	fn coherence_static_dynamic() {
@@ -149,15 +167,42 @@ mod tests {
 			max_time,
 		};
 
-		println!("Dynamic attack: {:?}", attack_dynamic.blocked_links());
-		println!("Static attack: {:?}", attack_static.blocked_links());
+		assert_eq!(attack_dynamic.blocked_links(), attack_static.blocked_links());
 
 		let (efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(&graph);
 		let (efficiency_static, reach_static) = attack_static.efficiency(&graph);
 
-		println!("Dynamic efficiency: {}, reach: {}", efficiency_dynamic, reach_dynamic);
-		println!("Static efficiency: {}, reach: {}", efficiency_static, reach_static);
-		assert_eq!(efficiency_dynamic, efficiency_static);
+		assert!((efficiency_dynamic - efficiency_static).abs() < 0.0001); // Floating point comparison
 		assert_eq!(reach_dynamic, reach_static);
+	}
+
+	#[test]
+	fn delete_all_links() {
+		let graph = make_test_graph();
+		let max_time = 10;
+		let delta = 1;
+
+		let deleted_links = graph.edges.iter().enumerate().flat_map(|(from, neighbours)| {
+			neighbours.iter().map(move |neighbour| DeletedLink {
+				from: from as u16,
+				to: neighbour.node,
+				times: (0..max_time).collect(),
+			})
+		});
+
+		let attack = DynamicAttack {
+			blocked_links: deleted_links.collect(),
+			delta,
+			max_time,
+		};
+
+		let attack_result = attack.all_pairs_distances(&graph);
+		let dma = match attack_result {
+			AttackResult::Dynamic(dma) => dma,
+			_ => panic!("Expected a dynamic matrix"),
+		};
+		let (efficiency, reachables) = sum_dma(&dma, attack.max_time());
+		assert!(efficiency.abs() < 0.0001); // Floating point comparison
+		assert_eq!(reachables, 0);
 	}
 }
