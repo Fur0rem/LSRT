@@ -1,6 +1,7 @@
 import osmnx as ox
 import networkx as nx
 import numpy as np
+import re
 
 LOWEST_MAX_SPEED=30
 STEP=60 # The duration of a weigth of 1 in the sparse matrix (in seconds)
@@ -141,7 +142,7 @@ class CityGraph :
 						speed=LOWEST_MAX_SPEED
 
 					# TODO : put the coef in normalize_speed
-					weights.append(max(int((length*coef)/speed), 1))
+					weights.append(max(int((length*3.6)/(speed)), 1))
 
 				V[j]=np.min(weights)
 
@@ -163,19 +164,22 @@ class CityGraph :
 
 def normalize_speed(var):
 	"""Make sure that the weigth of a node become an int with the same unit, whatever it was"""
-	# TODO mph
 
-	if(var=='FR:zone30'): # TODO : Don't keep this
-		return 30
-	if(var=='FR:zone20'): # TODO : Don't keep this
-		return 20
-	elif(type(var)==int):
+	if(type(var)==int):
 		return var
 	elif((type(var)==float) or ((type(var)==str)) and var.isnumeric()):
 		return int(var)
 	elif((type(var)==list) or (type(var)==tuple)):
 		return np.min([normalize_speed(x) for x in var if(x!='walk')])
+	elif(type(var)==str):
+		zone=re.search('zone([0-9]*)', var)
+		mph=re.search('([0-9]*) mph', var)
+		if(zone!=None):
+			return int(zone[1])
+		elif(mph!=None):
+			return int(mph[1])*1.609344
 	else:
+		print(var)
 		return LOWEST_MAX_SPEED
 
 def euclidian_distance(a,b):
