@@ -2,11 +2,11 @@
 mod tests {
 
 	use crate::distance_matrix::{print_dma, sum_dma};
-use crate::graph::{dijkstra, Graph, Neighbour};
+	use crate::graph::{dijkstra, Graph, Neighbour};
 	use crate::paths::TemporalSubPathsPyramid;
 	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
-	use crate::{AttackResult, DeletedLink};
 	use crate::{Attack, DynamicAttack, StaticAttack};
+	use crate::{AttackResult, DeletedLink};
 
 	fn make_test_graph() -> Graph {
 		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 2, weight: 2 }];

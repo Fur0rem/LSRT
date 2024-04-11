@@ -7,8 +7,7 @@ pub fn print_dma(dma: &[DistanceMatrix]) {
 			for j in 0..dma[t].distances[i].len() {
 				let distance_to_str = if dma[t][i][j] == Weight::MAX {
 					"∞".to_string()
-				}
-				else {
+				} else {
 					dma[t][i][j].to_string()
 				};
 				print!("{} ", distance_to_str);

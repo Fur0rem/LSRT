@@ -28,7 +28,7 @@ pub trait Attack: std::fmt::Debug {
 			AttackResult::Dynamic(dma) => sum_dma(&dma, self.max_time()),
 		}
 	}
-		
+
 	fn max_time(&self) -> Time;
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
 	fn delta(&self) -> Time;
@@ -194,7 +194,7 @@ impl Attack for DynamicAttack {
 		return Cow::Borrowed(&self.blocked_links);
 	}
 
-	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {		
+	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
 		let distance_matrix = DistanceMatrix::init(graph);

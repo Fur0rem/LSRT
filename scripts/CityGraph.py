@@ -23,6 +23,7 @@ class CityGraph :
 	projected_graph : nx.Graph = None
 	lanes_data : list[int] = None
 	betweenness_centralities : list[float] = None
+	list_edges : list[int]
 
 	def __init__(self, city_name : str, network_type : str = "drive") :
 		"""Loads a graph from OSmnx through its name"""
@@ -33,6 +34,7 @@ class CityGraph :
 		# print the number of nodes and edges
 		# TODO : remove this
 		print("nodes :", self.graph.number_of_nodes(), "edges: ", self.graph.number_of_edges())
+		self.list_edges = list(self.graph.edges())
 
 	def get_node_index(self, node : int) :
 		"""Returns the index in the matrix of the node through it's OSmnx numero"""
@@ -92,7 +94,7 @@ class CityGraph :
 	# TODO : fait la meme chose que get_edge_index
 	def get_edge_at(self, edge_idx : int) :
 		"""Accesses an edge through its index"""
-		return list(self.graph.edges())[edge_idx]
+		return self.list_edges[edge_idx]
 	
 	def get_nb_lanes_of_edge(self, edge_idx : int) -> int:
 		"""Returns the number of lanes of an edge"""

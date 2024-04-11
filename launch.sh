@@ -21,8 +21,8 @@ DELTA=8
 BUDGET_MIN=2
 BUDGET_MAX=100
 # Fraction so it's more modular
-GROWTH_NUMERATOR=3
-GROWTH_DENOMINATOR=2
+GROWTH_NUMERATOR=9
+GROWTH_DENOMINATOR=8
 
 eval set -- "$OPTS"
 
@@ -110,10 +110,15 @@ i=0
 while [[ $cur_budg -le $BUDGET_MAX ]]; do
     max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"/$cur_budg &
 
+    old_budg=$cur_budg
     attack_string="$attack_string $cur_budg"
     cur_budg=$((cur_budg * GROWTH_NUMERATOR))
     cur_budg=$((cur_budg / GROWTH_DENOMINATOR))
     i=$((i + 1))
+    # If the growth is too small to impact the budget, we just add 1
+    if [[ $cur_budg -eq $old_budg ]]; then
+        cur_budg=$((cur_budg + 1))
+    fi
 done
 
 # Wait for all the attacks to finish
@@ -124,3 +129,7 @@ echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGE
 CITY_BASENAME=$(basename "$CITY")
 FILE_FORMAT_BASENAME=$(basename "$FILE_FORMAT")
 ./lsrt "$CITY_BASENAME" "$FILE_FORMAT_BASENAME" "$attack_string" 
+
+# Exemple d'utilisation
+# ./launch.sh -c Saints -a betweenness_moving -n 1 -x 500
+# ./launch.sh -c Saints -a none -n 0 -x 0
