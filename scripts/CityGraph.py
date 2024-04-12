@@ -31,9 +31,6 @@ class CityGraph :
 		self.city_name = city_name
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
-		# print the number of nodes and edges
-		# TODO : remove this
-		print("nodes :", self.graph.number_of_nodes(), "edges: ", self.graph.number_of_edges())
 		self.list_edges = list(self.graph.edges())
 
 	def get_node_index(self, node : int) :
