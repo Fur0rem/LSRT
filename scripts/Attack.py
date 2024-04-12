@@ -63,6 +63,10 @@ class DynamicAttack :
     def set_delta(self, delta : int) -> None :
         """Sets the delta"""
         self.delta = delta
+
+    def set_max_time(self, max_time : int) -> None :
+        """Sets the max time"""
+        self.max_time = max_time
     
     def add_attack(self, time : int, edge_idx : int) -> None :
         """Adds an attack to the list"""

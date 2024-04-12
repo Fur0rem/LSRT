@@ -10,7 +10,7 @@ DEBUG_FLAGS := -g -fsanitize=address -fsanitize=object-size -fno-optimize-siblin
 CFLAGS := -O2 -std=gnu17 -Wall -Wextra -Wpedantic -Wno-unused-parameter 
 
 SRCS := $(wildcard src/*.c)
-FILES_DIR_NAME := intermediate_files
+FILES_DIR_NAME := data
 
 all: $(TARGET)
 

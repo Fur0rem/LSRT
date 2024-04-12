@@ -33,7 +33,7 @@ fn main() {
 	let args: Vec<String> = std::env::args().collect();
 	println!("{:?}", args);
 
-	const FILES_DIR_NAME: &str = "intermediate_files";
+	const FILES_DIR_NAME: &str = "data";
 	let graph_filename = format!("{FILES_DIR_NAME}/{}/graph", &args[1]);
 	let attack_directory = format!("{FILES_DIR_NAME}/{}/{}/", &args[1], &args[2]);
 	println!("\n");

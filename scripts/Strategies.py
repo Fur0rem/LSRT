@@ -76,6 +76,7 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
     
     # First time
     attacks = random_attack(graph, 1, budget, delta, costPerLane)
+    attacks.set_max_time(nbTimes)
     
     # Next times
     # First, find the neighbours of the concerned edges
@@ -86,7 +87,7 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
         neighbours[edge_idx] = set()
         for node in edge :
             for edge2 in graph.graph.edges(node) :
-                neighbours[edge_idx].add(graph.find_edge_index(edge2[0], edge2[1]))        
+                neighbours[edge_idx].add(graph.find_edge_index(edge2[0], edge2[1]))
 
     # Remove the edge itself from it's neighbours
     for (k, v) in neighbours.items():
@@ -97,8 +98,6 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
     nb_people_on_edges = [0 for _ in range(graph.nb_edges())]
     for attack in attacks.attacks :
         nb_people_on_edges[attack[1]] += costFunc(attack[1])
-
-    #print(nb_people_on_edges)
 
 
     for time in range(1, 1 + (nbTimes // delta)) :
@@ -125,8 +124,7 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
     # Add the last attack
     for edge_idx in range(graph.nb_edges()) :
         if nb_people_on_edges[edge_idx] > 0 :
-            attacks.add_attack(nbTimes, edge_idx)
-            
+            attacks.add_attack(nbTimes, edge_idx)            
 
     return attacks
 
@@ -286,7 +284,7 @@ def main():
         "random" : random_attack,
         "min_lanes" : min_lanes_attack,
         "max_lanes" : max_lanes_attack,
-        "betweenness_static" : betweenness_centralities_attack,
+        "betweenness" : betweenness_centralities_attack,
         "betweenness_moving" : betweenness_centralities_moving_attack,
         "random_moving" : random_moving_attack,
         #"connex" : connex_attack,
@@ -300,7 +298,7 @@ def main():
     print(args)
 
     # Write graph to file
-    FILES_DIR_NAME = "intermediate_files"
+    FILES_DIR_NAME = "data"
     graph.write_to_file(f"{FILES_DIR_NAME}/{args.nom_ville}/graph")
     if args.budget > graph.nb_edges(): 
         args.budget = graph.nb_edges()

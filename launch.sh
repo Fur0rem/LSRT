@@ -1,135 +1,22 @@
 #!/bin/bash
+# Takes 2 arguments : city and budget_max
 
-# city : name of the city
-# attack : type of attack
-# times : number of attacks
-# delta : TODO je suis pas sur
-# budget_min : how much budget we start with
-# budget_max : how much budget we stop with
-LONG=city:,attack:,times:,delta:,budget_min:,budget_max:,growth_num:,growth_den:
-SHORT=c:,a:,t:,d:,n:,x:,g:,r:
-OPTS=$(getopt --options $SHORT --longoptions $LONG -- "$@")
+# Parameters
+NB_ATTACK_RANDOMS=5
 
-# Defaults
-# "" means it should always be set
-# -1 means it is optionnal and the Python script will generate a default value
-# Anything else is a default value
-CITY=""
-ATTACK=""
-TIMES=-1
-DELTA=8
-BUDGET_MIN=2
-BUDGET_MAX=100
-# Fraction so it's more modular
-GROWTH_NUMERATOR=9
-GROWTH_DENOMINATOR=8
-
-eval set -- "$OPTS"
-
-while true; do
-    case "$1" in
-
-    -c | --city)
-        CITY=$2
-        shift 2
-        ;;
-    -a | --attack)
-        ATTACK=$2
-        shift 2
-        ;;
-    -t | --times)
-        TIMES=$2
-        shift 2
-        ;;
-    -d | --delta)
-        DELTA=$2
-        shift 2
-        ;;
-
-    -n | --budget_min) 
-        BUDGET_MIN=$2
-        shift 2
-        ;;
-    -x | --budget_max) 
-        BUDGET_MAX=$2
-        shift 2
-        ;;
-
-    -g | --growth_num)
-        GROWTH_NUMERATOR=$2
-        shift 2
-        ;;
-    -r | --growth_den)
-        GROWTH_DENOMINATOR=$2
-        shift 2
-        ;;
-
-    --)
-        shift
-        break
-        ;;
-    *)
-        echo "Unexpected option: $1"
-        exit 1
-        ;;
-
-    esac
+# Launch random attacks
+for i in $(seq 1 $NB_ATTACK_RANDOMS); do
+    ./launch_single.sh -c $1 -a random -g 10 -r 9 -x $2 -s 1
+    ./launch_single.sh -c $1 -a random_moving -g 10 -r 9 -x $2 -s 1
 done
 
-FILES_DIR_NAME="intermediate_files"
+# Launch betweenness attacks
+./launch_single.sh -c $1 -a betweenness -g 10 -r 9 -x $2 -s 1
+./launch_single.sh -c $1 -a betweenness_moving -g 10 -r 9 -x $2 -s 1
 
-# If $FILES_DIR_NAME doesn't exist, create it
-if [ ! -d "$FILES_DIR_NAME" ]; then
-    mkdir $FILES_DIR_NAME
-fi
+# Launch mix_lanes and max_lanes attacks
+./launch_single.sh -c $1 -a min_lanes -g 10 -r 9 -x $2 -s 1
+./launch_single.sh -c $1 -a max_lanes -g 10 -r 9 -x $2 -s 1
 
-# If the city doesn't exist, create it
-if [ ! -d "./$FILES_DIR_NAME/$CITY" ]; then
-    mkdir ./$FILES_DIR_NAME/$CITY
-fi
-
-# Generate a new temporary filename for the attack
-FILE_FORMAT=$(mktemp -d ./$FILES_DIR_NAME/$CITY"/"$ATTACK"_XXXXXX")
-if [ $? -ne 0 ]; then
-    echo "$0: Can't create temp file"
-    exit 1
-fi
-
-cur_budg=$BUDGET_MIN
-attack_string=""
-
-# Like a pool thread that limits the number of subprocesses
-function max_n {
-    NB_MAX=4
-    while [ `jobs | wc -l` -ge $NB_MAX ]; do
-        sleep 1
-    done
-}
-
-i=0
-while [[ $cur_budg -le $BUDGET_MAX ]]; do
-    max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"/$cur_budg &
-
-    old_budg=$cur_budg
-    attack_string="$attack_string $cur_budg"
-    cur_budg=$((cur_budg * GROWTH_NUMERATOR))
-    cur_budg=$((cur_budg / GROWTH_DENOMINATOR))
-    i=$((i + 1))
-    # If the growth is too small to impact the budget, we just add 1
-    if [[ $cur_budg -eq $old_budg ]]; then
-        cur_budg=$((cur_budg + 1))
-    fi
-done
-
-# Wait for all the attacks to finish
-wait
-
-#python3 scripts/Strategies.py $CITY $ATTACK $TIMES $DELTA $FILE_FORMAT $attack_string
-echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
-CITY_BASENAME=$(basename "$CITY")
-FILE_FORMAT_BASENAME=$(basename "$FILE_FORMAT")
-./lsrt "$CITY_BASENAME" "$FILE_FORMAT_BASENAME" "$attack_string" 
-
-# Exemple d'utilisation
-# ./launch.sh -c Saints -a betweenness_moving -n 1 -x 500
-# ./launch.sh -c Saints -a none -n 0 -x 0
+# Exemple :
+# ./launch.sh Saints 183 (a prit 5 minutes sur mon ordi pour 5 attaques random)
