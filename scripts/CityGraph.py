@@ -32,11 +32,11 @@ class CityGraph :
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
 
-		for edge in self.graph.edges.values():
+		for nodes,edge in self.graph.edges.items():
 			if("length" in edge.keys()):
 				length=edge["length"]
 			else:
-				length=euclidian_distance(self.graph.nodes[nodeList[i]],self.graph.nodes[nodeList[csr.indices[j]]])
+				length=euclidian_distance(nodes[0], nodes[1])
 
 			if "maxspeed" in edge.keys() :
 				speed=normalize_speed(edge["maxspeed"])
