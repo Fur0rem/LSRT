@@ -216,16 +216,16 @@ def normalize_speed(var):
 		return np.min([normalize_speed(x) for x in var if(x!='walk')])
 	elif(type(var)==str):
 		# Try to parse it as a speed
-		zone=re.search('zone([0-9]*)', var)
+		zone=re.search('zone:?([0-9]*)', var)
 		mph=re.search('([0-9]*) mph', var)
-		de=re.search('DE:([0-9]*)', var)
+		de=re.search('[A-Z]{2}:([0-9]*)', var)
 		if(zone!=None):
 			return int(zone[1])
 		elif(mph!=None):
 			return int(mph[1])*1.609344
 		elif(de!=None):
 			return int(de[1])	
-	#print(var)
+	# print("Error : ", type(var), (var))
 	return LOWEST_MAX_SPEED
 
 def euclidian_distance(a,b):
