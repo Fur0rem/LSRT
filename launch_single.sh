@@ -131,9 +131,9 @@ while [[ $cur_budg -le $BUDGET_MAX ]]; do
 done
 
 # Do one last attack with the maximum budget if it's not already done
-if [[ $cur_budg -ne $BUDGET_MAX ]]; then
-    max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$BUDGET_MAX" "$DELTA" "$FILE_FORMAT"/$BUDGET_MAX &
-fi
+# if [[ $cur_budg -ne $BUDGET_MAX ]]; then
+#     max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$BUDGET_MAX" "$DELTA" "$FILE_FORMAT"/$BUDGET_MAX &
+# fi
 
 # Wait for all the attacks to finish
 wait

@@ -1,3 +1,4 @@
+import copy
 import math
 import random
 import networkx as nx
@@ -68,6 +69,20 @@ def max_lanes_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int
 def betweenness_centralities_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the highest betweenness centrality until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, delta, lambda x : graph.get_edge_betweenness_centrality(x), costPerLane)
+
+def geographical_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
+    """Each time, it removes the edge to the most left geographically until the budget is reached or no more edges are available"""
+    def get_edge_longitude(edge_idx : int) -> float :
+        edge = graph.get_edge_at(edge_idx)
+        return min(graph.graph.nodes[edge[0]]["x"], graph.graph.nodes[edge[1]]["x"])
+    
+    return sorted_attack(graph, nbTimes, budget, delta, get_edge_longitude, costPerLane)
+
+def index_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
+    """Each time, it removes the edge with the highest index until the budget is reached or no more edges are available"""
+    return sorted_attack(graph, nbTimes, budget, delta, lambda x : -x, costPerLane)
+    
+
 
 def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
     """We start with random edges, and then with each time the attacks are moved to a neighbor edge"""
@@ -146,67 +161,66 @@ def betweenness_centralities_moving_attack(graph : CityGraph, nbTimes : int, bud
         graph.graph.remove_edge(edge[0], edge[1])
 
     attacks = DynamicAttack(graph, nbTimes)
-    edges = list(graph.graph.edges())
     betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
-    graph_backup = graph.graph.copy()
+    graph_backup = copy.deepcopy(graph.graph)
+    edges_deleted_last_time = []
 
-    # Find the edge with the highest betweenness centrality
-    # Then remove it
     for time in range(1 + (nbTimes // delta)) :
         # Sort the edges by betweenness centrality
-        edges.sort(key = lambda x : betweenness_centralities[(x[0], x[1], 0)], reverse = True)
+        betweenness_centralities = list(betweenness_centralities.items())
+        betweenness_centralities.sort(key = lambda x : x[1], reverse = True)
         # Remove all the edges with the highest betweenness centrality with the budget
         budget_used = 0
-        for i in range(budget) :
-            edge_idx = graph.find_edge_index(edges[i][0], edges[i][1])
-            remove_edge(graph, edges[i])
-            attacks.add_attack(time, edge_idx)
+        # Betweenness centralities is smaller than nb_edges, so we can use it as a limit
+        edges_in_case = copy.deepcopy(edges_deleted_last_time)
+        edges_deleted_last_time = []
+        while budget_used < budget and budget_used < len(betweenness_centralities) :
+            edge = betweenness_centralities[budget_used]
+            attacks.add_attack(time, graph.find_edge_index(edge[0][0], edge[0][1]))
+            remove_edge(graph, edge[0])
+            edges_deleted_last_time.append(edge[0])
+            budget_used += 1
+        # If we have removed all the edges, then we keep going until budget is reached with the edges of the last iteration
+        while budget_used < budget :
+            edge = edges_in_case.pop(0)
+            attacks.add_attack(time, graph.find_edge_index(edge[0], edge[1]))
+            remove_edge(graph, edge)
+            edges_deleted_last_time.append(edge)
             budget_used += 1
         # Recompute the betweenness centralities
         betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
         # Restore the graph
-        graph.graph = graph_backup.copy()
+        graph.graph = copy.deepcopy(graph_backup)
 
     return attacks
 
 
-def index_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
-    """
-    We remove the edges with the highest betweenness centrality.
-    Then we recompute the betweenness centralities for the edges of the new graph with the removed edges.
-    """
+# def index_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
+#     """
+#     We remove the edges with the highest betweenness centrality.
+#     Then we recompute the betweenness centralities for the edges of the new graph with the removed edges.
+#     """
 
-    def remove_edge(graph : CityGraph, edge_idx : int) :
-        """Removes an edge from the graph"""
-        edge = graph.get_edge_at(edge_idx)
-        graph.graph.remove_edge(edge[0], edge[1])
+#     def remove_edge_idx(graph : CityGraph, edge_idx : int) :
+#         """Removes an edge from the graph"""
+#         edge = graph.get_edge_at(edge_idx)
+#         graph.graph.remove_edge(edge[0], edge[1])
 
-    attacks = DynamicAttack(graph, nbTimes)
-    edges = list(graph.edges())
-    betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
-    graph_backup = graph.graph.copy()
+#     attacks = DynamicAttack(graph, nbTimes)
+#     graph_backup = copy.deepcopy(graph.graph)
 
-    # Find the edge with the highest betweenness centrality
-    # Then remove it
-    for time in range(1 + (nbTimes // delta)) :
-        # Sort the edges by betweenness centrality
-        edges.sort(key = lambda x : betweenness_centralities[(x[0], x[1], 0)], reverse = True)
-        # Remove all the edges with the highest betweenness centrality with the budget
-        budget_used = 0
-        for i in range(graph.nb_edges()) :
-            if budget_used < budget :
-                remove_edge(graph, i)
-                attacks.add_attack(time, i)
-                budget_used += 1
-            else :
-                break
-        # Recompute the betweenness centralities
-        betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
-        # Restore the graph
-        graph.graph = graph_backup.copy()
+#     for time in range(1 + (nbTimes // delta)) :
+#         budget_used = 0
+#         for i in range(graph.nb_edges()) :
+#             if budget_used < budget :
+#                 attacks.add_attack(time, i)
+#                 remove_edge_idx(graph, i)
+#                 budget_used += 1
+#             else :
+#                 break
+#         graph.graph = copy.deepcopy(graph_backup)
 
-    return attacks
-
+#     return attacks
 
 def connex_attack(graph : CityGraph, nbTimes : int, budget : int) -> DynamicAttack :
     """We remove edges which cut the graph into two parts recursively
@@ -319,6 +333,7 @@ def main():
         "betweenness_moving" : betweenness_centralities_moving_attack,
         "random_moving" : random_moving_attack,
         "index" : index_attack,
+        "geographical" : geographical_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
     }
@@ -327,7 +342,7 @@ def main():
         print(f"{TermColors.RED}Error{TermColors.ENDC}: {args.type_attack} is not a valid attack type")
         return
 
-    print(args)
+    #print(args)
 
     # Write graph to file
     FILES_DIR_NAME = "data"
