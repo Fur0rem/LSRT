@@ -40,6 +40,7 @@ def sorted_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, s
 
     attack = StaticAttack(graph, nbTimes)
     edges = list(graph.edges())
+
     for i, edge in enumerate(edges) :
         edges[i] = (graph.find_edge_index(edge[0], edge[1]), graph.get_node_index(edge[0]), graph.get_node_index(edge[1]))
     edges.sort(key = lambda x: sort_by(x[0]), reverse = True)
@@ -140,19 +141,13 @@ def betweenness_centralities_moving_attack(graph : CityGraph, nbTimes : int, bud
     Then we recompute the betweenness centralities for the edges of the new graph with the removed edges.
     """
 
-    def remove_edge(graph : CityGraph, edge_idx : int) :
+    def remove_edge(graph : CityGraph, edge : tuple) :
         """Removes an edge from the graph"""
-        edge = graph.get_edge_at(edge_idx)
         graph.graph.remove_edge(edge[0], edge[1])
 
-    def add_edge(graph : CityGraph, edge_idx : int) :
-        """Adds an edge to the graph"""
-        edge = graph.get_edge_at(edge_idx)
-        graph.graph.add_edge(edge[0], edge[1])
-
     attacks = DynamicAttack(graph, nbTimes)
-    edges = list(graph.edges())
-    betweenness_centralities = graph.get_betweenness_centralities()
+    edges = list(graph.graph.edges())
+    betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
     graph_backup = graph.graph.copy()
 
     # Find the edge with the highest betweenness centrality
@@ -162,15 +157,51 @@ def betweenness_centralities_moving_attack(graph : CityGraph, nbTimes : int, bud
         edges.sort(key = lambda x : betweenness_centralities[(x[0], x[1], 0)], reverse = True)
         # Remove all the edges with the highest betweenness centrality with the budget
         budget_used = 0
-        for edge_idx in range(graph.nb_edges()) :
+        for i in range(budget) :
+            edge_idx = graph.find_edge_index(edges[i][0], edges[i][1])
+            remove_edge(graph, edges[i])
+            attacks.add_attack(time, edge_idx)
+            budget_used += 1
+        # Recompute the betweenness centralities
+        betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
+        # Restore the graph
+        graph.graph = graph_backup.copy()
+
+    return attacks
+
+
+def index_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
+    """
+    We remove the edges with the highest betweenness centrality.
+    Then we recompute the betweenness centralities for the edges of the new graph with the removed edges.
+    """
+
+    def remove_edge(graph : CityGraph, edge_idx : int) :
+        """Removes an edge from the graph"""
+        edge = graph.get_edge_at(edge_idx)
+        graph.graph.remove_edge(edge[0], edge[1])
+
+    attacks = DynamicAttack(graph, nbTimes)
+    edges = list(graph.edges())
+    betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
+    graph_backup = graph.graph.copy()
+
+    # Find the edge with the highest betweenness centrality
+    # Then remove it
+    for time in range(1 + (nbTimes // delta)) :
+        # Sort the edges by betweenness centrality
+        edges.sort(key = lambda x : betweenness_centralities[(x[0], x[1], 0)], reverse = True)
+        # Remove all the edges with the highest betweenness centrality with the budget
+        budget_used = 0
+        for i in range(graph.nb_edges()) :
             if budget_used < budget :
-                remove_edge(graph, edge_idx)
-                attacks.add_attack(time, edge_idx)
+                remove_edge(graph, i)
+                attacks.add_attack(time, i)
                 budget_used += 1
             else :
                 break
         # Recompute the betweenness centralities
-        betweenness_centralities = graph.get_betweenness_centralities()
+        betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
         # Restore the graph
         graph.graph = graph_backup.copy()
 
@@ -287,6 +318,7 @@ def main():
         "betweenness" : betweenness_centralities_attack,
         "betweenness_moving" : betweenness_centralities_moving_attack,
         "random_moving" : random_moving_attack,
+        "index" : index_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
     }
