@@ -171,7 +171,6 @@ class CityGraph :
 
 def normalize_speed(var):
 	"""Make sure that the weigth of a node become an int with the same unit, whatever it was"""
-
 	if(type(var)==int):
 		return var
 	elif((type(var)==float) or ((type(var)==str)) and var.isnumeric()):
@@ -185,9 +184,9 @@ def normalize_speed(var):
 			return int(zone[1])
 		elif(mph!=None):
 			return int(mph[1])*1.609344
-	else:
-		print(var)
-		return LOWEST_MAX_SPEED
+	
+	print("Erreur : ", type(var), [var])
+	return LOWEST_MAX_SPEED
 
 def euclidian_distance(a,b):
 	"""Give the euclidian distance between two nodes"""
