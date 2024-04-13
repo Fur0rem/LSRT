@@ -9,8 +9,8 @@ use crate::paths::{Path, SubPathsPyramid};
 use std::collections::BinaryHeap;
 
 pub type Node = u16;
-pub type Weight = u16;
-pub type Time = u16;
+pub type Weight = u32;
+pub type Time = u32;
 
 /// A neighbour is a node and the weight of the edge to this node
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,8 +69,7 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -113,7 +112,7 @@ impl Graph {
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct DijkstraState {
 	pub node: Node,
-	pub distance: u16,
+	pub distance: Weight,
 }
 
 impl Ord for DijkstraState {
@@ -134,7 +133,7 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 	let mut previous = vec![None; graph.nb_nodes()];
 	heap.push(DijkstraState { node: start, distance: 1 });
 
-	let mut distances = vec![u16::MAX; graph.nb_nodes()];
+	let mut distances = vec![Weight::MAX; graph.nb_nodes()];
 	distances[start as usize] = 1;
 
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
@@ -194,7 +193,7 @@ impl Graph {
 				let subpaths = SubPathsPyramid::from_path(self, &path);
 				for subpath in &subpaths.subpaths {
 					if subpath.total_weight > max_time {
-						dst_mat[subpath.start as usize][subpath.end as usize] = u16::MAX;
+						dst_mat[subpath.start as usize][subpath.end as usize] = Weight::MAX;
 						continue;
 					}
 					dst_mat[subpath.start as usize][subpath.end as usize] = subpath.total_weight;

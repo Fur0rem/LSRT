@@ -2,7 +2,7 @@
 mod tests {
 
 	use crate::distance_matrix::{print_dma, sum_dma};
-	use crate::graph::{dijkstra, Graph, Neighbour};
+	use crate::graph::{dijkstra, Graph, Neighbour, Node};
 	use crate::paths::TemporalSubPathsPyramid;
 	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
 	use crate::{Attack, DynamicAttack, StaticAttack};
@@ -184,7 +184,7 @@ mod tests {
 
 		let deleted_links = graph.edges.iter().enumerate().flat_map(|(from, neighbours)| {
 			neighbours.iter().map(move |neighbour| DeletedLink {
-				from: from as u16,
+				from: from as Node,
 				to: neighbour.node,
 				times: (0..max_time).collect(),
 			})

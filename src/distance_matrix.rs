@@ -75,7 +75,7 @@ pub struct DistanceMatrix {
 
 impl DistanceMatrix {
 	pub fn new(graph: &Graph) -> DistanceMatrix {
-		let mut distances = vec![vec![u16::MAX; graph.nb_nodes()]; graph.nb_nodes()];
+		let mut distances = vec![vec![Weight::MAX; graph.nb_nodes()]; graph.nb_nodes()];
 		for i in 0..graph.nb_nodes() {
 			distances[i][i] = 1;
 		}

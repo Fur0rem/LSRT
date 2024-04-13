@@ -27,11 +27,14 @@ class CityGraph :
 
 	def __init__(self, city_name : str, network_type : str = "drive") :
 		"""Loads a graph from OSmnx through its name"""
+		print("Loading graph of", city_name)
 		ox.settings.osm_xml_way_tags=["highway", "lanes"]
 		self.city_name = city_name
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
+		print("Graph loaded")
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
 
+		print("Map created")
 		for nodes,edge in self.graph.edges.items():
 			if("length" in edge.keys()):
 				length=edge["length"]
@@ -46,11 +49,30 @@ class CityGraph :
 			# TODO : put the coef in normalize_speed
 			edge["weight"]=max(int((length*3.6)/(speed)), 1)
 
+		print("Normalised the data")
 		self.list_edges = list(self.graph.edges())
+		print("Graph fully done")
+		print("Graph has", self.nb_nodes(), "nodes and", self.nb_edges(), "edges")
 
 	def get_node_index(self, node : int) :
 		"""Returns the index in the matrix of the node through it's OSmnx numero"""
 		return self.nodes_idx_map[node]
+	
+	# def diameter(self):
+	# 	"""The diameter of the graph"""
+	# 	# Convert the graph to be non oriented else networkx is mad >:(
+	# 	tmp_graph = None
+	# 	if self.graph.is_directed() :
+	# 		tmp_graph = self.graph.to_undirected()
+	# 	else :
+	# 		tmp_graph = self.graph
+
+	# 	# If the graph is not connected, choose the biggest connected component
+	# 	max_diameter = 0
+	# 	for component in nx.connected_components(tmp_graph) :
+	# 		if nx.diameter(tmp_graph.subgraph(component)) > max_diameter :
+	# 			max_diameter = nx.diameter(tmp_graph.subgraph(component))
+	# 	return max_diameter
 
 	def show(self) :
 		"""Opens an image of the graph"""
@@ -97,7 +119,7 @@ class CityGraph :
 
 	def nb_nodes(self) :
 		"""Returns the number of nodes in the graph"""
-		return self.graph.size()
+		return self.graph.number_of_nodes()
 
 	def nb_edges(self) :
 		"""Returns the number of edges in the graph"""
@@ -105,7 +127,21 @@ class CityGraph :
 
 	def diameter(self):
 		"""Not finished"""
-		return nx.diameter(self.graph, weight="weight")
+		#return nx.diameter(self.graph, weight="weight")
+		# Make the graph non oriented
+		tmp_graph = None
+		if self.graph.is_directed() :
+			tmp_graph = self.graph.to_undirected()
+		else :
+			tmp_graph = self.graph
+
+		# If the graph is not connected, choose the biggest connected component
+		max_diameter = 0
+		for component in nx.connected_components(tmp_graph) :
+			if nx.diameter(tmp_graph.subgraph(component)) > max_diameter :
+				max_diameter = nx.diameter(tmp_graph.subgraph(component), weight="weight")
+		return max_diameter
+	
 
 	# TODO : fait la meme chose que get_edge_index
 	def get_edge_at(self, edge_idx : int) :
@@ -171,7 +207,6 @@ class CityGraph :
 
 def normalize_speed(var):
 	"""Make sure that the weigth of a node become an int with the same unit, whatever it was"""
-
 	if(type(var)==int):
 		return var
 	elif((type(var)==float) or ((type(var)==str)) and var.isnumeric()):
@@ -179,15 +214,18 @@ def normalize_speed(var):
 	elif((type(var)==list) or (type(var)==tuple)):
 		return np.min([normalize_speed(x) for x in var if(x!='walk')])
 	elif(type(var)==str):
+		# Try to parse it as a speed
 		zone=re.search('zone([0-9]*)', var)
 		mph=re.search('([0-9]*) mph', var)
+		de=re.search('DE:([0-9]*)', var)
 		if(zone!=None):
 			return int(zone[1])
 		elif(mph!=None):
 			return int(mph[1])*1.609344
-	else:
-		print(var)
-		return LOWEST_MAX_SPEED
+		elif(de!=None):
+			return int(de[1])	
+	#print(var)
+	return LOWEST_MAX_SPEED
 
 def euclidian_distance(a,b):
 	"""Give the euclidian distance between two nodes"""

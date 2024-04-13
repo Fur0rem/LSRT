@@ -358,18 +358,8 @@ def main():
     args.output_file = args.output_file if args.output_file is not None else f"{args.nom_ville}_{args.type_attack}_{args.times}_{args.budget}_{args.delta}"
     graph = CityGraph(args.nom_ville)
     if args.times == NO_ARG :
-        # Convert the graph to be non oriented else networkx is mad >:(
-        tmp_graph = None
-        if graph.graph.is_directed() :
-            tmp_graph = graph.graph.to_undirected()
-        else :
-            tmp_graph = graph.graph
-        
-        # Choose the max of the diameter of connected components
-        max_diameter = 0
-        for component in nx.connected_components(tmp_graph) :
-            max_diameter = max(max_diameter, nx.diameter(tmp_graph.subgraph(component)))
-        args.times = max_diameter
+        args.times = graph.diameter()
+    
 
     # TODO : Peut etre transformer en variable dynamiquement si ca devient trop
     # TODO : Random a l'air de pas marcher : meme avec un budget de 40000, il n'arrive pas a tout retirer

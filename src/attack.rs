@@ -31,7 +31,7 @@ pub trait Attack: std::fmt::Debug {
 
 	fn max_time(&self) -> Time;
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
-	fn delta(&self) -> Time;
+	fn delta(&self) -> u8;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -44,14 +44,14 @@ pub struct DeletedLink {
 #[derive(Debug)]
 pub struct DynamicAttack {
 	pub blocked_links: Vec<DeletedLink>,
-	pub delta: Time,
+	pub delta: u8,
 	pub max_time: Time,
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
 	pub blocked_links: Vec<Vec<Node>>,
-	pub delta: Time,
+	pub delta: u8,
 	pub max_time: Time,
 }
 
@@ -65,8 +65,7 @@ impl dyn Attack {
 
 		if line.starts_with('S') {
 			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			return Box::new(DynamicAttack::from_file(&mut reader));
 		}
 
@@ -80,7 +79,7 @@ impl StaticAttack {
 		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (max_time, delta) = scanf!(line.trim(), "{} {}", u16, u16).unwrap();
+		let (max_time, delta) = scanf!(line.trim(), "{} {}", Time, u8).unwrap();
 
 		// while there is new line, read it and append to the result
 		let mut blocked_links = Vec::with_capacity(graph.nb_nodes());
@@ -104,7 +103,7 @@ impl Attack for StaticAttack {
 		return self.max_time;
 	}
 
-	fn delta(&self) -> Time {
+	fn delta(&self) -> u8 {
 		return self.delta;
 	}
 
@@ -142,7 +141,7 @@ impl DynamicAttack {
 	pub fn from_file(reader: &mut BufReader<File>) -> Self {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (nb_edges, delta, max_time) = scanf!(line.trim(), "{} {} {}", usize, u16, u16).unwrap();
+		let (nb_edges, delta, max_time) = scanf!(line.trim(), "{} {} {}", usize, u8, Time).unwrap();
 
 		// Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
 		// For example : 4 (0,2) 5 9 17 18
@@ -175,7 +174,7 @@ impl DynamicAttack {
 
 		return Self {
 			blocked_links,
-			delta: delta as Time,
+			delta: delta,
 			max_time: max_time as Time,
 		};
 	}
@@ -186,7 +185,7 @@ impl Attack for DynamicAttack {
 		return self.max_time;
 	}
 
-	fn delta(&self) -> Time {
+	fn delta(&self) -> u8 {
 		return self.delta;
 	}
 
@@ -216,13 +215,14 @@ impl Attack for DynamicAttack {
 					for subpath in &subpaths.subpaths {
 						let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
 
-						if time_start >= time_graph.max_time as u16 {
+						if time_start >= time_graph.max_time as Time {
 							continue;
 						}
 						dma[time_start as usize][from as usize][to as usize] = total_length;
 					}
 				}
 			}
+			//println!("{}/{}", t, self.max_time);
 		}
 
 		return AttackResult::Dynamic(dma);

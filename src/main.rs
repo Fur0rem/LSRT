@@ -44,18 +44,18 @@ fn main() {
 	rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
 	benchmark!("series of attack", {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
-		let efficiencies: Vec<f64> = attack_files
+		let efficiencies: Vec<(&str, f64, u64)> = attack_files
 			.par_iter()
 			.map(|attack_file| {
 				let file_name = format!("{}{}", attack_directory, attack_file);
 				let attack = <dyn Attack>::from_file(&file_name, &graph);
 				let (efficiency, reachables) = attack.efficiency(&graph);
 				println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, file_name);
-				efficiency
+				(*attack_file, efficiency, reachables)
 			})
 			.collect();
-		for efficiency in efficiencies {
-			writeln!(result_file, "{}", efficiency).unwrap();
+		for (attack_file, efficiency, reachables) in efficiencies {
+			writeln!(result_file, "{} {} {}", attack_file, efficiency, reachables).unwrap();
 		}
 	});
 }
