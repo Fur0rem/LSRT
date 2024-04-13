@@ -139,7 +139,7 @@ done
 wait
 
 #python3 scripts/Strategies.py $CITY $ATTACK $TIMES $DELTA $FILE_FORMAT $attack_string
-echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
+#echo "$CITY"_graph "$FILE_FORMAT" -f "$CITY"_"$ATTACK"_"$TIMES"_"$DELTA"_"$BUDGET_MIN"_"$BUDGET_MAX" "$i $attack_string"
 CITY_BASENAME=$(basename "$CITY")
 FILE_FORMAT_BASENAME=$(basename "$FILE_FORMAT")
 ./lsrt "$CITY_BASENAME" "$FILE_FORMAT_BASENAME" "$attack_string" 

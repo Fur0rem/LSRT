@@ -79,7 +79,7 @@ class DynamicAttack :
         edges_of_graph = [(self.graph.get_node_index(edge[0]), self.graph.get_node_index(edge[1])) for edge in self.graph.edges()]
 
         # Conversion
-        edges_deleted : dict[int, set[int]] = { edge : set() for edge in edges_of_graph}
+        edges_deleted : dict[tuple[int, int], set[int]] = { edge : set() for edge in edges_of_graph}
         for time, edge_idx in self.attacks :
             node0 = self.graph.get_node_index(self.graph.get_edge_at(edge_idx)[0])
             node1 = self.graph.get_node_index(self.graph.get_edge_at(edge_idx)[1])

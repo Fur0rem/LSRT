@@ -31,14 +31,10 @@ macro_rules! benchmark {
 fn main() {
 	// Collect args
 	let args: Vec<String> = std::env::args().collect();
-	println!("{:?}", args);
 
 	const FILES_DIR_NAME: &str = "data";
 	let graph_filename = format!("{FILES_DIR_NAME}/{}/graph", &args[1]);
 	let attack_directory = format!("{FILES_DIR_NAME}/{}/{}/", &args[1], &args[2]);
-	println!("\n");
-	println!("Graph filename: {}", graph_filename);
-	println!("Attack directory: {}", attack_directory);
 	let attack_files: Vec<&str> = args[3].split_ascii_whitespace().collect();
 
 	let result_file = format!("{FILES_DIR_NAME}/{}/{}/result", &args[1], &args[2]);
@@ -51,9 +47,10 @@ fn main() {
 		let efficiencies: Vec<f64> = attack_files
 			.par_iter()
 			.map(|attack_file| {
-				let attack = <dyn Attack>::from_file(&format!("{}{}", attack_directory, attack_file), &graph);
+				let file_name = format!("{}{}", attack_directory, attack_file);
+				let attack = <dyn Attack>::from_file(&file_name, &graph);
 				let (efficiency, reachables) = attack.efficiency(&graph);
-				println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, attack_file);
+				println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, file_name);
 				efficiency
 			})
 			.collect();
