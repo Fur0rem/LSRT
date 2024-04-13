@@ -6,7 +6,8 @@
 NB_ATTACK_RANDOMS=5
 
 # Get the number of edges of the city through the exit value of BudgetVille.py
-NB_EDGES=$(python3 scripts/BudgetVille.py $1)
+python3 scripts/BudgetVille.py $1
+NB_EDGES=$?
 
 # Launch the non-attacked city
 ./launch_single.sh -c $1 -a none -g 8 -r 7 -n 0 -x 0 -s 1

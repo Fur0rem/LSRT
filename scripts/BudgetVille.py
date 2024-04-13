@@ -13,5 +13,5 @@ if __name__ == "__main__":
     city_name = sys.argv[1]
     num_edges = get_city_edges(city_name)
 
-    # Communiquer le nombre d'arêtes au script appelant
-    print(num_edges)
+    # Communiquer le nombre d'arêtes au script appelant avec le code de sortie
+    sys.exit(num_edges)
