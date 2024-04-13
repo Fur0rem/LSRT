@@ -44,7 +44,7 @@ class CityGraph :
 				speed=LOWEST_MAX_SPEED
  
 			# TODO : put the coef in normalize_speed
-			edge["weigth"]=max(int((length*3.6)/(speed)), 1)
+			edge["weight"]=max(int((length*3.6)/(speed)), 1)
 
 		self.list_edges = list(self.graph.edges())
 
@@ -105,7 +105,7 @@ class CityGraph :
 
 	def diameter(self):
 		"""Not finished"""
-		return nx.diameter(self.graph, weight="weigth")
+		return nx.diameter(self.graph, weight="weight")
 
 	# TODO : fait la meme chose que get_edge_index
 	def get_edge_at(self, edge_idx : int) :
@@ -149,7 +149,7 @@ class CityGraph :
 			for j in range(csr.indptr[i], csr.indptr[i+1]):
 				weights=[]
 				for edge in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
-					weights.append(edge["weigth"])
+					weights.append(edge["weight"])
 
 				V[j]=np.min(weights)
 
