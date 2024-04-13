@@ -11,8 +11,8 @@ NB_EDGES=$(python3 scripts/BudgetVille.py $1)
 # Launch sorted, deterministic attacks
 ./launch_single.sh -c $1 -a betweenness -g 8 -r 7 -x $NB_EDGES -s 1
 ./launch_single.sh -c $1 -a betweenness_moving -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a index -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a geographical -g 8 -r 7 -x $NB_EDGES -s 1
+./launch_single.sh -c $1 -a identifier -g 8 -r 7 -x $NB_EDGES -s 1
+./launch_single.sh -c $1 -a longitude -g 8 -r 7 -x $NB_EDGES -s 1
 ./launch_single.sh -c $1 -a max_lanes -g 8 -r 7 -x $NB_EDGES -s 1
 
 # Launch random attacks

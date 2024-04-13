@@ -70,8 +70,8 @@ def betweenness_centralities_attack(graph : CityGraph, nbTimes : int, budget : i
     """Each time, it removes the edge with the highest betweenness centrality until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, delta, lambda x : graph.get_edge_betweenness_centrality(x), costPerLane)
 
-def geographical_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
-    """Each time, it removes the edge to the most left geographically until the budget is reached or no more edges are available"""
+def longitude_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
+    """Each time, it removes the edge to the most left (by longitude) until the budget is reached or no more edges are available"""
     def get_edge_longitude(edge_idx : int) -> float :
         edge = graph.get_edge_at(edge_idx)
         return min(graph.graph.nodes[edge[0]]["x"], graph.graph.nodes[edge[1]]["x"])
@@ -383,7 +383,7 @@ def main():
         "betweenness_moving" : betweenness_centralities_moving_attack,
         "random_moving" : random_moving_attack,
         "index" : index_attack,
-        "geographical" : geographical_attack,
+        "longitude" : longitude_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
     }
