@@ -10,19 +10,19 @@ python3 scripts/BudgetVille.py $1
 NB_EDGES=$?
 
 # Launch the non-attacked city
-./launch_single.sh -c $1 -a none -g 8 -r 7 -n 0 -x 0 -s 1
+./launch_single.sh -c $1 -a none -n 0 -x 0
 
 # Launch sorted, deterministic attacks
-./launch_single.sh -c $1 -a betweenness -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a betweenness_moving -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a identifier -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a longitude -g 8 -r 7 -x $NB_EDGES -s 1
-./launch_single.sh -c $1 -a max_lanes -g 8 -r 7 -x $NB_EDGES -s 1
+./launch_single.sh -c $1 -a betweenness -g 15 -r 14 -x $NB_EDGES -s 2
+./launch_single.sh -c $1 -a betweenness_moving -g 15 -r 14 -x $NB_EDGES -s 2
+./launch_single.sh -c $1 -a identifier -g 15 -r 14 -x $NB_EDGES -s 2
+./launch_single.sh -c $1 -a longitude -g 15 -r 14 -x $NB_EDGES -s 2
+./launch_single.sh -c $1 -a max_lanes -g 15 -r 14 -x $NB_EDGES -s 2
 
 # Launch random attacks
 for i in $(seq 1 $NB_ATTACK_RANDOMS); do
-    ./launch_single.sh -c $1 -a random -g 8 -r 7 -x $NB_EDGES -s 1
-    ./launch_single.sh -c $1 -a random_moving -g 8 -r 7 -x $NB_EDGES -s 1
+    ./launch_single.sh -c $1 -a random -g 15 -r 14 -x $NB_EDGES -s 2
+    ./launch_single.sh -c $1 -a random_moving -g 15 -r 14 -x $NB_EDGES -s 2
 done
 
 # Exemple :
