@@ -78,7 +78,7 @@ def longitude_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int
     
     return sorted_attack(graph, nbTimes, budget, delta, get_edge_longitude, costPerLane)
 
-def index_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
+def identifier_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the highest index until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, delta, lambda x : -x, costPerLane)
     
@@ -382,7 +382,7 @@ def main():
         "betweenness" : betweenness_centralities_attack,
         "betweenness_moving" : betweenness_centralities_moving_attack,
         "random_moving" : random_moving_attack,
-        "index" : index_attack,
+        "identifier" : identifier_attack,
         "longitude" : longitude_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
