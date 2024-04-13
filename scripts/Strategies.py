@@ -10,7 +10,7 @@ from Attack import DynamicAttack, print_suppression_edge, StaticAttack
 # Juste pour test pour l'instant
 ville="Melun"
 
-def random_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
+def full_random_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
     """Each time, it removes a random edge from the graph until the budget is reached or no more edges are available"""
 
     costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
@@ -91,7 +91,7 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
     edges = list(graph.edges())
     
     # First time
-    attacks = random_attack(graph, 1, budget, delta, costPerLane)
+    attacks = full_random_attack(graph, 1, budget, delta, costPerLane)
     attacks.set_max_time(nbTimes)
     
     # Next times
@@ -315,8 +315,8 @@ def connex_attack(graph : CityGraph, nbTimes : int, budget : int) -> DynamicAtta
 #graph.print_stats()
 # graph.show() # je sais pas comment fermer une fenetre sous sway au secours
 
-#a = random_attack(graph, 10, 10, True)
-#a.write_to_file("test_random_attack.txt")
+#a = full_random_attack(graph, 10, 10, True)
+#a.write_to_file("test_full_random_attack.txt")
 # a = min_lanes_attack(graph, 10, 10)
 # a.write_to_file("test_min_lanes_attack.txt")
 # a = max_lanes_attack(graph, 10, 10)
@@ -364,7 +364,7 @@ def main():
     # TODO : Peut etre transformer en variable dynamiquement si ca devient trop
     # TODO : Random a l'air de pas marcher : meme avec un budget de 40000, il n'arrive pas a tout retirer
     switch = {
-        "random" : random_attack,
+        "full_random" : full_random_attack,
         "min_lanes" : min_lanes_attack,
         "max_lanes" : max_lanes_attack,
         "betweenness" : betweenness_centralities_attack,

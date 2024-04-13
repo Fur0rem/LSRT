@@ -21,7 +21,7 @@ NB_EDGES=$?
 
 # Launch random attacks
 for i in $(seq 1 $NB_ATTACK_RANDOMS); do
-    ./launch_single.sh -c $1 -a random -g 15 -r 14 -x $NB_EDGES -s 2
+    ./launch_single.sh -c $1 -a full_random -g 15 -r 14 -x $NB_EDGES -s 2
     ./launch_single.sh -c $1 -a random_moving -g 15 -r 14 -x $NB_EDGES -s 2
 done
 
