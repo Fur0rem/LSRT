@@ -31,6 +31,21 @@ class CityGraph :
 		self.city_name = city_name
 		self.graph = ox.graph_from_place(city_name, network_type=network_type)
 		self.nodes_idx_map = { edge : i  for i, edge in enumerate(self.graph.nodes())}
+
+		for edge in self.graph.edges.values():
+			if("length" in edge.keys()):
+				length=edge["length"]
+			else:
+				length=euclidian_distance(self.graph.nodes[nodeList[i]],self.graph.nodes[nodeList[csr.indices[j]]])
+
+			if "maxspeed" in edge.keys() :
+				speed=normalize_speed(edge["maxspeed"])
+			else:
+				speed=LOWEST_MAX_SPEED
+ 
+			# TODO : put the coef in normalize_speed
+			edge["weigth"]=max(int((length*3.6)/(speed)), 1)
+
 		self.list_edges = list(self.graph.edges())
 
 	def get_node_index(self, node : int) :
@@ -88,6 +103,10 @@ class CityGraph :
 		"""Returns the number of edges in the graph"""
 		return self.graph.number_of_edges()
 
+	def diameter(self):
+		"""Not finished"""
+		return nx.diameter(self.graph, weight="weigth")
+
 	# TODO : fait la meme chose que get_edge_index
 	def get_edge_at(self, edge_idx : int) :
 		"""Accesses an edge through its index"""
@@ -130,18 +149,7 @@ class CityGraph :
 			for j in range(csr.indptr[i], csr.indptr[i+1]):
 				weights=[]
 				for edge in self.graph.succ[nodeList[i]][nodeList[csr.indices[j]]].values():
-					if("length" in edge.keys()):
-						length=edge["length"]
-					else:
-						edge["length"]=euclidian_distance(self.graph.nodes[nodeList[i]],self.graph.nodes[nodeList[csr.indices[j]]])
-
-					if "maxspeed" in edge.keys() :
-						speed=normalize_speed(edge["maxspeed"])
-					else:
-						speed=LOWEST_MAX_SPEED
-
-					# TODO : put the coef in normalize_speed
-					weights.append(max(int((length*3.6)/(speed)), 1))
+					weights.append(edge["weigth"])
 
 				V[j]=np.min(weights)
 
