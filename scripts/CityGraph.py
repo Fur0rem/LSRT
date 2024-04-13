@@ -119,7 +119,7 @@ class CityGraph :
 		"""Accesses an edge through its index"""
 		return list(self.graph.edges())[edge_idx]
 
-	def write_to_file(self, file_path : str) -> None :
+	def write_to_file(self, file_path : str) -> int :
 		nodeList=list(self.graph.nodes); # Should be changed
 		csr=nx.to_scipy_sparse_array(self.graph, format='csr'); # format=csr not needed
 		V=np.ndarray(len(csr.indices), dtype=np.uint32)

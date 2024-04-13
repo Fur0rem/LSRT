@@ -138,9 +138,9 @@ def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta :
                     attacks.add_attack(time, edge_idx)
                 
     # Add the last attack
-    for edge_idx in range(graph.nb_edges()) :
-        if nb_people_on_edges[edge_idx] > 0 :
-            attacks.add_attack(nbTimes, edge_idx)            
+    # for edge_idx in range(graph.nb_edges()) :
+    #     if nb_people_on_edges[edge_idx] > 0 :
+    #         attacks.add_attack(nbTimes, edge_idx)            
 
     return attacks
 
@@ -240,8 +240,6 @@ def betweenness_centralities_moving_attack(graph : CityGraph, nbTimes : int, bud
         # Recompute the betweenness centralities
         betweenness_centralities = nx.edge_betweenness_centrality(graph.graph)
         graph.graph = copy.deepcopy(graph_backup)
-
-    print(attacks.attacks)
 
     return attacks
 
@@ -366,12 +364,6 @@ def main():
             tmp_graph = graph.graph.to_undirected()
         else :
             tmp_graph = graph.graph
-        
-        # Choose the max of the diameter of connected components
-        max_diameter = 0
-        for component in nx.connected_components(tmp_graph) :
-            max_diameter = max(max_diameter, nx.diameter(tmp_graph.subgraph(component)))
-        args.times = max_diameter
 
     # TODO : Peut etre transformer en variable dynamiquement si ca devient trop
     # TODO : Random a l'air de pas marcher : meme avec un budget de 40000, il n'arrive pas a tout retirer
@@ -396,7 +388,9 @@ def main():
 
     # Write graph to file
     FILES_DIR_NAME = "data"
-    graph.write_to_file(f"{FILES_DIR_NAME}/{args.nom_ville}/graph")
+    diameter = graph.write_to_file(f"{FILES_DIR_NAME}/{args.nom_ville}/graph")
+    if args.times == NO_ARG :
+        args.times = diameter
     if args.budget > graph.nb_edges(): 
         args.budget = graph.nb_edges()
 
