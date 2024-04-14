@@ -21,7 +21,7 @@ def dt_from_dir(dir_path):
     by the launch script into a list of [name, np.array]
     """
     res_int = dict()
-    res_coeff = dict()
+    dir_path = "data/" + dir_path
     for name in os.listdir(dir_path): 
         if not name == "graph" : 
 
@@ -31,7 +31,6 @@ def dt_from_dir(dir_path):
                 clean_name = split[0] + " " + split[1]
             else : 
                 clean_name = split[0]
-
             
             if clean_name not in res_int : 
                 res_int[clean_name] = [load_file(dir_path + "/" + name + "/result")]
@@ -95,6 +94,7 @@ def rand_from_dir(dir_path) :
     by the launch script into a dict()
     """
     res_int = dict()
+    dir_path = "data/" + dir_path
     for name in os.listdir(dir_path): 
         if not name == "graph" : 
 
@@ -120,12 +120,12 @@ def plot_rand(ax, data, y_index=1):
     col_wheel = iter(cm.rainbow(np.linspace(0, 1, 6)))#pour changer de couleur
 
 
-    print(data)
+    # print(data)
     for i in data.keys() :
         c = next(col_wheel)
         for values in data[i]:
 
-            print(values)
+            # print(values)
 
             x = [ j[0]for j in values]
             y = []
@@ -140,13 +140,12 @@ def plot_rand(ax, data, y_index=1):
     ax.legend()
     ax.set_xscale("log")
 
-def mk_plot_rand(ax, dir_name, y_index=1) : 
+def mk_plot_rand(ax, city_name, y_index=1) : 
     """
     string(directory path) -> None 
     plots from the dir passed
     """
-    print(dir_name.split("/"[-1]))
-    ax.set_title( dir_name.split("/")[-1])
+    ax.set_title(city_name)
 
     if y_index==1  : 
         ax.set_ylabel("efficiency in permille")
@@ -155,7 +154,7 @@ def mk_plot_rand(ax, dir_name, y_index=1) :
 
     ax.set_xlabel("number of attacked links")
 
-    plot_rand(ax,rand_from_dir(dir_name),y_index)
+    plot_rand(ax,rand_from_dir(city_name),y_index)
 
 def main():
 
@@ -164,7 +163,7 @@ def main():
     args = parser.parse_args()
 
     fig, (ax1,ax2) = plt.subplots(1,2)
-    fig.suptitle("Attaques sur " + args.path_ville.split("/")[-1])
+    fig.suptitle("Attaques sur " + args.path_ville)
 
     mk_plot(ax1, args.path_ville)
 
@@ -176,8 +175,14 @@ def main():
     fig.set_figwidth(30)
 
     fig.show()
-    fig.savefig("plot_"+args.path_ville.split("/")[-1])
+    # If plots subdirectory does not exist, create it
+    if not os.path.exists("plots"):
+        os.makedirs("plots")
+    fig.savefig("plots/plot_"+args.path_ville)
 
     
 if __name__ == "__main__" : 
     main()
+
+# Exemple d'utilisation :
+# python3 Plot.py Maza
