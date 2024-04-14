@@ -6,16 +6,16 @@ use std::{
 
 use sscanf::scanf;
 
-use crate::distance_matrix::{print_dma, sum_dma, sum_dma_static, DistanceMatrix};
+use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray};
 use crate::time_varying_graph::{graph_to_temporal, temporal_dijkstra};
 use crate::{
-	graph::{Graph, Node, Time},
+	graph::{Graph, Node, Tick},
 	paths::TemporalSubPathsPyramid,
 };
 
 pub enum AttackResult {
 	Static(DistanceMatrix),
-	Dynamic(Vec<DistanceMatrix>),
+	Dynamic(DistanceMatrixArray),
 }
 
 pub trait Attack: std::fmt::Debug {
@@ -24,12 +24,12 @@ pub trait Attack: std::fmt::Debug {
 	fn efficiency(&self, graph: &Graph) -> (f64, u64) {
 		let distance_matrix = self.all_pairs_distances(graph);
 		match distance_matrix {
-			AttackResult::Static(dm) => sum_dma_static(&dm, self.max_time()),
-			AttackResult::Dynamic(dma) => sum_dma(&dma, self.max_time()),
+			AttackResult::Static(dm) => dm.efficiency_reachables(self.max_time()),
+			AttackResult::Dynamic(dma) => dma.efficiency_reachables(self.max_time()),
 		}
 	}
 
-	fn max_time(&self) -> Time;
+	fn max_time(&self) -> Tick;
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
 	fn delta(&self) -> u8;
 }
@@ -38,21 +38,21 @@ pub trait Attack: std::fmt::Debug {
 pub struct DeletedLink {
 	pub from: Node,
 	pub to: Node,
-	pub times: Vec<Time>,
+	pub times: Vec<Tick>,
 }
 
 #[derive(Debug)]
 pub struct DynamicAttack {
 	pub blocked_links: Vec<DeletedLink>,
 	pub delta: u8,
-	pub max_time: Time,
+	pub max_time: Tick,
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
 	pub blocked_links: Vec<Vec<Node>>,
 	pub delta: u8,
-	pub max_time: Time,
+	pub max_time: Tick,
 }
 
 impl dyn Attack {
@@ -79,10 +79,10 @@ impl StaticAttack {
 		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (max_time, delta) = scanf!(line.trim(), "{} {}", Time, u8).unwrap();
+		let (max_time, delta) = scanf!(line.trim(), "{} {}", Tick, u8).unwrap();
 
 		// while there is new line, read it and append to the result
-		let mut blocked_links = Vec::with_capacity(graph.nb_nodes());
+		let mut blocked_links = Vec::with_capacity(graph.nb_nodes() as usize);
 		for _ in 0..graph.nb_nodes() {
 			let mut line = String::new();
 			reader.read_line(&mut line).unwrap();
@@ -99,7 +99,7 @@ impl StaticAttack {
 }
 
 impl Attack for StaticAttack {
-	fn max_time(&self) -> Time {
+	fn max_time(&self) -> Tick {
 		return self.max_time;
 	}
 
@@ -141,7 +141,7 @@ impl DynamicAttack {
 	pub fn from_file(reader: &mut BufReader<File>) -> Self {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (nb_edges, delta, max_time) = scanf!(line.trim(), "{} {} {}", usize, u8, Time).unwrap();
+		let (nb_edges, delta, max_time) = scanf!(line.trim(), "{} {} {}", usize, u8, Tick).unwrap();
 
 		// Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
 		// For example : 4 (0,2) 5 9 17 18
@@ -175,13 +175,13 @@ impl DynamicAttack {
 		return Self {
 			blocked_links,
 			delta: delta,
-			max_time: max_time as Time,
+			max_time: max_time as Tick,
 		};
 	}
 }
 
 impl Attack for DynamicAttack {
-	fn max_time(&self) -> Time {
+	fn max_time(&self) -> Tick {
 		return self.max_time;
 	}
 
@@ -196,14 +196,13 @@ impl Attack for DynamicAttack {
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
-		let distance_matrix = DistanceMatrix::init(graph);
-		let mut dma = vec![distance_matrix.clone(); self.max_time as usize];
+		let mut dma = DistanceMatrixArray::zeroed(graph, self.max_time());
 		// Compute all distance matrices
 		for t in 0..time_graph.max_time {
-			for i in 0..time_graph.nodes.len() {
-				for j in 0..time_graph.nodes.len() {
+			for i in 0..time_graph.nb_nodes() {
+				for j in 0..time_graph.nb_nodes() {
 					// Not 0 -> already computed
-					if dma[t as usize][i][j] != 0 {
+					if dma[(t, i, j)] != 0 {
 						continue;
 					}
 
@@ -215,10 +214,10 @@ impl Attack for DynamicAttack {
 					for subpath in &subpaths.subpaths {
 						let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
 
-						if time_start >= time_graph.max_time as Time {
+						if time_start >= time_graph.max_time as Tick {
 							continue;
 						}
-						dma[time_start as usize][from as usize][to as usize] = total_length;
+						dma[(time_start, from, to)] = total_length;
 					}
 				}
 			}

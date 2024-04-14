@@ -9,14 +9,13 @@ use crate::paths::{Path, SubPathsPyramid};
 use std::collections::BinaryHeap;
 
 pub type Node = u16;
-pub type Weight = u32;
-pub type Time = u32;
+pub type Tick = u32;
 
 /// A neighbour is a node and the weight of the edge to this node
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Neighbour {
 	pub node: Node,
-	pub weight: Weight,
+	pub weight: Tick,
 }
 
 /// A graph is represented as an adjacency list
@@ -29,8 +28,8 @@ pub struct Graph {
 
 impl Graph {
 	/// Returns the number of nodes in the graph
-	pub fn nb_nodes(&self) -> usize {
-		self.edges.len()
+	pub fn nb_nodes(&self) -> Node {
+		self.edges.len() as Node
 	}
 
 	// TODO : change the python file to make it a adjacency list to begin with
@@ -49,7 +48,7 @@ impl Graph {
 		// The second line contains the weights of the elements
 		reader.read_line(&mut line)?;
 		let weights = line.split_whitespace();
-		let weights = weights.map(|x| x.parse::<Weight>().unwrap()).collect::<Vec<Weight>>();
+		let weights = weights.map(|x| x.parse::<Tick>().unwrap()).collect::<Vec<Tick>>();
 		line.clear();
 
 		// The third line contains the column index of the elements
@@ -112,7 +111,7 @@ impl Graph {
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct DijkstraState {
 	pub node: Node,
-	pub distance: Weight,
+	pub distance: Tick,
 }
 
 impl Ord for DijkstraState {
@@ -130,10 +129,10 @@ impl PartialOrd for DijkstraState {
 // FIXME : probably wrong cause distance is unused
 pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 	let mut heap = BinaryHeap::new();
-	let mut previous = vec![None; graph.nb_nodes()];
+	let mut previous = vec![None; graph.nb_nodes() as usize];
 	heap.push(DijkstraState { node: start, distance: 1 });
 
-	let mut distances = vec![Weight::MAX; graph.nb_nodes()];
+	let mut distances = vec![Tick::MAX; graph.nb_nodes() as usize];
 	distances[start as usize] = 1;
 
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
@@ -176,13 +175,13 @@ impl Graph {
 	/// It does dijkstra for each pair of nodes, and stores the result in a matrix
 	/// For each path computed, it also stores all the subpaths present in the path
 	/// This should reduce the number of dijkstra calls, since a path of length n has n(n+1)/2 subpaths
-	pub fn all_pairs_distances(&self, max_time: Weight) -> DistanceMatrix {
-		let mut dst_mat = DistanceMatrix::init(self);
+	pub fn all_pairs_distances(&self, max_time: Tick) -> DistanceMatrix {
+		let mut dst_mat = DistanceMatrix::zeroed(self);
 
 		for node in 0..self.nb_nodes() {
 			for node2 in 0..self.nb_nodes() {
 				// If the value is already computed, skip
-				if dst_mat[node][node2] != 0 {
+				if dst_mat[(node, node2)] != 0 {
 					continue;
 				}
 
@@ -193,10 +192,10 @@ impl Graph {
 				let subpaths = SubPathsPyramid::from_path(self, &path);
 				for subpath in &subpaths.subpaths {
 					if subpath.total_weight > max_time {
-						dst_mat[subpath.start as usize][subpath.end as usize] = Weight::MAX;
+						dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
 						continue;
 					}
-					dst_mat[subpath.start as usize][subpath.end as usize] = subpath.total_weight;
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
 				}
 			}
 		}

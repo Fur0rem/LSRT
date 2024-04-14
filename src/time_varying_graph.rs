@@ -1,5 +1,5 @@
 use crate::graph::DijkstraState;
-use crate::graph::{Graph, Neighbour, Node, Time, Weight};
+use crate::graph::{Graph, Neighbour, Node, Tick};
 use crate::paths::TemporalPath;
 use crate::DeletedLink;
 
@@ -7,7 +7,7 @@ use std::collections::BinaryHeap;
 
 #[derive(Debug, Clone)]
 pub struct TimeVaryingEdge {
-	pub weights: Vec<Weight>,
+	pub weights: Vec<Tick>,
 }
 
 /// A phantom edge is used to replace a blocked edge with an edge with an equivalent weight + waiting time
@@ -23,14 +23,21 @@ pub struct PhantomEdge {
 /// The graph is represented as an adjacency list, where each edge is a PhantomEdge
 #[derive(Debug, Clone)]
 pub struct TimeVaryingGraph {
-	pub max_time: u64,
+	pub max_time: Tick,
 	pub nodes: Vec<Vec<PhantomEdge>>,
 }
 
-pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, max_time: u64, time_start: u64) -> TemporalPath<'_> {
+impl TimeVaryingGraph {
+	/// Returns the number of nodes in the graph
+	pub fn nb_nodes(&self) -> Node {
+		self.nodes.len() as Node
+	}
+}
+
+pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, max_time: Tick, time_start: Tick) -> TemporalPath<'_> {
 	// Initialize the distance, previous node and visited arrays
 	let max_node_index = time_graph.nodes.len();
-	let mut dist = vec![Weight::MAX; max_node_index];
+	let mut dist = vec![Tick::MAX; max_node_index];
 	let mut prev = vec![Node::MAX; max_node_index];
 	let mut visited = vec![false; max_node_index];
 	dist[start as usize] = 0;
@@ -49,11 +56,11 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		for phantom_edge in &time_graph.nodes[node as usize] {
 			let edge = &phantom_edge.weights;
 			let neighbour = &phantom_edge.node;
-			if (distance as u64 + time_start) >= max_time {
+			if (distance + time_start) >= max_time {
 				continue;
 			}
 			let weight = edge.weights[distance as usize + time_start as usize];
-			if weight == Weight::MAX {
+			if weight == Tick::MAX {
 				continue;
 			}
 			let new_distance = distance + weight;
@@ -81,7 +88,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		let neighbour_node = &phantom_edge.node;
 		steps.push(Neighbour {
 			node: *neighbour_node,
-			weight: tve.weights[(dist[prev_node as usize] + time_start as Weight) as usize],
+			weight: tve.weights[(dist[prev_node as usize] + time_start as Tick) as usize],
 		});
 		node = prev_node;
 	}
@@ -91,12 +98,12 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		steps,
 		time_graph,
 		start,
-		start_time: time_start as Time,
+		start_time: time_start as Tick,
 	}
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
-pub fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
+pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
 
 	for (node, neighbours) in graph.edges.iter().enumerate() {
@@ -112,7 +119,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<D
 				let mut wait = 0;
 				for deleted_edge in deleted_edges {
 					if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
-						while deleted_edge.times.contains(&((t + wait) / (delta as Time))) {
+						while deleted_edge.times.contains(&((t + wait) / (delta as Tick))) {
 							wait += 1;
 						}
 					}
@@ -120,7 +127,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<D
 
 				// Remove weights that are too high
 				let weight_t = weight + wait;
-				weights.push(if weight_t + t as Time <= max_time { weight_t } else { Weight::MAX });
+				weights.push(if weight_t + t as Tick <= max_time { weight_t } else { Tick::MAX });
 			}
 			edges.push(PhantomEdge {
 				node: neighbour.node,
@@ -133,7 +140,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Time, deleted_edges: &Vec<D
 	return phantoms;
 }
 
-pub fn graph_to_temporal(graph: &Graph, max_time: Time, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
+pub fn graph_to_temporal(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
 	let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta);
 	TimeVaryingGraph {
 		max_time: max_time.into(),

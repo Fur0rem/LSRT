@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
 
-	use crate::distance_matrix::{print_dma, sum_dma};
 	use crate::graph::{dijkstra, Graph, Neighbour, Node};
 	use crate::paths::TemporalSubPathsPyramid;
 	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
@@ -201,7 +200,7 @@ mod tests {
 			AttackResult::Dynamic(dma) => dma,
 			_ => panic!("Expected a dynamic matrix"),
 		};
-		let (efficiency, reachables) = sum_dma(&dma, attack.max_time());
+		let (efficiency, reachables) = dma.efficiency_reachables(max_time);
 		assert!(efficiency.abs() < 0.0001); // Floating point comparison
 		assert_eq!(reachables, 0);
 	}

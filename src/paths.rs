@@ -1,4 +1,4 @@
-use crate::graph::{Graph, Neighbour, Node, Time, Weight};
+use crate::graph::{Graph, Neighbour, Node, Tick};
 use crate::time_varying_graph::TimeVaryingGraph;
 
 pub struct Path<'a> {
@@ -8,7 +8,7 @@ pub struct Path<'a> {
 }
 
 impl Path<'_> {
-	pub fn cost(&self) -> Weight {
+	pub fn cost(&self) -> Tick {
 		self.steps.iter().map(|x| x.weight).sum()
 	}
 
@@ -26,7 +26,7 @@ impl Path<'_> {
 pub struct SubPath {
 	pub start: Node,
 	pub end: Node,
-	pub total_weight: Weight,
+	pub total_weight: Tick,
 }
 
 pub struct SubPathsPyramid<'a> {
@@ -125,19 +125,19 @@ pub struct TemporalPath<'a> {
 	pub time_graph: &'a TimeVaryingGraph,
 	pub start: Node,
 	pub steps: Vec<Neighbour>,
-	pub start_time: Time,
+	pub start_time: Tick,
 }
 
 impl<'a> TemporalPath<'a> {
-	pub fn cost(&self) -> Weight {
+	pub fn cost(&self) -> Tick {
 		if self.steps.is_empty() {
-			return Weight::MAX;
+			return Tick::MAX;
 		}
 		let mut current_time = self.start_time;
 		let mut total_weight = 0;
 		for step in &self.steps {
 			if current_time as usize >= self.time_graph.max_time as usize {
-				return Weight::MAX;
+				return Tick::MAX;
 			}
 			total_weight += step.weight;
 			current_time += step.weight;
@@ -153,7 +153,7 @@ impl<'a> TemporalPath<'a> {
 		if self.steps.is_empty() {
 			return "No path".to_string();
 		}
-		if self.cost() == Weight::MAX {
+		if self.cost() == Tick::MAX {
 			return "No path".to_string();
 		}
 		let to = self.steps.last().unwrap().node;
@@ -174,8 +174,8 @@ impl<'a> TemporalPath<'a> {
 pub struct TemporalSubPath {
 	pub start: Node,
 	pub end: Node,
-	pub total_weight: Weight,
-	pub start_time: Time,
+	pub total_weight: Tick,
+	pub start_time: Tick,
 }
 
 impl TemporalSubPath {
@@ -252,11 +252,10 @@ impl TemporalSubPathsPyramid<'_> {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
-					total_weight: Weight::MAX,
+					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			}
-			else {
+			} else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
