@@ -92,13 +92,13 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 		if node == end {
 			break;
 		}
+		if distance + time_start >= time_graph.max_time {
+			break;
+		}
 		visited[node as usize] = true;
 		for phantom_edge in &time_graph.nodes[node as usize] {
 			let edge = &phantom_edge.weights;
 			let neighbour = &phantom_edge.neighbour;
-			if (distance + time_start) >= time_graph.max_time {
-				continue;
-			}
 			let weight = edge.weights[distance as usize + time_start as usize];
 			if weight == Tick::MAX {
 				continue;
