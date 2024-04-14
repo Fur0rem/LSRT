@@ -1,6 +1,7 @@
+use crate::distance_matrix::DistanceMatrixArray;
 use crate::graph::DijkstraState;
 use crate::graph::{Graph, Neighbour, Node, Tick};
-use crate::paths::TemporalPath;
+use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
 
 use std::collections::BinaryHeap;
@@ -34,7 +35,44 @@ impl TimeVaryingGraph {
 	}
 }
 
-pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, max_time: Tick, time_start: Tick) -> TemporalPath<'_> {
+/// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
+/// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
+fn write_info_to_dma(
+	dma: &mut DistanceMatrixArray, time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dist: &Vec<Tick>,
+	prev: &Vec<Node>,
+) {
+	// Reconstruction of the path
+	let mut node = end;
+	let mut steps = vec![];
+	while node != start {
+		let prev_node = prev[node as usize];
+		if prev_node == Node::MAX {
+			break;
+		}
+		let phantom_edge = time_graph.nodes[prev_node as usize].iter().find(|x| x.node == node).unwrap();
+		let tve = &phantom_edge.weights;
+		let neighbour_node = &phantom_edge.node;
+		steps.push(Neighbour {
+			node: *neighbour_node,
+			weight: tve.weights[(dist[prev_node as usize] + time_start as Tick) as usize],
+		});
+		node = prev_node;
+	}
+	steps.reverse();
+	let path = TemporalPath {
+		steps,
+		time_graph,
+		start,
+		start_time: time_start,
+	};
+	let pyramid = TemporalSubPathsPyramid::from_path(&time_graph, &path);
+	for subpath in &pyramid.subpaths {
+		let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
+		dma[(time_start, from, to)] = total_length;
+	}
+}
+
+pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: &mut DistanceMatrixArray) {
 	// Initialize the distance, previous node and visited arrays
 	let max_node_index = time_graph.nodes.len();
 	let mut dist = vec![Tick::MAX; max_node_index];
@@ -56,7 +94,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		for phantom_edge in &time_graph.nodes[node as usize] {
 			let edge = &phantom_edge.weights;
 			let neighbour = &phantom_edge.node;
-			if (distance + time_start) >= max_time {
+			if (distance + time_start) >= time_graph.max_time {
 				continue;
 			}
 			let weight = edge.weights[distance as usize + time_start as usize];
@@ -75,31 +113,8 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		}
 	}
 
-	// Reconstruct the path
-	let mut steps = vec![];
-	let mut node = end;
-	while node != start {
-		let prev_node = prev[node as usize];
-		if prev_node == Node::MAX {
-			break;
-		}
-		let phantom_edge = time_graph.nodes[prev_node as usize].iter().find(|x| x.node == node).unwrap();
-		let tve = &phantom_edge.weights;
-		let neighbour_node = &phantom_edge.node;
-		steps.push(Neighbour {
-			node: *neighbour_node,
-			weight: tve.weights[(dist[prev_node as usize] + time_start as Tick) as usize],
-		});
-		node = prev_node;
-	}
-	steps.reverse();
-
-	TemporalPath {
-		steps,
-		time_graph,
-		start,
-		start_time: time_start as Tick,
-	}
+	// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
+	write_info_to_dma(dma, &time_graph, start, end, time_start, &dist, &prev);
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again

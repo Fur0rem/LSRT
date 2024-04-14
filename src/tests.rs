@@ -3,7 +3,7 @@ mod tests {
 
 	use crate::graph::{dijkstra, Graph, Neighbour, Node};
 	use crate::paths::TemporalSubPathsPyramid;
-	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
+	use crate::time_varying_graph::{create_phantom_edges, TimeVaryingGraph};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
 

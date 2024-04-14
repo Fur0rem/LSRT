@@ -6,8 +6,11 @@ use std::{
 
 use sscanf::scanf;
 
-use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray};
-use crate::time_varying_graph::{graph_to_temporal, temporal_dijkstra};
+use crate::time_varying_graph::graph_to_temporal;
+use crate::{
+	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
+	time_varying_graph::temporal_dijkstra_write,
+};
 use crate::{
 	graph::{Graph, Node, Tick},
 	paths::TemporalSubPathsPyramid,
@@ -207,20 +210,7 @@ impl Attack for DynamicAttack {
 					if dma[(t, i, j)] != 0 {
 						continue;
 					}
-
-					// Find the path from i to j at time t
-					let path = temporal_dijkstra(&time_graph, i as Node, j as Node, time_graph.max_time, t);
-
-					// Write all the subpaths used in the main path
-					let subpaths = TemporalSubPathsPyramid::from_path(&time_graph, &path);
-					for subpath in &subpaths.subpaths {
-						let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
-
-						if time_start >= time_graph.max_time as Tick {
-							continue;
-						}
-						dma[(time_start, from, to)] = total_length;
-					}
+					temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
 				}
 			}
 			//println!("{}/{}", t, self.max_time);
