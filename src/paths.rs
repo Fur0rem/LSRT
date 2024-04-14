@@ -36,7 +36,7 @@ pub struct SubPathsPyramid<'a> {
 	pub subpaths: Vec<SubPath>,
 }
 
-impl SubPathsPyramid<'_> {
+impl<'a> SubPathsPyramid<'a> {
 	fn get_prof(idx: usize) -> usize {
 		//stack exchange get inverse of formula for sum of intergers from 1 to n?
 		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize + 1;
@@ -61,6 +61,20 @@ impl SubPathsPyramid<'_> {
 		return (left_parent, right_parent);
 	}
 
+	pub fn leaves(&'a self) -> &'a [SubPath] {
+		// The leaves are the last elements of the pyramid
+		if self.subpaths.is_empty() {
+			return &self.subpaths;
+		}
+		if self.subpaths.len() == 1 {
+			return &self.subpaths;
+		}
+
+		let prof = Self::get_prof(self.subpaths.len() - 1);
+		let (minr, maxr) = Self::get_range(prof);
+		return &self.subpaths[minr..=maxr];
+	}
+
 	fn get_range(prof: usize) -> (usize, usize) {
 		if prof == 0 {
 			return (0, 0);
@@ -69,7 +83,7 @@ impl SubPathsPyramid<'_> {
 		return (most_right - prof, most_right - 1);
 	}
 
-	pub fn from_path<'a>(graph: &'a Graph, path: &Path) -> SubPathsPyramid<'a> {
+	pub fn from_path<'b>(graph: &'b Graph, path: &Path) -> SubPathsPyramid<'b> {
 		if path.steps.is_empty() {
 			return SubPathsPyramid { graph, subpaths: vec![] };
 		}

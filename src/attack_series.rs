@@ -69,13 +69,35 @@ impl<'a> AttackSeries<'a> {
 		let mut efficiencies_unattacked = distance_matrix_arrays[0].efficiency_reachables(max_time);
 		println!("Efficiency unattacked: {:?}", efficiencies_unattacked);
 
+		//let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
+
 		benchmark!("invalidating paths", {
-			/*for (i, (budget, attack)) in self.series.iter().enumerate() {
+			for (i, (budget, attack)) in self.series.iter().enumerate() {
 				for path in &paths {
-					path.invalidate_path(&mut distance_matrix_arrays[i], attack);
+					// check if any of the leaves is in the attack
+					let mut attacked = false;
+					for leaf in path.leaves() {
+						for blocked_link in &*attack.blocked_links() {
+							if blocked_link.from == leaf.start && blocked_link.to == leaf.end {
+								attacked = true;
+								break;
+							}
+						}
+						if attacked {
+							break;
+						}
+					}
+
+					if attacked {
+						for subpath in &path.subpaths {
+							for t in 0..max_time {
+								distance_matrix_arrays[i][(t, subpath.start, subpath.end)] = 0;
+							}
+						}
+					}
 				}
-			}*/
-			for e in 0..self.series.len() {
+			}
+			/*for e in 0..self.series.len() {
 				for t in 0..max_time {
 					for i in 0..self.graph.nb_nodes() {
 						for j in 0..self.graph.nb_nodes() {
@@ -85,7 +107,7 @@ impl<'a> AttackSeries<'a> {
 						}
 					}
 				}
-			}
+			}*/
 		});
 
 		// Then, we compute the efficiency for each attack
@@ -128,24 +150,44 @@ impl<'a> AttackSeries<'a> {
 			});*/
 		}
 
+		let mut dmas = distance_matrix_arrays;
+
 		let mut results = Vec::new();
 		for (e, (budget, attack)) in self.series.iter().enumerate() {
 			results.push((
 				*budget,
-				benchmark!("recomputing", {
+				/*benchmark!("recomputing", {
 					let time_varying_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-					let mut distance_matrix_array = DistanceMatrixArray::zeroed(self.graph.nb_nodes(), max_time);
 					for t in 0..max_time {
 						for i in 0..self.graph.nb_nodes() {
 							for j in 0..self.graph.nb_nodes() {
 								if distance_matrix_arrays[e][(t, i, j)] == 0 {
 									// compute the shortest path
-									temporal_dijkstra_write(&time_varying_graph, i, j, t, &mut distance_matrix_array);
+									temporal_dijkstra_write(&time_varying_graph, i, j, t, &mut distance_matrix_arrays[e]);
 								}
 							}
 						}
 					}
-					distance_matrix_array.efficiency_reachables(max_time)
+					distance_matrix_arrays[e].efficiency_reachables(max_time)
+				}),*/
+				//benchmark!("recomputing everythin", attack.efficiency(self.graph)),
+				benchmark!("recomputing everything", {
+					let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
+					for t in 0..time_graph.max_time {
+						for i in 0..time_graph.nb_nodes() {
+							// Doing the j in reverse seems to improve slightly the performance
+							// Probably because nodes that are far in real life apart also have far apart indexes
+							for j in (0..time_graph.nb_nodes()).rev() {
+								// Not 0 -> already computed
+								if dmas[e][(t, i, j)] != 0 {
+									continue;
+								}
+								temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dmas[e]);
+							}
+						}
+						//println!("{}/{}", t, self.max_time);
+					}
+					dmas[e].efficiency_reachables(max_time)
 				}),
 			));
 		}
