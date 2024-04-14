@@ -15,9 +15,13 @@ mod time_varying_graph;
 
 mod distance_matrix;
 
+mod attack_series;
+use attack_series::AttackSeries;
+
 use rayon::prelude::*;
 use std::io::Write;
 
+// TODO : export this somehow
 macro_rules! benchmark {
 	($name:expr, $block:expr) => {{
 		let start = std::time::Instant::now();
@@ -41,7 +45,7 @@ fn main() {
 	let result_file = std::fs::File::create(result_file).unwrap();
 	let mut result_file = std::io::BufWriter::new(result_file);
 
-	rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
+	/*rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
 	benchmark!("series of attack", {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
 		let efficiencies: Vec<(&str, f64, u64)> = attack_files
@@ -56,6 +60,16 @@ fn main() {
 			.collect();
 		for (attack_file, efficiency, reachables) in efficiencies {
 			writeln!(result_file, "{} {} {}", attack_file, efficiency, reachables).unwrap();
+		}
+	});*/
+
+	benchmark!("series of attack", {
+		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
+		let attack_series = AttackSeries::from_directory(&attack_directory, &attack_files, &graph);
+		let results = attack_series.efficiency();
+		for (budget, (efficiency, reachables)) in results {
+			println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, budget);
+			writeln!(result_file, "{} {} {}", budget, efficiency, reachables).unwrap();
 		}
 	});
 }

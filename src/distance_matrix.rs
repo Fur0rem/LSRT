@@ -121,8 +121,7 @@ impl DistanceMatrix {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				}
-				else {
+				} else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -132,6 +131,7 @@ impl DistanceMatrix {
 	}
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DistanceMatrixArray {
 	// 3D array of distance matrices flattened
 	pub distances: Vec<Tick>,
@@ -154,36 +154,48 @@ impl std::ops::IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 }
 
 impl DistanceMatrixArray {
-	fn fill_diagonals(&mut self, graph: &Graph, max_time: Tick) {
+	fn fill_diagonals(&mut self, nb_nodes: Node, max_time: Tick) {
 		for t in 0..max_time {
-			for i in 0..graph.nb_nodes() {
+			for i in 0..nb_nodes {
 				self[(t, i, i)] = 1;
 			}
 		}
 	}
 
-	pub fn maxed(graph: &Graph, max_time: Tick) -> DistanceMatrixArray {
-		let size = graph.nb_nodes() as usize;
+	pub fn maxed(nb_nodes: Node, max_time: Tick) -> Self {
+		let size = nb_nodes as usize;
 		let distances = vec![Tick::MAX; size * size * max_time as usize];
 		let mut dma = DistanceMatrixArray {
 			distances,
 			dim: size,
 			max_time: max_time as usize,
 		};
-		dma.fill_diagonals(graph, max_time);
+		dma.fill_diagonals(nb_nodes, max_time);
 		return dma;
 	}
 
-	pub fn zeroed(graph: &Graph, max_time: Tick) -> DistanceMatrixArray {
-		let size = graph.nb_nodes() as usize;
+	pub fn zeroed(nb_nodes: Node, max_time: Tick) -> Self {
+		let size = nb_nodes as usize;
 		let distances = vec![0; size * size * max_time as usize];
 		let mut dma = DistanceMatrixArray {
 			distances,
 			dim: size,
 			max_time: max_time as usize,
 		};
-		dma.fill_diagonals(graph, max_time);
+		dma.fill_diagonals(nb_nodes, max_time);
 		return dma;
+	}
+
+	pub fn propagated(dst_matrix: &DistanceMatrix, max_time: Tick) -> Self {
+		let mut new_matrix = DistanceMatrixArray::zeroed(dst_matrix.dim() as Node, max_time);
+		for t in 0..max_time {
+			for i in 0..dst_matrix.dim() {
+				for j in 0..dst_matrix.dim() {
+					new_matrix[(t, i as Node, j as Node)] = dst_matrix[(i as Node, j as Node)];
+				}
+			}
+		}
+		return new_matrix;
 	}
 
 	pub fn efficiency_reachables(&self, max_time: Tick) -> (f64, u64) {
@@ -219,8 +231,7 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					}
-					else {
+					} else {
 						distance.to_string()
 					};
 					print!("{} ", distance_to_str);

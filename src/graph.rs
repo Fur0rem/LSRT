@@ -77,8 +77,7 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -211,5 +210,58 @@ impl Graph {
 		}
 
 		return dst_mat;
+	}
+
+	pub fn all_pairs_paths(&self) -> Vec<SubPathsPyramid> {
+		let mut paths = vec![];
+		let mut dst_mat = DistanceMatrix::zeroed(self);
+		for node in 0..self.nb_nodes() {
+			for node2 in 0..self.nb_nodes() {
+				// If the value is already computed, skip
+				if dst_mat[(node, node2)] != 0 {
+					continue;
+				}
+
+				// Compute the path from node to node2
+				let path = dijkstra(self, node as Node, node2 as Node);
+
+				// If the path is too long, set the value to infinity (max of possible weight)
+				let subpaths = SubPathsPyramid::from_path(self, &path);
+				paths.push(subpaths);
+			}
+		}
+
+		return paths;
+	}
+
+	// TODO : merge the 3 functions
+	pub fn all_pairs_distances_and_paths(&self, max_time: Tick) -> (DistanceMatrix, Vec<SubPathsPyramid>) {
+		let mut dst_mat = DistanceMatrix::zeroed(self);
+		let mut paths = vec![];
+
+		for node in 0..self.nb_nodes() {
+			for node2 in 0..self.nb_nodes() {
+				// If the value is already computed, skip
+				if dst_mat[(node, node2)] != 0 {
+					continue;
+				}
+
+				// Compute the path from node to node2
+				let path = dijkstra(self, node as Node, node2 as Node);
+
+				// If the path is too long, set the value to infinity (max of possible weight)
+				let subpaths = SubPathsPyramid::from_path(self, &path);
+				for subpath in &subpaths.subpaths {
+					if subpath.total_weight > max_time {
+						dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
+						continue;
+					}
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+				}
+				paths.push(subpaths);
+			}
+		}
+
+		return (dst_mat, paths);
 	}
 }

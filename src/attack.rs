@@ -68,8 +68,7 @@ impl dyn Attack {
 
 		if line.starts_with('S') {
 			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			return Box::new(DynamicAttack::from_file(&mut reader));
 		}
 
@@ -200,7 +199,7 @@ impl Attack for DynamicAttack {
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
-		let mut dma = DistanceMatrixArray::zeroed(graph, self.max_time());
+		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), self.max_time());
 		// Compute all distance matrices
 		for t in 0..time_graph.max_time {
 			for i in 0..time_graph.nb_nodes() {

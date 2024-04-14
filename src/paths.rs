@@ -1,3 +1,5 @@
+use crate::attack;
+use crate::distance_matrix::DistanceMatrixArray;
 use crate::graph::{Graph, Neighbour, Node, Tick};
 use crate::time_varying_graph::TimeVaryingGraph;
 
@@ -116,6 +118,51 @@ impl SubPathsPyramid<'_> {
 		}
 
 		return SubPathsPyramid { graph, subpaths: elems };
+	}
+
+	pub fn invalidate_path(&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack) {
+		// look through all the leaves, if any of them is in the attack, invalidate the path by writing 0 in the matrix,
+		// then propagate the change to the root
+		let mut to_invalidate = vec![];
+		for (i, subpath) in self.subpaths.iter().enumerate() {
+			for blocked_link in &attack.blocked_links {
+				if blocked_link.from == subpath.start && blocked_link.to == subpath.end {
+					to_invalidate.push(i);
+					// clear the value in the matrix
+					for time in 0..attack.max_time {
+						dma[(time, subpath.start, subpath.end)] = 0;
+					}
+					break;
+				}
+			}
+		}
+
+		if to_invalidate.is_empty() {
+			return;
+		}
+		//println!("Invalidating path : {:?}", to_invalidate);
+
+		// for all the leaves that have been invalidated, propagate the change to their parents
+		while !to_invalidate.is_empty() {
+			let mut new_to_invalidate = vec![];
+			for i in to_invalidate {
+				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
+				if let Some(left_parent) = left_parent {
+					if dma[(0, self.subpaths[left_parent].start, self.subpaths[left_parent].end)] != 0 {
+						new_to_invalidate.push(left_parent);
+					}
+				}
+				if let Some(right_parent) = right_parent {
+					if dma[(0, self.subpaths[right_parent].start, self.subpaths[right_parent].end)] != 0 {
+						new_to_invalidate.push(right_parent);
+					}
+				}
+				for time in 0..attack.max_time {
+					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
+				}
+			}
+			to_invalidate = new_to_invalidate;
+		}
 	}
 }
 
@@ -255,8 +302,7 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			}
-			else {
+			} else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
