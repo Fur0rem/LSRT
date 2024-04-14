@@ -43,6 +43,15 @@ impl Graph {
 		let mut sizes = line.split_whitespace();
 		let size_elem_array: usize = sizes.next().unwrap().parse()?;
 		let size_row_array: usize = sizes.next().unwrap().parse()?;
+
+		// Error handling in case of bad data
+		if size_elem_array == 0 || size_row_array == 0 {
+			return Err("Empty graph".into());
+		}
+		if size_row_array > Node::MAX as usize {
+			return Err("Too many nodes".into());
+		}
+
 		line.clear();
 
 		// The second line contains the weights of the elements
@@ -68,7 +77,8 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			} else {
+			}
+			else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {

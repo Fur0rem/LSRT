@@ -55,7 +55,7 @@ mod tests {
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
 
 		// FIXME : index timevaryingedge
-		assert_eq!(phantom_edges[0][0].node, 1);
+		assert_eq!(phantom_edges[0][0].neighbour, 1);
 		assert_eq!(phantom_edges[0][0].weights.weights[0], 5);
 		assert_eq!(phantom_edges[0][0].weights.weights[1], 4);
 		assert_eq!(phantom_edges[0][0].weights.weights[2], 3);
@@ -63,7 +63,7 @@ mod tests {
 		assert_eq!(phantom_edges[0][0].weights.weights[4], 1);
 		assert_eq!(phantom_edges[0][0].weights.weights[5], 1);
 		assert_eq!(phantom_edges[0][0].weights.weights[6], 1);
-		assert_eq!(phantom_edges[0][1].node, 2);
+		assert_eq!(phantom_edges[0][1].neighbour, 2);
 		assert_eq!(phantom_edges[0][1].weights.weights[0], 2);
 		assert_eq!(phantom_edges[0][1].weights.weights[1], 2);
 	}

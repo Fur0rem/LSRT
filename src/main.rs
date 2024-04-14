@@ -18,6 +18,9 @@ mod distance_matrix;
 use rayon::prelude::*;
 use std::io::Write;
 
+#[macro_use]
+extern crate ouroboros;
+
 macro_rules! benchmark {
 	($name:expr, $block:expr) => {{
 		let start = std::time::Instant::now();

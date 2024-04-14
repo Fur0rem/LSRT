@@ -255,7 +255,8 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			} else {
+			}
+			else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

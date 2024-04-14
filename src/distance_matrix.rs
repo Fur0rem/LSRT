@@ -1,24 +1,65 @@
 use crate::graph::{Graph, Node, Tick};
+use std::ops::{Index, IndexMut};
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct DistanceMatrix {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SquareMatrix<T> {
 	// 2D square array flattened
-	pub distances: Vec<Tick>,
+	pub matrix: Vec<T>,
 	// size of one side of the square
 	dim: usize,
 }
 
-impl std::ops::Index<(Node, Node)> for DistanceMatrix {
-	type Output = Tick;
+impl<T> SquareMatrix<T> {
+	pub fn dim(&self) -> usize {
+		self.dim
+	}
 
-	fn index(&self, index: (Node, Node)) -> &Self::Output {
-		return &self.distances[index.0 as usize * self.dim + index.1 as usize];
+	pub fn default(dim: usize) -> SquareMatrix<T>
+	where
+		T: Default + Clone,
+	{
+		let size = dim * dim;
+		let matrix = vec![T::default(); size];
+		return SquareMatrix { matrix, dim };
+	}
+
+	pub fn new(dim: usize, default_value: T) -> SquareMatrix<T>
+	where
+		T: Clone,
+	{
+		let size = dim * dim;
+		let matrix = vec![default_value; size];
+		return SquareMatrix { matrix, dim };
 	}
 }
 
-impl std::ops::IndexMut<(Node, Node)> for DistanceMatrix {
+impl<T> Index<(usize, usize)> for SquareMatrix<T> {
+	type Output = T;
+
+	fn index(&self, index: (usize, usize)) -> &Self::Output {
+		return &self.matrix[index.0 * self.dim + index.1];
+	}
+}
+
+impl<T> IndexMut<(usize, usize)> for SquareMatrix<T> {
+	fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+		return &mut self.matrix[index.0 * self.dim + index.1];
+	}
+}
+
+pub type DistanceMatrix = SquareMatrix<Tick>;
+
+impl Index<(Node, Node)> for DistanceMatrix {
+	type Output = Tick;
+
+	fn index(&self, index: (Node, Node)) -> &Self::Output {
+		return &self.matrix[index.0 as usize * self.dim + index.1 as usize];
+	}
+}
+
+impl IndexMut<(Node, Node)> for DistanceMatrix {
 	fn index_mut(&mut self, index: (Node, Node)) -> &mut Self::Output {
-		return &mut self.distances[index.0 as usize * self.dim + index.1 as usize];
+		return &mut self.matrix[index.0 as usize * self.dim + index.1 as usize];
 	}
 }
 
@@ -32,7 +73,10 @@ impl DistanceMatrix {
 	pub fn maxed(graph: &Graph) -> DistanceMatrix {
 		let size = graph.nb_nodes() as usize;
 		let distances = vec![Tick::MAX; size * size];
-		let mut dm = DistanceMatrix { distances, dim: size };
+		let mut dm = DistanceMatrix {
+			matrix: distances,
+			dim: size,
+		};
 		dm.fill_diagonal(graph);
 		return dm;
 	}
@@ -40,7 +84,10 @@ impl DistanceMatrix {
 	pub fn zeroed(graph: &Graph) -> DistanceMatrix {
 		let size = graph.nb_nodes() as usize;
 		let distances = vec![0; size * size];
-		let mut dm = DistanceMatrix { distances, dim: size };
+		let mut dm = DistanceMatrix {
+			matrix: distances,
+			dim: size,
+		};
 		dm.fill_diagonal(graph);
 		return dm;
 	}
@@ -48,9 +95,8 @@ impl DistanceMatrix {
 	pub fn efficiency_reachables(&self, max_time: Tick) -> (f64, u64) {
 		let mut sum = 0.0;
 		let mut reachables = 0;
-		let distances_len = (self.distances.len() as f64).sqrt() as usize;
-		for i in 0..distances_len {
-			for j in 0..distances_len {
+		for i in 0..self.dim {
+			for j in 0..self.dim {
 				let distance = self[(i as Node, j as Node)];
 				// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
 				if distance <= max_time && distance != 0 {
@@ -62,21 +108,21 @@ impl DistanceMatrix {
 		}
 
 		// Normalise the sum
-		sum -= distances_len as f64 * max_time as f64;
-		sum /= max_time as f64 * (distances_len * (distances_len - 1)) as f64;
-		reachables -= distances_len as u64 * max_time as u64;
+		sum -= self.dim as f64 * max_time as f64;
+		sum /= max_time as f64 * (self.dim * (self.dim - 1)) as f64;
+		reachables -= self.dim as u64 * max_time as u64;
 
 		return (sum, reachables);
 	}
 
 	pub fn print(&self) {
-		let distances_len = (self.distances.len() as f64).sqrt() as usize;
-		for i in 0..distances_len {
-			for j in 0..distances_len {
+		for i in 0..self.dim {
+			for j in 0..self.dim {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				} else {
+				}
+				else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -173,7 +219,8 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					} else {
+					}
+					else {
 						distance.to_string()
 					};
 					print!("{} ", distance_to_str);
