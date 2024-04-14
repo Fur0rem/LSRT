@@ -1,10 +1,11 @@
-use std::io::BufRead;
+use std::{collections::HashSet, io::BufRead};
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
-	distance_matrix::DistanceMatrixArray,
+	distance_matrix::{DistanceMatrixArray, SquareMatrix},
 	graph::{Graph, Node, Tick},
+	paths::Path,
 	time_varying_graph::{self, graph_to_temporal, temporal_dijkstra_write},
 	Attack, DynamicAttack,
 };
@@ -58,42 +59,31 @@ impl<'a> AttackSeries<'a> {
 	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
-		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
-
+											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
+		let dst_mat = self.graph.all_pairs_distances(max_time);
 		let efficiency_unattacked = dst_mat.efficiency_reachables(max_time);
 		println!("Efficiency unattacked: {:?}", efficiency_unattacked);
 
 		// Then, we fill the distance matrix array with the paths that are not attacked
 		let mut distance_matrix_arrays = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
 
-		let mut efficiencies_unattacked = distance_matrix_arrays[0].efficiency_reachables(max_time);
+		let efficiencies_unattacked = distance_matrix_arrays[0].efficiency_reachables(max_time);
 		println!("Efficiency unattacked: {:?}", efficiencies_unattacked);
 
 		//let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
 
 		benchmark!("invalidating paths", {
-			for (i, (budget, attack)) in self.series.iter().enumerate() {
-				for path in &paths {
-					// check if any of the leaves is in the attack
-					let mut attacked = false;
-					for leaf in path.leaves() {
-						for blocked_link in &*attack.blocked_links() {
-							if blocked_link.from == leaf.start && blocked_link.to == leaf.end {
-								attacked = true;
-								break;
+			for a in 0..self.series.len() {
+				for t in 0..max_time {
+					for i in 0..self.graph.nb_nodes() {
+						for j in 0..self.graph.nb_nodes() {
+							if distance_matrix_arrays[a][(t, i, j)].saturating_add(t) < max_time {
+								distance_matrix_arrays[a][(t, i, j)] = 0;
 							}
-						}
-						if attacked {
-							break;
 						}
 					}
-
-					if attacked {
-						for subpath in &path.subpaths {
-							for t in 0..max_time {
-								distance_matrix_arrays[i][(t, subpath.start, subpath.end)] = 0;
-							}
-						}
+					for i in 0..self.graph.nb_nodes() {
+						distance_matrix_arrays[a][(t, i, i)] = 1;
 					}
 				}
 			}
@@ -118,7 +108,7 @@ impl<'a> AttackSeries<'a> {
 				}
 			});*/
 			// count how many zeros there are in the distance matrix array
-			let mut zeros = 0;
+			/*let mut zeros = 0;
 			for t in 0..max_time {
 				for i in 0..self.graph.nb_nodes() {
 					for j in 0..self.graph.nb_nodes() {
@@ -133,7 +123,7 @@ impl<'a> AttackSeries<'a> {
 				zeros,
 				distance_matrix_arrays[e].distances.len(),
 				budget
-			);
+			);*/
 			//let budget: usize = budget.parse().unwrap();
 			/*let time_varying_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
 			benchmark!("Recomputing stuff", {
@@ -191,28 +181,6 @@ impl<'a> AttackSeries<'a> {
 				}),
 			));
 		}
-
-		/*let results = self
-		.series
-		.par_iter()
-		.map(|(budget, attack)| {
-			let time_varying_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-			let mut distance_matrix_array = DistanceMatrixArray::propagated(&dst_mat, max_time);
-			for path in &paths {
-				path.invalidate_path(&mut distance_matrix_array, attack);
-			}
-			for t in 0..max_time {
-				for i in 0..self.graph.nb_nodes() {
-					for j in 0..self.graph.nb_nodes() {
-						if distance_matrix_array[(t, i, j)] == 0 {
-							temporal_dijkstra_write(&time_varying_graph, i, j, t, &mut distance_matrix_array);
-						}
-					}
-				}
-			}
-			(*budget, distance_matrix_array.efficiency_reachables(max_time))
-		})
-		.collect();*/
 
 		return results;
 	}
