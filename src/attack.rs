@@ -200,7 +200,9 @@ impl Attack for DynamicAttack {
 		// Compute all distance matrices
 		for t in 0..time_graph.max_time {
 			for i in 0..time_graph.nb_nodes() {
-				for j in 0..time_graph.nb_nodes() {
+				// Doing the j in reverse seems to improve slightly the performance
+				// Probably because nodes that are far in real life apart also have far apart indexes
+				for j in (0..time_graph.nb_nodes()).rev() {
 					// Not 0 -> already computed
 					if dma[(t, i, j)] != 0 {
 						continue;
