@@ -215,7 +215,6 @@ impl<'a> SubPathsPyramid<'a> {
 		if to_invalidate.is_empty() {
 			return;
 		}
-		//println!("Invalidating path : {:?}", to_invalidate);
 
 		// for all the leaves that have been invalidated, propagate the change to their parents
 		while !to_invalidate.is_empty() {
@@ -265,13 +264,6 @@ impl<'a> SubPathsPyramid<'a> {
 		&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack, already_done: &mut SquareMatrix<bool>,
 		times_matrix: &SquareMatrix<Option<&'a Vec<Tick>>>,
 	) {
-		let mut debug = true;
-		if debug {
-			println!("Times matrix : {:?}", times_matrix);
-		}
-		if debug {
-			println!("-------------------");
-		}
 		if self.subpaths.is_empty() {
 			return;
 		}
@@ -282,22 +274,7 @@ impl<'a> SubPathsPyramid<'a> {
 			return;
 		}
 
-		if debug {
-			self.print();
-		}
-
-		let debug_i = 10;
-		let debug_j = 4;
-
-		if self.subpaths[0].start == debug_i && self.subpaths[0].end == debug_j {
-			println!("-------------------");
-			println!("Times matrix : {:?}", times_matrix);
-			println!("Times matrix : {:?}", times_matrix[(debug_i as usize, debug_j as usize)]);
-			println!("-------------------");
-		}
-
 		// This is a vec which, for each subpath, contains a vector of intervals at which the path is invalidated
-		//let mut intervals_to_invalidate = vec![vec![]; self.subpaths.len()];
 		let mut intervals_to_invalidate = vec![HashSet::new(); self.subpaths.len()];
 		// look through all the leaves, write their invalidation intervals in the intervals_to_invalidate vec, then propagate the change to the root
 		for i in self.leaves_range() {
@@ -318,125 +295,6 @@ impl<'a> SubPathsPyramid<'a> {
 
 		// for all the leaves that have been invalidated, propagate the change to their parents
 		// go through the pyramid from the leaves to the root
-		let mut to_invalidate = vec![];
-		for i in self.leaves_range() {
-			to_invalidate.push(i);
-		}
-
-		/*while !to_invalidate.is_empty() {
-			let mut new_to_invalidate = vec![];
-			for i in to_invalidate {
-				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
-				//println!("Parents of {} : {:?}, {:?}", i, left_parent, right_parent);
-				if self.subpaths[i].start == debug_i && self.subpaths[i].end == debug_j {
-					println!("Interval to invalidate : {:?}", intervals_to_invalidate[i]);
-					println!("time taken : {}", self.subpaths[i].time_taken);
-					debug = true;
-				} else {
-					debug = false;
-				}
-				if let Some(left_parent) = left_parent {
-					// TODO : optimize this
-					let mut to_push = vec![];
-					for time in &intervals_to_invalidate[i] {
-						/*if debug {
-							println!(
-								"{} Pushing {} {} to left parent {}",
-								i, self.subpaths[i].time_taken, time, left_parent
-							);
-						}*/
-						//to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
-						/*if *time >= self.subpaths[i].time_taken {
-							to_push.push(*time - self.subpaths[i].time_taken);
-						}*/
-						// if you have a left neighbour
-						let offset = if i > 0 {
-							if SubPathsPyramid::get_prof(i) == SubPathsPyramid::get_prof(i - 1) {
-								self.subpaths[i].time_taken.saturating_sub(self.subpaths[i - 1].time_taken)
-							} else {
-								0
-							}
-						} else {
-							0
-						};
-
-						to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
-					}
-					for time in to_push {
-						intervals_to_invalidate[left_parent].insert(time);
-					}
-					if !already_done[(self.subpaths[left_parent].start as usize, self.subpaths[left_parent].end as usize)] {
-						let last_elem_index = new_to_invalidate.len();
-						//if last_elem_index == 0 || new_to_invalidate[last_elem_index - 1] != left_parent {
-						new_to_invalidate.push(left_parent);
-						//}
-					}
-				}
-				if let Some(right_parent) = right_parent {
-					let mut to_push = vec![];
-					for time in &intervals_to_invalidate[i] {
-						if debug {
-							println!(
-								"{} Pushing {} {} to right parent {}",
-								i, self.subpaths[i].time_taken, time, right_parent
-							);
-						}
-						to_push.push(*time);
-					}
-					for time in to_push {
-						intervals_to_invalidate[right_parent].insert(time);
-					}
-					if !already_done[(self.subpaths[right_parent].start as usize, self.subpaths[right_parent].end as usize)] {
-						// if the parent has not already been invalidated, add it to the list of parents to invalidate
-						let last_elem_index = new_to_invalidate.len();
-						//if last_elem_index == 0 || new_to_invalidate[last_elem_index - 1] != right_parent {
-						new_to_invalidate.push(right_parent);
-						//}
-						new_to_invalidate.push(right_parent);
-					}
-				}
-
-				if debug {
-					println!(
-						"Invalidating subpath total {}--{}-->{} : {:?}",
-						self.subpaths[i].start, self.subpaths[i].total_weight, self.subpaths[i].end, intervals_to_invalidate[i]
-					);
-				}
-				if self.subpaths[i].start == debug_i && self.subpaths[i].end == debug_j {
-					println!("Interval to invalidate : {:?}", intervals_to_invalidate[i]);
-					println!("all intervals : {:?}", intervals_to_invalidate);
-				}
-
-				already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
-				if debug {
-					print!("All intervals : ");
-				}
-				for time in &intervals_to_invalidate[i] {
-					/*if debug {
-						print!("  {} {{", time);
-					}
-					let mut idx = *time as usize * attack.delta as usize;
-					for delta in 0..attack.delta {
-						if idx as usize >= dma.max_time {
-							break;
-						}
-						dma[(idx as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-						if debug {
-							print!("{} ", idx);
-						}
-						idx += 1;
-					}
-					if debug {
-						print!("}}  ");
-					}*/
-					dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-				}
-				if debug {
-					println!();
-				}
-			}
-			to_invalidate = new_to_invalidate;
-		}*/
 
 		for i in (0..self.subpaths.len()).rev() {
 			let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
@@ -461,29 +319,6 @@ impl<'a> SubPathsPyramid<'a> {
 			already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
 			for time in &intervals_to_invalidate[i] {
 				dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-			}
-		}
-
-		if debug {
-			println!("-------------------");
-			let mut prof = 0;
-			let mut idx = 0;
-			for subpath in &self.subpaths {
-				print!("{}--{}-->{} ", subpath.start, subpath.total_weight, subpath.end);
-				if idx == prof {
-					println!();
-					prof += 1;
-					idx = 0;
-				} else {
-					idx += 1;
-				}
-			}
-
-			for (i, subpath) in self.subpaths.iter().enumerate() {
-				println!(
-					"Invalidating path n{} {}--{}-->{} ({}) : {:?}",
-					i, subpath.start, subpath.total_weight, subpath.end, subpath.time_taken, intervals_to_invalidate[i]
-				);
 			}
 		}
 	}

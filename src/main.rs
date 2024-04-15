@@ -66,13 +66,7 @@ fn main() {
 	benchmark!("series of attack", {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
 		let attack_series = AttackSeries::from_directory(&attack_directory, &attack_files, &graph);
-		/*let results = attack_series.efficiency();
-		for (budget, (efficiency, reachables)) in results {
-			println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, budget);
-			writeln!(result_file, "{} {} {}", budget, efficiency, reachables).unwrap();
-		}*/
-
-		let results = attack_series.efficiency_exp();
+		let results = attack_series.efficiency();
 		for (budget, (efficiency, reachables)) in results {
 			println!("Efficiency: {}, Reachables: {} for {}", efficiency, reachables, budget);
 			writeln!(result_file, "{} {} {}", budget, efficiency, reachables).unwrap();

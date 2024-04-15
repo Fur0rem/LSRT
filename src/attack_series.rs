@@ -45,7 +45,7 @@ impl<'a> AttackSeries<'a> {
 		AttackSeries { series, graph }
 	}
 
-	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
+	/*pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
 											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
@@ -99,28 +99,16 @@ impl<'a> AttackSeries<'a> {
 			.collect();
 
 		return results;
-	}
+	}*/
 
-	pub fn efficiency_exp(&self) -> Vec<(&str, (f64, u64))> {
+	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
-											//let paths = self.graph.all_pairs_paths();
-											//let mut dmas = vec![DistanceMatrixArray::zeroed(self.graph.nb_nodes(), max_time); self.series.len()];
-
 		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
 		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
-		/*for dma in dmas.iter_mut() {
-			dma.fill_1_on_diagonals();
-		}*/
-
-		println!("Max time: {}", max_time);
-
-		let debug_i = 4;
-		let debug_j = 8;
-		let debug_t = 37;
 
 		let results = dmas
-			.iter_mut()
+			.par_iter_mut()
 			.enumerate()
 			.map(|(e, dma)| {
 				// Then, we recompute the paths for the attacked graph
@@ -133,16 +121,6 @@ impl<'a> AttackSeries<'a> {
 					times_matrix[(link.from as usize, link.to as usize)] = Some(&link.times);
 				}
 
-				println!("Budget: {}", self.series[e].0);
-
-				/*benchmark!("unvalidating paths", {
-					for path in paths.iter() {
-						benchmark!("unvalidating path", {
-							path.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
-						});
-					}
-				});*/
-
 				benchmark!("unvalidating paths", {
 					for path in paths.iter() {
 						path.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
@@ -150,7 +128,7 @@ impl<'a> AttackSeries<'a> {
 				});
 
 				// Count the number of 0's
-				let mut count = 0;
+				/*let mut count = 0;
 				for t in 0..max_time {
 					for i in 0..self.graph.nb_nodes() {
 						for j in 0..self.graph.nb_nodes() {
@@ -167,11 +145,11 @@ impl<'a> AttackSeries<'a> {
 					"Zeroes: {}/{}",
 					count,
 					self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_time as usize
-				);
+				);*/
+
 				(
 					self.series[e].0,
 					benchmark!("recomputing everything", {
-						let mut nb_wrong = 0;
 						let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
 						for t in 0..time_graph.max_time {
 							for i in 0..time_graph.nb_nodes() {
@@ -179,71 +157,13 @@ impl<'a> AttackSeries<'a> {
 								// Probably because nodes that are far in real life apart also have far apart indexes
 								for j in (0..time_graph.nb_nodes()).rev() {
 									// Not 0 -> already computed
-									if i == debug_i && j == debug_j && t == debug_t {
-										println!("TEST {} -> {} at {} : {}", i, j, t, dma[(t, i, j)]);
-									}
 									if dma[(t, i, j)] != 0 {
-										let value = dma[(t, i, j)];
-										if value.saturating_add(t) >= max_time {
-											continue;
-										}
-										let path = temporal_dijkstra(&time_graph, i as Node, j as Node, t);
-										// write the path to the dma
-										let subpath_pyramid = TemporalSubPathsPyramid::from_path(&time_graph, &path);
-										for subpath in &subpath_pyramid.subpaths {
-											let (from, to, time_start, total_length) =
-												(subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
-											if from == debug_i && to == debug_j && time_start == debug_t {
-												println!(
-													"DDDD {} -> {} at {} : {} ({})",
-													from,
-													to,
-													time_start,
-													dma[(time_start, from, to)],
-													total_length
-												);
-											}
-											dma[(time_start, from, to)] = total_length;
-										}
-
-										if dma[(t, i, j)] != value {
-											nb_wrong += 1;
-											println!("{} -> {} at {} : ({}, {})", i, j, t, value, dma[(t, i, j)]);
-											if i == debug_i && j == debug_j && t == debug_t {
-												print!("Path new: ");
-												path.print();
-												let path_old = dijkstra(self.graph, i as Node, j as Node);
-												print!("Path old: ");
-												path_old.print();
-
-												for subpath in &subpath_pyramid.subpaths {
-													let (from, to, time_start, total_length) =
-														(subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
-													println!(
-														"EEEE {} -> {} at {} : {} ({})",
-														from,
-														to,
-														time_start,
-														dma[(time_start, from, to)],
-														total_length
-													);
-												}
-											}
-										}
-
 										continue;
 									}
 									temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, dma);
 								}
 							}
-							//println!("{}/{}", t, self.max_time);
 						}
-						println!(
-							"Wrong: {}/{}",
-							nb_wrong,
-							self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_time as usize
-						);
-						//dma.print(max_time);
 						dma.efficiency_reachables(max_time)
 					}),
 				)

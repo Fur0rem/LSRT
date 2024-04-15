@@ -146,41 +146,12 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 		let mut edges = vec![];
 
 		// For all the edges, we create a phantom edge
-		/*for neighbour in neighbours {
-			let weight = &neighbour.weight;
-			let mut weights = vec![];
-
-			for t in 0..max_time {
-				// Check if the edge is deleted at time t, if it is, we add 1 to the weight of the phantom edge at time t
-				let mut wait = 0;
-				for deleted_edge in deleted_edges {
-					if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
-						while deleted_edge.times.contains(&((t + wait) / (delta as Tick))) {
-							wait += 1;
-						}
-					}
-				}
-
-				// Remove weights that are too high
-				let weight_t = weight + wait;
-				weights.push(if weight_t + t as Tick <= max_time { weight_t } else { Tick::MAX });
-			}
-			edges.push(PhantomEdge {
-				neighbour: neighbour.node,
-				weights: TimeVaryingEdge { weights },
-			});
-		}
-		phantoms.push(edges);*/
-
-		let debug_i = 4;
-		let debug_j = 8;
-
 		for neighbour in neighbours {
 			let weight = neighbour.weight;
 			let mut weights = vec![weight; max_time as usize];
 			for deleted_edge in deleted_edges {
 				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
-					for (i, t) in deleted_edge.times.iter().enumerate() {
+					for t in &deleted_edge.times {
 						let t = *t as usize;
 						let t_with_delta = t * delta as usize;
 						for td in t_with_delta..t_with_delta + delta as usize {
@@ -201,18 +172,6 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 
 					break;
 				}
-			}
-			if node == debug_i && neighbour.node == debug_j {
-				println!(
-					"{} -> {} : {:?}",
-					node,
-					neighbour.node,
-					weights
-						.iter()
-						.enumerate()
-						.map(|(i, w)| (i, i / delta as usize, w))
-						.collect::<Vec<_>>() //weights.iter().enumerate().collect::<Vec<_>>()
-				);
 			}
 			edges.push(PhantomEdge {
 				neighbour: neighbour.node,
