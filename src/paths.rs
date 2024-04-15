@@ -265,7 +265,7 @@ impl<'a> SubPathsPyramid<'a> {
 		&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack, already_done: &mut SquareMatrix<bool>,
 		times_matrix: &SquareMatrix<Option<&'a Vec<Tick>>>,
 	) {
-		let mut debug = false;
+		let mut debug = true;
 		if debug {
 			println!("Times matrix : {:?}", times_matrix);
 		}
@@ -443,7 +443,7 @@ impl<'a> SubPathsPyramid<'a> {
 			if let Some(left_parent) = left_parent {
 				let mut to_push = vec![];
 				for time in &intervals_to_invalidate[i] {
-					to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
+					to_push.push(time.saturating_sub((self.subpaths[i].time_taken).saturating_sub(self.subpaths[left_parent].time_taken)));
 				}
 				for time in to_push {
 					intervals_to_invalidate[left_parent].insert(time);
@@ -460,14 +460,7 @@ impl<'a> SubPathsPyramid<'a> {
 			}
 			already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
 			for time in &intervals_to_invalidate[i] {
-				let mut idx = *time as usize * attack.delta as usize;
-				for delta in 0..attack.delta {
-					if idx as usize >= dma.max_time {
-						break;
-					}
-					dma[(idx as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-					idx += 1;
-				}
+				dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
 			}
 		}
 
