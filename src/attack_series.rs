@@ -45,160 +45,34 @@ impl<'a> AttackSeries<'a> {
 		AttackSeries { series, graph }
 	}
 
-	/*pub fn efficiency(&self) -> Vec<(&str, f64, u64)> {
-		rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
-		self.series
-			.par_iter()
-			.map(|(budget, attack)| {
-				let (efficiency, reachables) = attack.efficiency(self.graph);
-				(*budget, efficiency, reachables)
-			})
-			.collect()
-	}*/
-
 	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
 											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
 		let dst_mat = self.graph.all_pairs_distances(max_time);
-		//let efficiency_unattacked = dst_mat.efficiency_reachables(max_time);
-		//println!("Efficiency unattacked: {:?}", efficiency_unattacked);
 
-		// Then, we fill the distance matrix array with the paths that are not attacked
-		let mut distance_matrix_arrays = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
-
-		//let efficiencies_unattacked = distance_matrix_arrays[0].efficiency_reachables(max_time);
-		//println!("Efficiency unattacked: {:?}", efficiencies_unattacked);
-
-		//let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
-
-		/*benchmark!("invalidating paths", {
-		for a in 0..self.series.len() {
-			for t in 0..max_time {
-				for i in 0..self.graph.nb_nodes() {
-					for j in 0..self.graph.nb_nodes() {
-						if distance_matrix_arrays[a][(t, i, j)].saturating_add(t) < max_time {
-							distance_matrix_arrays[a][(t, i, j)] = 0;
-						}
-					}
-				}
-				for i in 0..self.graph.nb_nodes() {
-					distance_matrix_arrays[a][(t, i, i)] = 1;
-				}
-			}
-		}*/
-		/*for e in 0..self.series.len() {
-			for t in 0..max_time {
-				for i in 0..self.graph.nb_nodes() {
-					for j in 0..self.graph.nb_nodes() {
-						if distance_matrix_arrays[e][(t, i, j)] != Tick::MAX {
-							distance_matrix_arrays[e][(t, i, j)] = 0;
-						}
-					}
-				}
-			}
-		}*/
-		//});
-
-		// Then, we compute the efficiency for each attack
-		for (e, (budget, attack)) in self.series.iter().enumerate() {
-			/*benchmark!("invalidating paths", {
-				for path in &paths {
-					path.invalidate_path(&mut distance_matrix_arrays[e], attack);
-				}
-			});*/
-			// count how many zeros there are in the distance matrix array
-			/*let mut zeros = 0;
-			for t in 0..max_time {
-				for i in 0..self.graph.nb_nodes() {
-					for j in 0..self.graph.nb_nodes() {
-						if distance_matrix_arrays[e][(t, i, j)] == 0 {
-							zeros += 1;
-						}
-					}
-				}
-			}
-			println!(
-				"Zeros: {}/{} for budget {}",
-				zeros,
-				distance_matrix_arrays[e].distances.len(),
-				budget
-			);*/
-			//let budget: usize = budget.parse().unwrap();
-			/*let time_varying_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-			benchmark!("Recomputing stuff", {
-				for t in 0..max_time {
-					for i in 0..self.graph.nb_nodes() {
-						for j in 0..self.graph.nb_nodes() {
-							//if distance_matrix_arrays[e][(t, i, j)] == 0 {
-							// compute the shortest path
-							temporal_dijkstra_write(&time_varying_graph, i, j, t, &mut distance_matrix_arrays[e]);
-							//}
-						}
-					}
-				}
-			});*/
-		}
-
-		let mut dmas = distance_matrix_arrays;
-
-		/*let mut results = Vec::new();
-		for (e, (budget, attack)) in self.series.iter().enumerate() {
-			results.push((
-				*budget,
-				/*benchmark!("recomputing", {
-					let time_varying_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-					for t in 0..max_time {
-						for i in 0..self.graph.nb_nodes() {
-							for j in 0..self.graph.nb_nodes() {
-								if distance_matrix_arrays[e][(t, i, j)] == 0 {
-									// compute the shortest path
-									temporal_dijkstra_write(&time_varying_graph, i, j, t, &mut distance_matrix_arrays[e]);
-								}
-							}
-						}
-					}
-					distance_matrix_arrays[e].efficiency_reachables(max_time)
-				}),*/
-				//benchmark!("recomputing everythin", attack.efficiency(self.graph)),
-				benchmark!("recomputing everything", {
-					let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-					for t in 0..time_graph.max_time {
-						for i in 0..time_graph.nb_nodes() {
-							// Doing the j in reverse seems to improve slightly the performance
-							// Probably because nodes that are far in real life apart also have far apart indexes
-							for j in (0..time_graph.nb_nodes()).rev() {
-								// Not 0 -> already computed
-								if dmas[e][(t, i, j)] != 0 {
-									continue;
-								}
-								temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dmas[e]);
-							}
-						}
-						//println!("{}/{}", t, self.max_time);
-					}
-					dmas[e].efficiency_reachables(max_time)
-				}),
-			));
-		}*/
+		// Then, we recopy the distance matrix to all the attacks
+		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
 
 		let results = dmas
 			.par_iter_mut()
 			.enumerate()
 			.map(|(e, dma)| {
-				let attack = &self.series[e].1;
-				for t in 0..max_time {
-					for i in 0..self.graph.nb_nodes() {
-						for j in 0..self.graph.nb_nodes() {
-							if dma[(t, i, j)].saturating_add(t) < max_time {
-								dma[(t, i, j)] = 0;
-							}
+				// We invalidate all the paths except those who took more than max_time to reach the destination
+				for i in 0..self.graph.nb_nodes() {
+					for j in 0..self.graph.nb_nodes() {
+						let weight = dst_mat[(i, j)];
+						let max_time_reachable = max_time.saturating_sub(weight);
+						for t in 0..max_time_reachable {
+							dma[(t, i, j)] = 0;
 						}
 					}
-					for i in 0..self.graph.nb_nodes() {
-						dma[(t, i, i)] = 1;
-					}
 				}
+
+				dma.fill_1_on_diagonals();
+
+				// Then, we recompute the paths for the attacked graph
+				let attack = &self.series[e].1;
 				(
 					self.series[e].0,
 					benchmark!("recomputing everything", {

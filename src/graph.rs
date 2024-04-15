@@ -77,7 +77,8 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			} else {
+			}
+			else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -227,6 +228,9 @@ impl Graph {
 
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
+				for subpath in &subpaths.subpaths {
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+				}
 				paths.push(subpaths);
 			}
 		}

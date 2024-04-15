@@ -121,7 +121,8 @@ impl DistanceMatrix {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				} else {
+				}
+				else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -154,9 +155,9 @@ impl std::ops::IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 }
 
 impl DistanceMatrixArray {
-	fn fill_diagonals(&mut self, nb_nodes: Node, max_time: Tick) {
-		for t in 0..max_time {
-			for i in 0..nb_nodes {
+	pub fn fill_1_on_diagonals(&mut self) {
+		for t in 0..self.max_time as Tick {
+			for i in 0..self.dim as Node {
 				self[(t, i, i)] = 1;
 			}
 		}
@@ -170,7 +171,7 @@ impl DistanceMatrixArray {
 			dim: size,
 			max_time: max_time as usize,
 		};
-		dma.fill_diagonals(nb_nodes, max_time);
+		dma.fill_1_on_diagonals();
 		return dma;
 	}
 
@@ -182,7 +183,7 @@ impl DistanceMatrixArray {
 			dim: size,
 			max_time: max_time as usize,
 		};
-		dma.fill_diagonals(nb_nodes, max_time);
+		dma.fill_1_on_diagonals();
 		return dma;
 	}
 
@@ -231,7 +232,8 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					} else {
+					}
+					else {
 						distance.to_string()
 					};
 					print!("{} ", distance_to_str);

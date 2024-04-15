@@ -63,10 +63,7 @@ impl<'a> SubPathsPyramid<'a> {
 
 	pub fn leaves(&'a self) -> &'a [SubPath] {
 		// The leaves are the last elements of the pyramid
-		if self.subpaths.is_empty() {
-			return &self.subpaths;
-		}
-		if self.subpaths.len() == 1 {
+		if self.subpaths.len() <= 1 {
 			return &self.subpaths;
 		}
 
@@ -316,7 +313,8 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			} else {
+			}
+			else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
