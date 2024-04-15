@@ -36,3 +36,7 @@ clean_data:
 rust:
 	rm -f lsrt
 	cargo build --release && mv target/release/lsrt_new lsrt
+
+rust_debug:
+	rm -f lsrt
+	cargo build && mv target/debug/lsrt_new lsrt

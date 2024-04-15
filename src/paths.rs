@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 use crate::attack;
-use crate::distance_matrix::DistanceMatrixArray;
+use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour, Node, Tick};
 use crate::time_varying_graph::TimeVaryingGraph;
 
@@ -29,6 +31,7 @@ pub struct SubPath {
 	pub start: Node,
 	pub end: Node,
 	pub total_weight: Tick,
+	pub time_taken: Tick,
 }
 
 pub struct SubPathsPyramid<'a> {
@@ -37,13 +40,33 @@ pub struct SubPathsPyramid<'a> {
 }
 
 impl<'a> SubPathsPyramid<'a> {
-	fn get_prof(idx: usize) -> usize {
+	pub fn print(&self) {
+		let mut idx = 0;
+		let mut prof = 0;
+		for subpath in &self.subpaths {
+			print!("{}--{}-->{} ", subpath.start, subpath.total_weight, subpath.end);
+			if idx == prof {
+				println!();
+				prof += 1;
+				idx = 0;
+			} else {
+				idx += 1;
+			}
+		}
+	}
+	pub fn get_prof(idx: usize) -> usize {
+		if idx == 0 {
+			return 0;
+		}
+		if idx == 1 {
+			return 1;
+		}
 		//stack exchange get inverse of formula for sum of intergers from 1 to n?
-		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize + 1;
+		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize;
 	}
 
-	fn get_idx_left_son(idx: usize) -> usize {
-		return idx + Self::get_prof(idx);
+	pub fn get_idx_left_son(idx: usize) -> usize {
+		return idx + Self::get_prof(idx) + 1;
 	}
 
 	pub fn get_idx_right_son(idx: usize) -> usize {
@@ -54,11 +77,40 @@ impl<'a> SubPathsPyramid<'a> {
 		if idx == 0 {
 			return (None, None);
 		}
+		// 1 has parents (None, 0), 2 has parents (0, None), 3 has parents (None, 1), 4 has parents (1, 2), 5 has parents (2, None)
+		// Structure :
+		// 0
+		// 1 2
+		// 3 4 5
 		let prof = Self::get_prof(idx);
 		let (minr, maxr) = Self::get_range(prof);
-		let left_parent = if idx == minr { None } else { Some(idx - prof) };
-		let right_parent = if idx == maxr { None } else { Some(idx - (prof - 1) + 1) };
+		if idx == 1 {
+			return (None, Some(0));
+		}
+		if idx == 2 {
+			return (Some(0), None);
+		}
+
+		let left_parent = if idx == minr { None } else { Some(idx - prof - 1) };
+		let right_parent = if idx == maxr { None } else { Some(idx - prof) };
 		return (left_parent, right_parent);
+	}
+
+	pub fn leaves_range(&self) -> std::ops::Range<usize> {
+		// The leaves are the last elements of the pyramid
+		if self.subpaths.len() < 1 {
+			return 0..0;
+		}
+		if self.subpaths.len() == 1 {
+			return 0..1;
+		}
+		if self.subpaths.len() == 3 {
+			return 1..3;
+		}
+
+		let prof = Self::get_prof(self.subpaths.len() - 1);
+		let (minr, maxr) = Self::get_range(prof);
+		return minr..maxr + 1;
 	}
 
 	pub fn leaves(&'a self) -> &'a [SubPath] {
@@ -72,17 +124,29 @@ impl<'a> SubPathsPyramid<'a> {
 		return &self.subpaths[minr..=maxr];
 	}
 
-	fn get_range(prof: usize) -> (usize, usize) {
+	/// Inclusive range
+	pub fn get_range(prof: usize) -> (usize, usize) {
 		if prof == 0 {
 			return (0, 0);
 		}
-		let most_right = ((prof + 1) * prof) / 2;
-		return (most_right - prof, most_right - 1);
+		let most_right = ((prof + 2) * (prof + 1)) / 2;
+		return (most_right - prof - 1, most_right - 1);
 	}
 
 	pub fn from_path<'b>(graph: &'b Graph, path: &Path) -> SubPathsPyramid<'b> {
 		if path.steps.is_empty() {
 			return SubPathsPyramid { graph, subpaths: vec![] };
+		}
+		if path.steps.len() == 1 {
+			return SubPathsPyramid {
+				graph,
+				subpaths: vec![SubPath {
+					start: path.start,
+					end: path.steps[0].node,
+					total_weight: path.steps[0].weight,
+					time_taken: 0,
+				}],
+			};
 		}
 		let nb_elems = (path.steps.len() * (path.steps.len() + 1)) / 2;
 		let mut elems = vec![
@@ -90,26 +154,29 @@ impl<'a> SubPathsPyramid<'a> {
 				start: 0,
 				end: 0,
 				total_weight: 0,
+				time_taken: 0,
 			};
 			nb_elems
 		];
 
 		let mut prev_node = path.start;
 		let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
+		let mut wait = 0;
 		for step in &path.steps {
 			elems[leaf_index] = SubPath {
 				start: prev_node,
 				end: step.node,
 				total_weight: step.weight,
+				time_taken: wait,
 			};
 			prev_node = step.node;
 			leaf_index += 1;
+			wait += step.weight;
 		}
 
 		let leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
-
-		for p in (0..SubPathsPyramid::get_prof(leaf_index) - 1).rev() {
-			let (minr, maxr) = SubPathsPyramid::get_range(p + 1);
+		for p in (0..SubPathsPyramid::get_prof(leaf_index)).rev() {
+			let (minr, maxr) = SubPathsPyramid::get_range(p);
 			for i in minr..=maxr {
 				let il = SubPathsPyramid::get_idx_left_son(i);
 				let ir = SubPathsPyramid::get_idx_right_son(i);
@@ -123,6 +190,7 @@ impl<'a> SubPathsPyramid<'a> {
 					start: left.start,
 					end: right.end,
 					total_weight: (left.total_weight + right.total_weight) - shared_len,
+					time_taken: left.time_taken,
 				};
 				elems[i] = new_path;
 			}
@@ -135,15 +203,11 @@ impl<'a> SubPathsPyramid<'a> {
 		// look through all the leaves, if any of them is in the attack, invalidate the path by writing 0 in the matrix,
 		// then propagate the change to the root
 		let mut to_invalidate = vec![];
-		for (i, subpath) in self.subpaths.iter().enumerate() {
+		'outer: for (i, subpath) in self.leaves().iter().enumerate() {
 			for blocked_link in &attack.blocked_links {
 				if blocked_link.from == subpath.start && blocked_link.to == subpath.end {
 					to_invalidate.push(i);
-					// clear the value in the matrix
-					for time in 0..attack.max_time {
-						dma[(time, subpath.start, subpath.end)] = 0;
-					}
-					break;
+					continue 'outer;
 				}
 			}
 		}
@@ -168,11 +232,266 @@ impl<'a> SubPathsPyramid<'a> {
 						new_to_invalidate.push(right_parent);
 					}
 				}
-				for time in 0..attack.max_time {
+				let weight = dma[(0, self.subpaths[i].start, self.subpaths[i].end)];
+				let max_time_reachable = attack.max_time.saturating_sub(weight);
+				for time in 0..max_time_reachable {
 					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
 				}
 			}
 			to_invalidate = new_to_invalidate;
+		}
+	}
+
+	pub fn validate_path(&self, dma: &mut DistanceMatrixArray, blocked_links: &SquareMatrix<bool>) {
+		if self.subpaths.is_empty() {
+			return;
+		}
+		if dma[(0, self.subpaths[0].start, self.subpaths[0].end)] != 0 {
+			return;
+		}
+		// look through all the leaves, if none of them is in the attack, validate the path by writing the weight in the matrix,
+		for subpath in self.leaves() {
+			if blocked_links[(subpath.start as usize, subpath.end as usize)] {
+				continue;
+			}
+			for time in 0..dma.max_time {
+				dma[(time as Tick, subpath.start, subpath.end)] = subpath.total_weight;
+			}
+		}
+	}
+
+	// FIXME : broken indices for the pyramid
+	pub fn unvalidate_path(
+		&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack, already_done: &mut SquareMatrix<bool>,
+		times_matrix: &SquareMatrix<Option<&'a Vec<Tick>>>,
+	) {
+		let mut debug = false;
+		if debug {
+			println!("Times matrix : {:?}", times_matrix);
+		}
+		if debug {
+			println!("-------------------");
+		}
+		if self.subpaths.is_empty() {
+			return;
+		}
+		if dma[(0, self.subpaths[0].start, self.subpaths[0].end)] == 0 {
+			return;
+		}
+		if already_done[(self.subpaths[0].start as usize, self.subpaths[0].end as usize)] {
+			return;
+		}
+
+		if debug {
+			self.print();
+		}
+
+		let debug_i = 10;
+		let debug_j = 4;
+
+		if self.subpaths[0].start == debug_i && self.subpaths[0].end == debug_j {
+			println!("-------------------");
+			println!("Times matrix : {:?}", times_matrix);
+			println!("Times matrix : {:?}", times_matrix[(debug_i as usize, debug_j as usize)]);
+			println!("-------------------");
+		}
+
+		// This is a vec which, for each subpath, contains a vector of intervals at which the path is invalidated
+		//let mut intervals_to_invalidate = vec![vec![]; self.subpaths.len()];
+		let mut intervals_to_invalidate = vec![HashSet::new(); self.subpaths.len()];
+		// look through all the leaves, write their invalidation intervals in the intervals_to_invalidate vec, then propagate the change to the root
+		for i in self.leaves_range() {
+			let subpath = &self.subpaths[i];
+			//println!("Invalidating path {}--{}-->{}", subpath.start, subpath.total_weight, subpath.end);
+			if let Some(times) = times_matrix[(subpath.start as usize, subpath.end as usize)] {
+				for time in times {
+					for delta in 0..attack.delta {
+						let idx = *time as usize * attack.delta as usize + delta as usize;
+						if idx >= dma.max_time {
+							continue;
+						}
+						intervals_to_invalidate[i].insert(idx as Tick);
+					}
+				}
+			}
+		}
+
+		// for all the leaves that have been invalidated, propagate the change to their parents
+		// go through the pyramid from the leaves to the root
+		let mut to_invalidate = vec![];
+		for i in self.leaves_range() {
+			to_invalidate.push(i);
+		}
+
+		/*while !to_invalidate.is_empty() {
+			let mut new_to_invalidate = vec![];
+			for i in to_invalidate {
+				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
+				//println!("Parents of {} : {:?}, {:?}", i, left_parent, right_parent);
+				if self.subpaths[i].start == debug_i && self.subpaths[i].end == debug_j {
+					println!("Interval to invalidate : {:?}", intervals_to_invalidate[i]);
+					println!("time taken : {}", self.subpaths[i].time_taken);
+					debug = true;
+				} else {
+					debug = false;
+				}
+				if let Some(left_parent) = left_parent {
+					// TODO : optimize this
+					let mut to_push = vec![];
+					for time in &intervals_to_invalidate[i] {
+						/*if debug {
+							println!(
+								"{} Pushing {} {} to left parent {}",
+								i, self.subpaths[i].time_taken, time, left_parent
+							);
+						}*/
+						//to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
+						/*if *time >= self.subpaths[i].time_taken {
+							to_push.push(*time - self.subpaths[i].time_taken);
+						}*/
+						// if you have a left neighbour
+						let offset = if i > 0 {
+							if SubPathsPyramid::get_prof(i) == SubPathsPyramid::get_prof(i - 1) {
+								self.subpaths[i].time_taken.saturating_sub(self.subpaths[i - 1].time_taken)
+							} else {
+								0
+							}
+						} else {
+							0
+						};
+
+						to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
+					}
+					for time in to_push {
+						intervals_to_invalidate[left_parent].insert(time);
+					}
+					if !already_done[(self.subpaths[left_parent].start as usize, self.subpaths[left_parent].end as usize)] {
+						let last_elem_index = new_to_invalidate.len();
+						//if last_elem_index == 0 || new_to_invalidate[last_elem_index - 1] != left_parent {
+						new_to_invalidate.push(left_parent);
+						//}
+					}
+				}
+				if let Some(right_parent) = right_parent {
+					let mut to_push = vec![];
+					for time in &intervals_to_invalidate[i] {
+						if debug {
+							println!(
+								"{} Pushing {} {} to right parent {}",
+								i, self.subpaths[i].time_taken, time, right_parent
+							);
+						}
+						to_push.push(*time);
+					}
+					for time in to_push {
+						intervals_to_invalidate[right_parent].insert(time);
+					}
+					if !already_done[(self.subpaths[right_parent].start as usize, self.subpaths[right_parent].end as usize)] {
+						// if the parent has not already been invalidated, add it to the list of parents to invalidate
+						let last_elem_index = new_to_invalidate.len();
+						//if last_elem_index == 0 || new_to_invalidate[last_elem_index - 1] != right_parent {
+						new_to_invalidate.push(right_parent);
+						//}
+						new_to_invalidate.push(right_parent);
+					}
+				}
+
+				if debug {
+					println!(
+						"Invalidating subpath total {}--{}-->{} : {:?}",
+						self.subpaths[i].start, self.subpaths[i].total_weight, self.subpaths[i].end, intervals_to_invalidate[i]
+					);
+				}
+				if self.subpaths[i].start == debug_i && self.subpaths[i].end == debug_j {
+					println!("Interval to invalidate : {:?}", intervals_to_invalidate[i]);
+					println!("all intervals : {:?}", intervals_to_invalidate);
+				}
+
+				already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
+				if debug {
+					print!("All intervals : ");
+				}
+				for time in &intervals_to_invalidate[i] {
+					/*if debug {
+						print!("  {} {{", time);
+					}
+					let mut idx = *time as usize * attack.delta as usize;
+					for delta in 0..attack.delta {
+						if idx as usize >= dma.max_time {
+							break;
+						}
+						dma[(idx as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
+						if debug {
+							print!("{} ", idx);
+						}
+						idx += 1;
+					}
+					if debug {
+						print!("}}  ");
+					}*/
+					dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
+				}
+				if debug {
+					println!();
+				}
+			}
+			to_invalidate = new_to_invalidate;
+		}*/
+
+		for i in (0..self.subpaths.len()).rev() {
+			let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
+			if let Some(left_parent) = left_parent {
+				let mut to_push = vec![];
+				for time in &intervals_to_invalidate[i] {
+					to_push.push(time.saturating_sub(self.subpaths[i].time_taken));
+				}
+				for time in to_push {
+					intervals_to_invalidate[left_parent].insert(time);
+				}
+			}
+			if let Some(right_parent) = right_parent {
+				let mut to_push = vec![];
+				for time in &intervals_to_invalidate[i] {
+					to_push.push(*time);
+				}
+				for time in to_push {
+					intervals_to_invalidate[right_parent].insert(time);
+				}
+			}
+			already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
+			for time in &intervals_to_invalidate[i] {
+				let mut idx = *time as usize * attack.delta as usize;
+				for delta in 0..attack.delta {
+					if idx as usize >= dma.max_time {
+						break;
+					}
+					dma[(idx as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
+					idx += 1;
+				}
+			}
+		}
+
+		if debug {
+			println!("-------------------");
+			let mut prof = 0;
+			let mut idx = 0;
+			for subpath in &self.subpaths {
+				print!("{}--{}-->{} ", subpath.start, subpath.total_weight, subpath.end);
+				if idx == prof {
+					println!();
+					prof += 1;
+					idx = 0;
+				} else {
+					idx += 1;
+				}
+			}
+
+			for (i, subpath) in self.subpaths.iter().enumerate() {
+				println!(
+					"Invalidating path n{} {}--{}-->{} ({}) : {:?}",
+					i, subpath.start, subpath.total_weight, subpath.end, subpath.time_taken, intervals_to_invalidate[i]
+				);
+			}
 		}
 	}
 }
@@ -252,36 +571,24 @@ pub struct TemporalSubPathsPyramid<'a> {
 }
 
 impl TemporalSubPathsPyramid<'_> {
-	fn get_prof(idx: usize) -> usize {
-		//stack exchange get inverse of formula for sum of intergers from 1 to n?
-		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize + 1;
+	pub fn get_prof(idx: usize) -> usize {
+		return SubPathsPyramid::get_prof(idx);
 	}
 
-	fn get_idx_left_son(idx: usize) -> usize {
-		return idx + Self::get_prof(idx);
+	pub fn get_idx_left_son(idx: usize) -> usize {
+		return SubPathsPyramid::get_idx_left_son(idx);
 	}
 
 	pub fn get_idx_right_son(idx: usize) -> usize {
-		return Self::get_idx_left_son(idx) + 1;
+		return SubPathsPyramid::get_idx_right_son(idx);
 	}
 
 	pub fn get_idx_parents(idx: usize) -> (Option<usize>, Option<usize>) {
-		if idx == 0 {
-			return (None, None);
-		}
-		let prof = Self::get_prof(idx);
-		let (minr, maxr) = Self::get_range(prof);
-		let left_parent = if idx == minr { None } else { Some(idx - prof) };
-		let right_parent = if idx == maxr { None } else { Some(idx - prof + 1) };
-		return (left_parent, right_parent);
+		return SubPathsPyramid::get_idx_parents(idx);
 	}
 
 	fn get_range(prof: usize) -> (usize, usize) {
-		if prof == 0 {
-			return (0, 0);
-		}
-		let truc = ((prof + 1) * prof) / 2;
-		return (truc - prof, truc - 1);
+		return SubPathsPyramid::get_range(prof);
 	}
 
 	pub fn from_path<'a>(graph: &'a TimeVaryingGraph, path: &TemporalPath) -> TemporalSubPathsPyramid<'a> {
@@ -313,8 +620,7 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			}
-			else {
+			} else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
@@ -327,10 +633,14 @@ impl TemporalSubPathsPyramid<'_> {
 			leaf_index += 1;
 		}
 
+		if path.steps.len() == 1 {
+			return TemporalSubPathsPyramid { graph, subpaths: elems };
+		}
+
 		// Fill the rest of the pyramid
 		let leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
-		for p in (0..TemporalSubPathsPyramid::get_prof(leaf_index) - 1).rev() {
-			let (minr, maxr) = TemporalSubPathsPyramid::get_range(p + 1);
+		for p in (0..TemporalSubPathsPyramid::get_prof(leaf_index)).rev() {
+			let (minr, maxr) = TemporalSubPathsPyramid::get_range(p);
 			for i in minr..=maxr {
 				let il = TemporalSubPathsPyramid::get_idx_left_son(i);
 				let ir = TemporalSubPathsPyramid::get_idx_right_son(i);

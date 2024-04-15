@@ -1,9 +1,10 @@
 #[cfg(test)]
 mod tests {
 
+	use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 	use crate::graph::{dijkstra, Graph, Neighbour, Node};
-	use crate::paths::TemporalSubPathsPyramid;
-	use crate::time_varying_graph::{create_phantom_edges, TimeVaryingGraph};
+	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
+	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
 
@@ -68,7 +69,22 @@ mod tests {
 		assert_eq!(phantom_edges[0][1].weights.weights[1], 2);
 	}
 
-	/*#[test]
+	#[test]
+	fn test_pyramid() {
+		// make a graph line with 4 nodes (0 -> 1 -> 2 -> 3)
+		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
+		let neighbours_of_1 = vec![Neighbour { node: 2, weight: 1 }];
+		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
+		let neighbours_of_3 = vec![];
+
+		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
+
+		let path_from_0_to_3 = dijkstra(&graph, 0, 3);
+		let pyr = SubPathsPyramid::from_path(&graph, &path_from_0_to_3);
+		pyr.print()
+	}
+
+	#[test]
 	fn test_temporal_dijkstra() {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
@@ -76,34 +92,32 @@ mod tests {
 		let max_time = 10;
 		let delta = 2;
 
-		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
+		let tvg = TimeVaryingGraph::from(&graph, max_time, &deleted_edges, delta);
 
-		let tvg = TimeVaryingGraph {
-			max_time: max_time.into(),
-			nodes: phantom_edges,
-		};
-
-		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, max_time.try_into().unwrap(), 1);
+		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, 1);
 		path_from_0_to_3_at_time_1.print();
+		println!("Total weight: {}", path_from_0_to_3_at_time_1.cost());
+		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_3_at_time_1);
+		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_0_to_2_at_time_0 = temporal_dijkstra(&tvg, 0, 2, max_time.try_into().unwrap(), 0);
+		let path_from_0_to_2_at_time_0 = temporal_dijkstra(&tvg, 0, 2, 0);
 		path_from_0_to_2_at_time_0.print();
 		println!("Total weight: {}", path_from_0_to_2_at_time_0.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_2_at_time_0);
 		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_0_to_2_at_time_5 = temporal_dijkstra(&tvg, 0, 2, max_time.try_into().unwrap(), 5);
+		let path_from_0_to_2_at_time_5 = temporal_dijkstra(&tvg, 0, 2, 5);
 		path_from_0_to_2_at_time_5.print();
 		println!("Total weight: {}", path_from_0_to_2_at_time_5.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_2_at_time_5);
 		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_1_to_2_at_time_7 = temporal_dijkstra(&tvg, 1, 2, max_time.try_into().unwrap(), 7);
+		let path_from_1_to_2_at_time_7 = temporal_dijkstra(&tvg, 1, 2, 7);
 		path_from_1_to_2_at_time_7.print();
 		println!("Total weight: {}", path_from_1_to_2_at_time_7.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_1_to_2_at_time_7);
 		println!("Pyramid: {:?}", pyr.subpaths);
-	}*/
+	}
 
 	#[test]
 	fn test_dijkstra() {
@@ -180,6 +194,8 @@ mod tests {
 		let graph = make_test_graph();
 		let max_time = 10;
 		let delta = 1;
+		let nb_nodes = graph.edges.len();
+		println!("Nb nodes: {}", nb_nodes);
 
 		let deleted_links = graph.edges.iter().enumerate().flat_map(|(from, neighbours)| {
 			neighbours.iter().map(move |neighbour| DeletedLink {
@@ -204,4 +220,91 @@ mod tests {
 		assert!(efficiency.abs() < 0.0001); // Floating point comparison
 		assert_eq!(reachables, 0);
 	}
+
+	#[test]
+	pub fn test_range_pyramid() {
+		for i in 0..10 {
+			println!("{} : {:?}", i, SubPathsPyramid::get_range(i));
+		}
+	}
+
+	#[test]
+	// does work yay
+	pub fn test_index_pyramid() {
+		for i in 0..10 {
+			println!(
+				"{} : prof {} left {} right {} parents {:?}",
+				i,
+				SubPathsPyramid::get_prof(i),
+				SubPathsPyramid::get_idx_left_son(i),
+				SubPathsPyramid::get_idx_right_son(i),
+				SubPathsPyramid::get_idx_parents(i),
+			);
+			assert_eq!(SubPathsPyramid::get_prof(i), TemporalSubPathsPyramid::get_prof(i));
+			assert_eq!(SubPathsPyramid::get_idx_left_son(i), TemporalSubPathsPyramid::get_idx_left_son(i));
+			assert_eq!(SubPathsPyramid::get_idx_right_son(i), TemporalSubPathsPyramid::get_idx_right_son(i));
+			assert_eq!(SubPathsPyramid::get_idx_parents(i), TemporalSubPathsPyramid::get_idx_parents(i));
+		}
+	}
+
+	#[test]
+	fn test_path_unvalidation() {
+		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
+		let neighbours_of_1 = vec![Neighbour { node: 0, weight: 1 }, Neighbour { node: 2, weight: 1 }];
+		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
+		let neighbours_of_3 = vec![Neighbour { node: 1, weight: 1 }];
+
+		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
+
+		let max_time = 10;
+		let delta = 3;
+
+		let deleted_links = vec![
+			DeletedLink {
+				from: 0,
+				to: 1,
+				times: vec![0, 1],
+			},
+			DeletedLink {
+				from: 1,
+				to: 2,
+				times: vec![2],
+			},
+			DeletedLink {
+				from: 3,
+				to: 1,
+				times: vec![0, 2],
+			},
+		];
+
+		let attack = DynamicAttack {
+			blocked_links: deleted_links,
+			delta,
+			max_time,
+		};
+
+		let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_time);
+		for path in paths.iter() {
+			println!("-----------------");
+			path.print();
+		}
+		let mut dma = DistanceMatrixArray::propagated(&dst_mat, max_time);
+
+		let mut already_done = SquareMatrix::new(graph.edges.len(), false);
+		let mut times_matrix = SquareMatrix::new(graph.edges.len(), None);
+		// push the blocked links times
+		let blocked_links = attack.blocked_links();
+		for link in blocked_links.iter() {
+			println!("Link: {:?}", link);
+			times_matrix[(link.from as usize, link.to as usize)] = Some(&link.times);
+		}
+
+		for path in paths.iter() {
+			path.unvalidate_path(&mut dma, &attack, &mut already_done, &times_matrix);
+		}
+
+		dma.print(max_time);
+	}
+
+	// TODO : test index pyramid
 }

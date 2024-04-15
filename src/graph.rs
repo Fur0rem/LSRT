@@ -77,8 +77,7 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -189,7 +188,7 @@ impl Graph {
 		let mut dst_mat = DistanceMatrix::zeroed(self);
 
 		for node in 0..self.nb_nodes() {
-			for node2 in 0..self.nb_nodes() {
+			for node2 in (0..self.nb_nodes()).rev() {
 				// If the value is already computed, skip
 				if dst_mat[(node, node2)] != 0 {
 					continue;

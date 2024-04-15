@@ -121,8 +121,7 @@ impl DistanceMatrix {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				}
-				else {
+				} else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -137,7 +136,7 @@ pub struct DistanceMatrixArray {
 	// 3D array of distance matrices flattened
 	pub distances: Vec<Tick>,
 	dim: usize,
-	max_time: usize,
+	pub max_time: usize,
 }
 
 impl std::ops::Index<(Tick, Node, Node)> for DistanceMatrixArray {
@@ -232,11 +231,11 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					}
-					else {
+					} else {
 						distance.to_string()
 					};
-					print!("{} ", distance_to_str);
+					// Pad the string to 4 characters
+					print!("{:4} ", distance_to_str);
 				}
 				println!();
 			}
