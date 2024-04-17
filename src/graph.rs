@@ -8,8 +8,10 @@ use crate::paths::{Path, SubPathsPyramid};
 
 use std::collections::BinaryHeap;
 
+// Paris has 9596 nodes, so u16 should be enough
 pub type Node = u16;
-pub type Tick = u32;
+// Paris has a diameter of 1404, so u16 should be enough
+pub type Tick = u16;
 
 /// A neighbour is a node and the weight of the edge to this node
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,8 +79,7 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {

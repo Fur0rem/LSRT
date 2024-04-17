@@ -7,6 +7,8 @@ def get_city_edges(city_name):
     city_graph = CityGraph(city_name)
     num_edges = city_graph.graph.number_of_edges()
     print("Diameter of the graph is", city_graph.diameter())
+    print("Number of nodes in the graph is", city_graph.nb_nodes())
+    print("Number of edges in the graph is", city_graph.nb_edges())
     
     return num_edges
 

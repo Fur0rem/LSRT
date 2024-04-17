@@ -82,7 +82,29 @@ def identifier_attack(graph : CityGraph, nbTimes : int, budget : int, delta : in
     """Each time, it removes the edge with the highest index until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, delta, lambda x : -x, costPerLane)
     
+def longitude_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
+    """We sort the edges by longitude, and then we move back and forth on the edges"""
 
+    costFunc = graph.get_nb_lanes_of_edge if costPerLane else lambda x : 1
+
+    attacks = DynamicAttack(graph, nbTimes)
+    edges = list(graph.edges())
+    edges.sort(key = lambda x : min(graph.graph.nodes[x[0]]["x"], graph.graph.nodes[x[1]]["x"]))
+    edges = [(graph.find_edge_index(edge[0], edge[1]), graph.get_node_index(edge[0]), graph.get_node_index(edge[1])) for edge in edges]
+
+    offset = 0
+    direction = 1
+    for time in range(1 + (nbTimes // delta)) :
+        window = edges[offset:offset + budget]
+        for edge in window :
+            attacks.add_attack(time, edge[0])
+        if offset + budget >= len(edges) :
+            direction = -1
+        if offset <= 0 :
+            direction = 1
+        offset += direction
+
+    return attacks
 
 def random_moving_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> DynamicAttack :
     """We start with random edges, and then with each time the attacks are moved to a neighbor edge"""
@@ -372,6 +394,7 @@ def main():
         "random_moving" : random_moving_attack,
         "identifier" : identifier_attack,
         "longitude" : longitude_attack,
+        "longitude_moving" : longitude_moving_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
     }

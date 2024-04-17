@@ -26,7 +26,7 @@ pub struct DynamicAttackSeries<'a> {
 }
 
 impl<'a> DynamicAttackSeries<'a> {
-	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> DynamicAttackSeries<'a> {
+	/*pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> DynamicAttackSeries<'a> {
 		let series = files
 			.iter()
 			.map(|budget| {
@@ -85,6 +85,61 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect();
 
 		return results;
+	}*/
+
+	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+		// First, compute the paths for the unattacked graph
+		// Read the first file to get the max time
+		let file_name = format!("{}{}", directory, files[0]);
+		let file = std::fs::File::open(file_name).unwrap();
+		let mut reader = std::io::BufReader::new(file);
+		let mut line = String::new();
+		reader.read_line(&mut line).unwrap();
+		line.clear();
+		reader.read_line(&mut line).unwrap();
+		let line = line.split_whitespace().collect::<Vec<&str>>();
+		let max_time = line[2];
+		let max_time = max_time.parse().unwrap();
+
+		// Compute the distance matrix for the unattacked graph
+		let dst_mat = graph.all_pairs_distances(max_time);
+
+		// Then, we recopy the distance matrix to all the attacks
+		// We invalidate all the paths except those who took more than max_time to reach the destination
+		files
+			.par_iter()
+			.map(|budget| {
+				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
+					let file_name = format!("{}{}", directory, budget);
+					let file = std::fs::File::open(file_name).unwrap();
+					let mut reader = std::io::BufReader::new(file);
+					let mut line = String::new();
+					reader.read_line(&mut line).unwrap();
+					let attack = DynamicAttack::from_file(&mut reader);
+					let mut dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_time);
+					let time_graph = graph_to_temporal(graph, max_time, &attack.blocked_links(), attack.delta());
+					std::mem::drop(attack);
+					for t in 0..time_graph.max_time {
+						for i in 0..time_graph.nb_nodes() {
+							// Doing the j in reverse seems to improve slightly the performance
+							// Probably because nodes that are far in real
+							// life apart also have far apart indexes
+							for j in (0..time_graph.nb_nodes()).rev() {
+								// Not 0 -> already computed
+								if dma[(t, i, j)] != 0 {
+									continue;
+								}
+								temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
+							}
+						}
+					}
+					let (efficiency, reachables) = dma.efficiency_reachables(max_time);
+
+					std::mem::drop(dma);
+					(*budget, (efficiency, reachables))
+				})
+			})
+			.collect()
 	}
 
 	pub fn efficiency_invalidation(&self) -> Vec<(&str, (f64, u64))> {
@@ -166,7 +221,7 @@ pub struct StaticAttackSeries<'a> {
 }
 
 impl<'a> StaticAttackSeries<'a> {
-	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> StaticAttackSeries<'a> {
+	/*pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> StaticAttackSeries<'a> {
 		let series = files
 			.iter()
 			.map(|budget| {
@@ -200,6 +255,24 @@ impl<'a> StaticAttackSeries<'a> {
 			})
 			.collect();
 		return efficiencies;
+	}*/
+
+	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+		files
+			.par_iter()
+			.map(|budget| {
+				let file_name = format!("{}{}", directory, budget);
+				let file = std::fs::File::open(file_name).unwrap();
+				let mut reader = std::io::BufReader::new(file);
+				let mut line = String::new();
+				reader.read_line(&mut line).unwrap();
+				let attack = StaticAttack::from_file(&mut reader, graph);
+				(
+					*budget,
+					benchmark!(format!("(Static) Efficiency for {}", budget), { attack.efficiency(graph) }),
+				)
+			})
+			.collect()
 	}
 }
 
@@ -209,7 +282,7 @@ pub enum AttackSeries<'a> {
 }
 
 impl<'a> AttackSeries<'a> {
-	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> AttackSeries<'a> {
+	/*pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> AttackSeries<'a> {
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
 		let file = std::fs::File::open(file_name).unwrap();
@@ -219,11 +292,9 @@ impl<'a> AttackSeries<'a> {
 
 		if line.starts_with('S') {
 			AttackSeries::Static(StaticAttackSeries::from_directory(directory, files, graph))
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			AttackSeries::Dynamic(DynamicAttackSeries::from_directory(directory, files, graph))
-		}
-		else {
+		} else {
 			panic!("Invalid attack file");
 		}
 	}
@@ -239,6 +310,24 @@ impl<'a> AttackSeries<'a> {
 		match self {
 			AttackSeries::Static(sas) => sas.efficiency(),
 			AttackSeries::Dynamic(das) => das.efficiency_invalidation(),
+		}
+	}*/
+
+	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+		rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
+		// Open the first file to check if it is a static or dynamic attack
+		let file_name = format!("{}{}", directory, files[0]);
+		let file = std::fs::File::open(file_name).unwrap();
+		let mut reader = std::io::BufReader::new(file);
+		let mut line = String::new();
+		reader.read_line(&mut line).unwrap();
+
+		if line.starts_with('S') {
+			StaticAttackSeries::efficiencies(directory, files, graph)
+		} else if line.starts_with('D') {
+			DynamicAttackSeries::efficiencies(directory, files, graph)
+		} else {
+			panic!("Invalid attack file");
 		}
 	}
 }

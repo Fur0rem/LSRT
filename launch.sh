@@ -20,6 +20,7 @@ NB_EDGES=$(python3 scripts/BudgetVille.py $1 | tail -n 1)
 ./launch_single.sh -c $1 -a betweenness_moving -g 15 -r 14 -x $NB_EDGES -s 2
 ./launch_single.sh -c $1 -a identifier -g 15 -r 14 -x $NB_EDGES -s 2
 ./launch_single.sh -c $1 -a longitude -g 15 -r 14 -x $NB_EDGES -s 2
+./launch_single.sh -c $1 -a longitude_moving -g 15 -r 14 -x $NB_EDGES -s 2
 ./launch_single.sh -c $1 -a max_lanes -g 15 -r 14 -x $NB_EDGES -s 2
 
 # Launch random attacks
