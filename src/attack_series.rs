@@ -101,6 +101,8 @@ impl<'a> DynamicAttackSeries<'a> {
 		let max_time = line[2];
 		let max_time = max_time.parse().unwrap();
 
+		println!("Graph diameter: {}", max_time);
+
 		// Compute the distance matrix for the unattacked graph
 		let dst_mat = graph.all_pairs_distances(max_time);
 
@@ -314,7 +316,7 @@ impl<'a> AttackSeries<'a> {
 	}*/
 
 	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
-		rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
+		//rayon::ThreadPoolBuilder::new().num_threads(8).build_global().unwrap();
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
 		let file = std::fs::File::open(file_name).unwrap();

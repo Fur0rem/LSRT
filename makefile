@@ -1,3 +1,7 @@
+rust:
+	rm -f lsrt
+	cargo build --release && mv target/release/lsrt_new lsrt
+
 TARGET := lsrt
 DEBUG := lsrt_debug
 
@@ -32,10 +36,6 @@ clean:
 clean_data:
 	rm -rf $(FILES_DIR_NAME)/*
 	rmdir $(FILES_DIR_NAME)
-
-rust:
-	rm -f lsrt
-	cargo build --release && mv target/release/lsrt_new lsrt
 
 rust_debug:
 	rm -f lsrt
