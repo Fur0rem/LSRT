@@ -68,8 +68,7 @@ impl dyn Attack {
 
 		if line.starts_with('S') {
 			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			return Box::new(DynamicAttack::from_file(&mut reader));
 		}
 
@@ -129,7 +128,7 @@ impl Attack for StaticAttack {
 		// Create a graph without the links that got blocked
 		let mut new_graph = graph.clone();
 		for i in 0..self.blocked_links.len() {
-			for j in 0..self.blocked_links[i].len() {
+			for j in (0..self.blocked_links[i].len()).rev() {
 				new_graph.remove_link(i as Node, self.blocked_links[i][j]);
 			}
 		}
