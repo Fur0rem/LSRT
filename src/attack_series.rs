@@ -7,7 +7,7 @@ use crate::{
 	graph::{dijkstra, Graph, Node, Tick},
 	paths::{Path, TemporalSubPathsPyramid},
 	time_varying_graph::{self, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write},
-	Attack, DynamicAttack,
+	Attack, DynamicAttack, StaticAttack,
 };
 
 macro_rules! benchmark {
@@ -15,18 +15,18 @@ macro_rules! benchmark {
 		let start = std::time::Instant::now();
 		let result = $block;
 		let duration = start.elapsed();
-		println!("Time elapsed in {}() is: {:?}", $name, duration);
+		println!("Time elapsed in {} is: {:?}", $name, duration);
 		result
 	}};
 }
 
-pub struct AttackSeries<'a> {
+pub struct DynamicAttackSeries<'a> {
 	pub series: Vec<(&'a str, DynamicAttack)>,
 	pub graph: &'a Graph,
 }
 
-impl<'a> AttackSeries<'a> {
-	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> AttackSeries<'a> {
+impl<'a> DynamicAttackSeries<'a> {
+	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> DynamicAttackSeries<'a> {
 		let series = files
 			.iter()
 			.map(|budget| {
@@ -42,40 +42,28 @@ impl<'a> AttackSeries<'a> {
 				(*budget, attack)
 			})
 			.collect();
-		AttackSeries { series, graph }
+		DynamicAttackSeries { series, graph }
 	}
 
-	/*pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
+	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
 											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
 		let dst_mat = self.graph.all_pairs_distances(max_time);
 
 		// Then, we recopy the distance matrix to all the attacks
-		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
+		// We invalidate all the paths except those who took more than max_time to reach the destination
+		let mut dmas = vec![DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_time); self.series.len()];
 
 		let results = dmas
-			.iter_mut()
+			.par_iter_mut()
 			.enumerate()
 			.map(|(e, dma)| {
-				// We invalidate all the paths except those who took more than max_time to reach the destination
-				for i in 0..self.graph.nb_nodes() {
-					for j in 0..self.graph.nb_nodes() {
-						let weight = dst_mat[(i, j)];
-						let max_time_reachable = max_time.saturating_sub(weight);
-						for t in 0..max_time_reachable {
-							dma[(t, i, j)] = 0;
-						}
-					}
-				}
-
-				dma.fill_1_on_diagonals();
-
 				// Then, we recompute the paths for the attacked graph
 				let attack = &self.series[e].1;
 				(
 					self.series[e].0,
-					benchmark!("recomputing everything", {
+					benchmark!(format!("(Dynamic) Recomputing distances for {}", self.series[e].0), {
 						let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
 						for t in 0..time_graph.max_time {
 							for i in 0..time_graph.nb_nodes() {
@@ -89,9 +77,7 @@ impl<'a> AttackSeries<'a> {
 									temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, dma);
 								}
 							}
-							//println!("{}/{}", t, self.max_time);
 						}
-						//dma.print(max_time);
 						dma.efficiency_reachables(max_time)
 					}),
 				)
@@ -99,9 +85,9 @@ impl<'a> AttackSeries<'a> {
 			.collect();
 
 		return results;
-	}*/
+	}
 
-	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
+	pub fn efficiency_invalidation(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
 		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
@@ -123,7 +109,7 @@ impl<'a> AttackSeries<'a> {
 
 				benchmark!("unvalidating paths", {
 					for path in paths.iter() {
-						path.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
+						path.unvalidate_path(dma, attack, &mut already_done, &times_matrix);
 					}
 				});
 
@@ -171,5 +157,88 @@ impl<'a> AttackSeries<'a> {
 			.collect();
 
 		return results;
+	}
+}
+
+pub struct StaticAttackSeries<'a> {
+	pub series: Vec<(&'a str, StaticAttack)>,
+	pub graph: &'a Graph,
+}
+
+impl<'a> StaticAttackSeries<'a> {
+	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> StaticAttackSeries<'a> {
+		let series = files
+			.iter()
+			.map(|budget| {
+				let file_name = format!("{}{}", directory, budget);
+				// Open the file with a reader that can read from it
+				let file = std::fs::File::open(file_name).unwrap();
+				let mut reader = std::io::BufReader::new(file);
+				// read the first line and skip it
+				let mut line = String::new();
+				reader.read_line(&mut line).unwrap();
+
+				let attack = StaticAttack::from_file(&mut reader, graph);
+				(*budget, attack)
+			})
+			.collect();
+		return StaticAttackSeries { series, graph };
+	}
+
+	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
+		let efficiencies: Vec<(&str, (f64, u64))> = self
+			.series
+			.par_iter()
+			.map(|(budget, attack)| {
+				(
+					*budget,
+					benchmark!(format!("(Static) Efficiency for {}", budget), {
+						let (efficiency, reachables) = attack.efficiency(self.graph);
+						(efficiency, reachables)
+					}),
+				)
+			})
+			.collect();
+		return efficiencies;
+	}
+}
+
+pub enum AttackSeries<'a> {
+	Static(StaticAttackSeries<'a>),
+	Dynamic(DynamicAttackSeries<'a>),
+}
+
+impl<'a> AttackSeries<'a> {
+	pub fn from_directory(directory: &str, files: &[&'a str], graph: &'a Graph) -> AttackSeries<'a> {
+		// Open the first file to check if it is a static or dynamic attack
+		let file_name = format!("{}{}", directory, files[0]);
+		let file = std::fs::File::open(file_name).unwrap();
+		let mut reader = std::io::BufReader::new(file);
+		let mut line = String::new();
+		reader.read_line(&mut line).unwrap();
+
+		if line.starts_with('S') {
+			AttackSeries::Static(StaticAttackSeries::from_directory(directory, files, graph))
+		}
+		else if line.starts_with('D') {
+			AttackSeries::Dynamic(DynamicAttackSeries::from_directory(directory, files, graph))
+		}
+		else {
+			panic!("Invalid attack file");
+		}
+	}
+
+	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
+		match self {
+			AttackSeries::Static(sas) => sas.efficiency(),
+			AttackSeries::Dynamic(das) => das.efficiency(),
+		}
+	}
+
+	pub fn efficiency_invalidation(&self) -> Vec<(&str, (f64, u64))> {
+		match self {
+			AttackSeries::Static(sas) => sas.efficiency(),
+			AttackSeries::Dynamic(das) => das.efficiency_invalidation(),
+		}
 	}
 }

@@ -6,7 +6,8 @@ def get_city_edges(city_name):
     # Importer le graphe de la ville
     city_graph = CityGraph(city_name)
     num_edges = city_graph.graph.number_of_edges()
-
+    print("Diameter of the graph is", city_graph.diameter())
+    
     return num_edges
 
 if __name__ == "__main__":
