@@ -288,7 +288,11 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 		if distance > distances[node as usize] {
 			continue;
 		}
-		dst_mat[(start, node)] = distance;
+		if node == start {
+			dst_mat[(start, node)] = 1;
+		} else {
+			dst_mat[(start, node)] = distance;
+		}
 		for neighbour in &graph.edges[node as usize] {
 			let new_distance = distance + neighbour.weight;
 			if new_distance < distances[neighbour.node as usize] {
