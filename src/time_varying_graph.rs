@@ -111,7 +111,7 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 		if node == end {
 			break;
 		}
-		if distance + time_start >= time_graph.max_time {
+		if distance.saturating_add(time_start) >= time_graph.max_time {
 			dma[(time_start, start, end)] = Tick::MAX;
 			break;
 		}
