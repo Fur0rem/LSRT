@@ -326,9 +326,11 @@ impl<'a> AttackSeries<'a> {
 
 		if line.starts_with('S') {
 			StaticAttackSeries::efficiencies(directory, files, graph)
-		} else if line.starts_with('D') {
+		}
+		else if line.starts_with('D') {
 			DynamicAttackSeries::efficiencies(directory, files, graph)
-		} else {
+		}
+		else {
 			panic!("Invalid attack file");
 		}
 	}

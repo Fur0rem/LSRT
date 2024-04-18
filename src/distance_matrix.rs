@@ -121,7 +121,8 @@ impl DistanceMatrix {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				} else {
+				}
+				else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -245,7 +246,8 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					} else {
+					}
+					else {
 						distance.to_string()
 					};
 					// Pad the string to 4 characters

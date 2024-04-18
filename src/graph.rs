@@ -197,7 +197,7 @@ impl Graph {
 				}
 
 				// Compute the path from node to node2
-				let path = dijkstra(self, node as Node, node2 as Node);
+				/*let path = dijkstra(self, node as Node, node2 as Node);
 
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
@@ -207,7 +207,9 @@ impl Graph {
 						continue;
 					}
 					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
-				}
+				}*/
+
+				dijkstra_write(self, node as Node, node2 as Node, &mut dst_mat, max_time);
 			}
 		}
 
@@ -268,5 +270,55 @@ impl Graph {
 		}
 
 		return (dst_mat, paths);
+	}
+}
+
+pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut DistanceMatrix, max_time: Tick) {
+	let mut heap = BinaryHeap::new();
+	let mut previous = vec![None; graph.nb_nodes() as usize];
+	heap.push(DijkstraState { node: start, distance: 0 });
+
+	let mut distances = vec![Tick::MAX; graph.nb_nodes() as usize];
+	distances[start as usize] = 0;
+
+	while let Some(DijkstraState { node, distance }) = heap.pop() {
+		if node == end {
+			break;
+		}
+		if distance > distances[node as usize] {
+			continue;
+		}
+		dst_mat[(start, node)] = distance;
+		for neighbour in &graph.edges[node as usize] {
+			let new_distance = distance + neighbour.weight;
+			if new_distance < distances[neighbour.node as usize] {
+				distances[neighbour.node as usize] = new_distance;
+				heap.push(DijkstraState {
+					node: neighbour.node,
+					distance: new_distance,
+				});
+				previous[neighbour.node as usize] = Some(node);
+			}
+		}
+	}
+
+	let mut path = vec![];
+	let mut current = end;
+	while let Some(prev) = previous[current as usize] {
+		path.push(Neighbour {
+			node: current,
+			weight: distances[current as usize] - distances[prev as usize],
+		});
+		current = prev;
+	}
+	path.reverse();
+	let path = Path { graph, start, steps: path };
+	let subpaths = SubPathsPyramid::from_path(graph, &path);
+	for subpath in &subpaths.subpaths {
+		if subpath.total_weight > max_time {
+			dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
+			continue;
+		}
+		dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
 	}
 }
