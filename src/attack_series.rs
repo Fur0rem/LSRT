@@ -101,7 +101,7 @@ impl<'a> DynamicAttackSeries<'a> {
 		let max_time = line[2];
 		let max_time = max_time.parse().unwrap();
 
-		println!("Graph diameter: {}", max_time);
+		//println!("Graph diameter: {}", max_time);
 
 		// Compute the distance matrix for the unattacked graph
 		let dst_mat = graph.all_pairs_distances(max_time);

@@ -52,7 +52,7 @@ class CityGraph :
 		print("Normalised the data")
 		self.list_edges = list(self.graph.edges())
 		print("Graph fully done")
-		print("Graph has", self.nb_nodes(), "nodes and", self.nb_edges(), "edges")
+		#print("Graph has", self.nb_nodes(), "nodes and", self.nb_edges(), "edges")
 
 	def get_node_index(self, node : int) :
 		"""Returns the index in the matrix of the node through it's OSmnx numero"""
