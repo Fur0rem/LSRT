@@ -79,7 +79,8 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			} else {
+			}
+			else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -186,7 +187,7 @@ impl Graph {
 	/// It does dijkstra for each pair of nodes, and stores the result in a matrix
 	/// For each path computed, it also stores all the subpaths present in the path
 	/// This should reduce the number of dijkstra calls, since a path of length n has n(n+1)/2 subpaths
-	pub fn all_pairs_distances(&self, max_time: Tick) -> DistanceMatrix {
+	pub fn all_pairs_distances(&self) -> DistanceMatrix {
 		let mut dst_mat = DistanceMatrix::zeroed(self);
 
 		for node in 0..self.nb_nodes() {
@@ -209,7 +210,7 @@ impl Graph {
 					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
 				}*/
 
-				dijkstra_write(self, node as Node, node2 as Node, &mut dst_mat, max_time);
+				dijkstra_write(self, node as Node, node2 as Node, &mut dst_mat);
 			}
 		}
 
@@ -273,7 +274,7 @@ impl Graph {
 	}
 }
 
-pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut DistanceMatrix, max_time: Tick) {
+pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut DistanceMatrix) {
 	let mut heap = BinaryHeap::new();
 	let mut previous = vec![None; graph.nb_nodes() as usize];
 	heap.push(DijkstraState { node: start, distance: 0 });
@@ -290,7 +291,8 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 		}
 		if node == start {
 			dst_mat[(start, node)] = 1;
-		} else {
+		}
+		else {
 			dst_mat[(start, node)] = distance;
 		}
 		for neighbour in &graph.edges[node as usize] {
@@ -319,10 +321,10 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 	let path = Path { graph, start, steps: path };
 	let subpaths = SubPathsPyramid::from_path(graph, &path);
 	for subpath in &subpaths.subpaths {
-		if subpath.total_weight > max_time {
+		/*if subpath.total_weight > max_time {
 			dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
 			continue;
-		}
+		}*/
 		dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
 	}
 }

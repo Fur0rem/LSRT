@@ -68,8 +68,7 @@ impl dyn Attack {
 
 		if line.starts_with('S') {
 			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			return Box::new(DynamicAttack::from_file(&mut reader));
 		}
 
@@ -135,7 +134,7 @@ impl Attack for StaticAttack {
 		}
 
 		// Compute the distance matrix
-		let distance_matrix = new_graph.all_pairs_distances(self.max_time);
+		let distance_matrix = new_graph.all_pairs_distances();
 		return AttackResult::Static(distance_matrix);
 	}
 }

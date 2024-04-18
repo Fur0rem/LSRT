@@ -104,7 +104,7 @@ impl<'a> DynamicAttackSeries<'a> {
 		//println!("Graph diameter: {}", max_time);
 
 		// Compute the distance matrix for the unattacked graph
-		let dst_mat = graph.all_pairs_distances(max_time);
+		let dst_mat = graph.all_pairs_distances();
 
 		// Then, we recopy the distance matrix to all the attacks
 		// We invalidate all the paths except those who took more than max_time to reach the destination
