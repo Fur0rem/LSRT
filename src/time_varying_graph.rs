@@ -112,7 +112,11 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 			break;
 		}
 		if distance + time_start >= time_graph.max_time {
+			dma[(time_start, start, end)] = Tick::MAX;
 			break;
+		}
+		if node != start {
+			dma[(time_start, start, node)] = distance;
 		}
 		visited[node as usize] = true;
 		for phantom_edge in &time_graph.nodes[node as usize] {

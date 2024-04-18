@@ -121,8 +121,7 @@ impl DistanceMatrix {
 				let distance = self[(i as Node, j as Node)];
 				let distance_to_str = if distance == Tick::MAX {
 					"∞".to_string()
-				}
-				else {
+				} else {
 					distance.to_string()
 				};
 				print!("{} ", distance_to_str);
@@ -222,7 +221,7 @@ impl DistanceMatrixArray {
 				for j in 0..distances_len {
 					let distance = self[(t, i as Node, j as Node)];
 					// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-					if distance + t <= max_time && distance != 0 {
+					if distance.saturating_add(t) <= max_time && distance != 0 {
 						sum += 1.0 / (distance as f64);
 						reachables += 1;
 					}
@@ -246,8 +245,7 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i as Node, j as Node)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					}
-					else {
+					} else {
 						distance.to_string()
 					};
 					// Pad the string to 4 characters
