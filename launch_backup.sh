@@ -4,13 +4,6 @@
 cities=$(ls data/)
 for city in $cities; do
     echo "City: $city"
-    values=$(python3 scripts/BudgetVille.py $city)
-    NB_EDGES=$(echo "$values" | tail -n 1)
-    NB_NODES=$(echo "$values" | tail -n 2 | head -n 1)
-    DIAMETER=$(echo "$values" | tail -n 3 | head -n 1)
-    echo "Number of edges: $NB_EDGES"
-    echo "Number of nodes: $NB_NODES"
-    echo "Diameter: $DIAMETER"
     # Remove "graph" file
     attacks=$(ls data/$city/ | grep -v graph)
     for attack in $attacks; do
