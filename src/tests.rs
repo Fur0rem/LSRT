@@ -2,9 +2,9 @@
 mod tests {
 
 	use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-	use crate::graph::{dijkstra, Graph, Neighbour, Node};
+	use crate::graph::{dijkstra, Graph, Neighbour, Node, Tick};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
-	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, TimeVaryingGraph};
+	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, temporal_dijkstra_write, TimeVaryingGraph};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
 
@@ -55,18 +55,21 @@ mod tests {
 
 		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
 
+		println!("Phantom edges: {:?}", phantom_edges);
+
 		// FIXME : index timevaryingedge
 		assert_eq!(phantom_edges[0][0].neighbour, 1);
-		assert_eq!(phantom_edges[0][0].weights.weights[0], 5);
-		assert_eq!(phantom_edges[0][0].weights.weights[1], 4);
-		assert_eq!(phantom_edges[0][0].weights.weights[2], 3);
-		assert_eq!(phantom_edges[0][0].weights.weights[3], 2);
-		assert_eq!(phantom_edges[0][0].weights.weights[4], 1);
-		assert_eq!(phantom_edges[0][0].weights.weights[5], 1);
-		assert_eq!(phantom_edges[0][0].weights.weights[6], 1);
+		assert_eq!(phantom_edges[0][0][0], 5);
+		assert_eq!(phantom_edges[0][0][1], 4);
+		assert_eq!(phantom_edges[0][0][2], 3);
+		assert_eq!(phantom_edges[0][0][3], 2);
+		assert_eq!(phantom_edges[0][0][4], 1);
+		assert_eq!(phantom_edges[0][0][5], 1);
+		assert_eq!(phantom_edges[0][0][6], 1);
 		assert_eq!(phantom_edges[0][1].neighbour, 2);
-		assert_eq!(phantom_edges[0][1].weights.weights[0], 2);
-		assert_eq!(phantom_edges[0][1].weights.weights[1], 2);
+		assert_eq!(phantom_edges[0][1][0], 2);
+		assert_eq!(phantom_edges[0][1][1], 2);
+		assert_eq!(phantom_edges[3][0][max_time as usize - 1], Tick::MAX);
 	}
 
 	#[test]
@@ -117,6 +120,47 @@ mod tests {
 		println!("Total weight: {}", path_from_1_to_2_at_time_7.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_1_to_2_at_time_7);
 		println!("Pyramid: {:?}", pyr.subpaths);
+	}
+
+	#[test]
+	fn test_temportal_dijkstra_write() {
+		let graph = make_test_graph();
+		let deleted_edges = make_test_deleted_links();
+
+		let max_time = 10;
+		let delta = 2;
+
+		let tvg = TimeVaryingGraph::from(&graph, max_time, &deleted_edges, delta);
+
+		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_time);
+		for time in 0..max_time {
+			for node in 0..graph.nb_nodes() {
+				for other_node in 0..graph.nb_nodes() {
+					if node == other_node {
+						continue;
+					}
+					let path = temporal_dijkstra(&tvg, node, other_node, time);
+					dma[(time, node, other_node)] = path.cost();
+				}
+			}
+		}
+
+		let mut dma2 = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_time);
+		for time in 0..max_time {
+			for node in 0..graph.nb_nodes() {
+				for other_node in 0..graph.nb_nodes() {
+					temporal_dijkstra_write(&tvg, node, other_node, time, &mut dma2);
+				}
+			}
+		}
+
+		for time in 0..max_time {
+			for node in 0..graph.nb_nodes() {
+				for other_node in 0..graph.nb_nodes() {
+					assert_eq!(dma[(time, node, other_node)], dma2[(time, node, other_node)]);
+				}
+			}
+		}
 	}
 
 	#[test]

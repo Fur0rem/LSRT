@@ -5,11 +5,7 @@ use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
 
 use std::collections::BinaryHeap;
-
-#[derive(Debug, Clone)]
-pub struct TimeVaryingEdge {
-	pub weights: Vec<Tick>,
-}
+use std::ops::{Index, IndexMut};
 
 /// A phantom edge is used to replace a blocked edge with an edge with an equivalent weight + waiting time
 /// This allows us to remove the time dimension from the graph, and use classical algorithms on it
@@ -17,7 +13,15 @@ pub struct TimeVaryingEdge {
 #[derive(Debug, Clone)]
 pub struct PhantomEdge {
 	pub neighbour: Node,
-	pub weights: TimeVaryingEdge,
+	weights: Vec<Tick>,
+}
+
+impl Index<usize> for PhantomEdge {
+	type Output = Tick;
+
+	fn index(&self, index: usize) -> &Self::Output {
+		return &self.weights[index];
+	}
 }
 
 /// The TimeVaryingGraph is a graph where the edges can be blocked at certain times
@@ -71,11 +75,10 @@ fn write_info_to_dma(
 		}
 		let phantom_edge = time_graph.edges_map[(prev_node as usize, node as usize)].unwrap();
 		let phantom_edge = unsafe { &*phantom_edge };
-		let tve = &phantom_edge.weights;
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: tve.weights[(dist[prev_node as usize] + time_start as Tick) as usize],
+			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
 		});
 		node = prev_node;
 	}
@@ -120,9 +123,8 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 		}
 		visited[node as usize] = true;
 		for phantom_edge in &time_graph.nodes[node as usize] {
-			let edge = &phantom_edge.weights;
 			let neighbour = &phantom_edge.neighbour;
-			let weight = edge.weights[distance as usize + time_start as usize];
+			let weight = phantom_edge[distance as usize + time_start as usize];
 			if weight == Tick::MAX {
 				continue;
 			}
@@ -179,7 +181,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 			}
 			edges.push(PhantomEdge {
 				neighbour: neighbour.node,
-				weights: TimeVaryingEdge { weights },
+				weights,
 			});
 		}
 		phantoms.push(edges);
@@ -226,9 +228,8 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		}
 		visited[node as usize] = true;
 		for phantom_edge in &time_graph.nodes[node as usize] {
-			let edge = &phantom_edge.weights;
 			let neighbour = &phantom_edge.neighbour;
-			let weight = edge.weights[distance as usize + time_start as usize];
+			let weight = phantom_edge[distance as usize + time_start as usize];
 			if weight == Tick::MAX {
 				continue;
 			}
@@ -254,11 +255,10 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		}
 		let phantom_edge = time_graph.edges_map[(prev_node as usize, node as usize)].unwrap();
 		let phantom_edge = unsafe { &*phantom_edge };
-		let tve = &phantom_edge.weights;
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: tve.weights[(dist[prev_node as usize] + time_start as Tick) as usize],
+			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
 		});
 		node = prev_node;
 	}
