@@ -30,6 +30,7 @@ echo "Diameter: $DIAMETER"
 ./launch_single.sh -c $1 -a betweenness -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 ./launch_single.sh -c $1 -a identifier -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 ./launch_single.sh -c $1 -a longitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_single.sh -c $1 -a latitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 ./launch_single.sh -c $1 -a longitude_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 ./launch_single.sh -c $1 -a max_lanes -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 
