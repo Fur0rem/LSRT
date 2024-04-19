@@ -1,4 +1,5 @@
 #![allow(clippy::needless_return)]
+#![allow(clippy::needless_range_loop)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
