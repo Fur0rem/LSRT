@@ -20,6 +20,7 @@ use attack_series::AttackSeries;
 
 use rayon::prelude::*;
 use std::io::Write;
+use std::env;
 
 // TODO : export this somehow
 macro_rules! benchmark {
@@ -34,6 +35,7 @@ macro_rules! benchmark {
 
 fn main() {
 	// Collect args
+	env::set_var("RUST_BACKTRACE", "full");
 	let args: Vec<String> = std::env::args().collect();
 
 	const FILES_DIR_NAME: &str = "data";

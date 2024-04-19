@@ -256,6 +256,7 @@ impl Graph {
 
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
+				// subpaths.print();
 				for i in 0..subpaths.subpaths.len() {
 				// for subpath in &subpaths.subpaths {
 					let subpath=&subpaths.subpaths[i];

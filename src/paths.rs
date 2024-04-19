@@ -7,6 +7,8 @@ use crate::time_varying_graph::TimeVaryingGraph;
 
 use std::ops::{Index, IndexMut};
 
+const DEBUG: bool = false;
+
 pub struct Path<'a> {
 	pub graph: &'a Graph,
 	pub start: Node,
@@ -46,7 +48,7 @@ impl<'a> SubPathsPyramid<'a> {
 		let mut idx = 0;
 		let mut prof = 0;
 		for subpath in &self.subpaths {
-			print!("{}--{}-->{} ", subpath.start, subpath.total_weight, subpath.end);
+			print!("{}--{}-->{} ({}) ", subpath.start, subpath.total_weight, subpath.end, subpath.time_taken);
 			if idx == prof {
 				println!();
 				prof += 1;
@@ -275,6 +277,10 @@ impl<'a> SubPathsPyramid<'a> {
 		if already_done[(self.subpaths[0].start as usize, self.subpaths[0].end as usize)] {
 			return;
 		}
+		if DEBUG {
+			println!("1");
+			self.print();
+		}
 
 		// This is a vec which, for each subpath, contains a vector of intervals at which the path is invalidated
 		let mut intervals_to_invalidate = vec![HashSet::new(); self.subpaths.len()];
@@ -295,6 +301,11 @@ impl<'a> SubPathsPyramid<'a> {
 			}
 		}
 
+		if DEBUG {
+			println!("2");
+			self.print();
+		}
+
 		// for all the leaves that have been invalidated, propagate the change to their parents
 		// go through the pyramid from the leaves to the root
 
@@ -305,6 +316,12 @@ impl<'a> SubPathsPyramid<'a> {
 				let mut to_push = vec![];
 				for time in &intervals_to_invalidate[i] {
 					to_push.push(time.saturating_sub((self.subpaths[i].time_taken).saturating_sub(self.subpaths[left_parent].time_taken)));
+					if DEBUG {
+						println!("left parent : {}--{}-->{}", self.subpaths[left_parent].start, self.subpaths[left_parent].total_weight, self.subpaths[left_parent].end);
+						println!("invalidating at {} = {} - ({} - {})", 
+							time.saturating_sub((self.subpaths[i].time_taken).saturating_sub(self.subpaths[left_parent].time_taken)),
+							*time, self.subpaths[i].time_taken, self.subpaths[left_parent].time_taken);
+					}
 				}
 				for time in to_push {
 					intervals_to_invalidate[left_parent].insert(time);
@@ -322,6 +339,17 @@ impl<'a> SubPathsPyramid<'a> {
 			already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
 			for time in &intervals_to_invalidate[i] {
 				dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
+			}
+			if false && DEBUG {
+				let mut aff=vec![];
+				for time in &intervals_to_invalidate[i] {
+					aff.push(time);
+				}
+				println!("Temps de {}--{}-->{}", self.subpaths[i].start, self.subpaths[i].total_weight, self.subpaths[i].end);
+				aff.sort();
+				for time in &aff {
+					println!("{}", *time);
+				}
 			}
 		}
 	}
@@ -573,7 +601,6 @@ impl<'a> PathMatrix<'a> {
 	}
 
 	pub fn add(&mut self, subpath: &SubPath, (left_parent, right_parent): (Option<&SubPath>, Option<&SubPath>), is_leave: bool) {
-		// println!("Hey :)");
 		/*
 		if self[(subpath.start, subpath.end)].time_taken==0 {
 			self[(subpath.start, subpath.end)]=subpath.clone(); // use another struct
@@ -599,7 +626,7 @@ impl<'a> PathMatrix<'a> {
 		&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack, already_done: &mut SquareMatrix<bool>,
 		times_matrix: &SquareMatrix<Option<&'a Vec<Tick>>>,
 	) {
-		println!("Hey :)");
+	 //	println!("Hey :)");
 
 		// This is a vec which, for each subpath, contains a vector of intervals at which the path is invalidated
 		let mut intervals_to_invalidate = SquareMatrix::new(self.graph.nb_nodes() as usize, HashSet::new());
@@ -621,29 +648,45 @@ impl<'a> PathMatrix<'a> {
 		}
 
 		let mut to_invalidate = self.leaves.clone();
-		/* vec![];
-		for i in 0..self.leaves.len() {
-			if self.leaves[i] {
-				to_invalidate.push(i);
-			}
-		} */
+		if DEBUG {
+			println!("leaves' len : {}", to_invalidate.len());
+		}
+		let mut level=1;
+		// for each levels of the trees
 		while !to_invalidate.is_empty() {
 			let mut tmp=SquareMatrix::new(self.graph.nb_nodes().into(), false);
 			for i in to_invalidate {
 				let i=i.clone();
 				let subpath = &self.paths[i].subpath;
-				if self.paths[i].empty {
+				if DEBUG {
+					if already_done[(subpath.start as usize, subpath.end as usize)] {
+						println!("Erreur already_done {}--{}-->{}", subpath.start, subpath.total_weight, subpath.end);
+					}
 					println!("Invalidating path {}--{}-->{}", subpath.start, subpath.total_weight, subpath.end);
 				}
+
+				
 				// self.paths[i].empty = false
 				for left in 0..self.paths[i].left_neighbours.len() {
 					if !self.paths[i].left_neighbours[left] {
 						continue;
 					}
 					let left_parent=&self.paths[(left, subpath.end as usize)];
+					
+					if DEBUG {
+						println!("left parent : {}--{}-->{}", left_parent.subpath.start, left_parent.subpath.total_weight, left_parent.subpath.end);
+					}
+
 					let mut to_push = vec![];
 					for time in &intervals_to_invalidate[i] {
-						to_push.push(time.saturating_sub((subpath.time_taken).saturating_sub(left_parent.subpath.time_taken)));
+						to_push.push(time.saturating_sub(left_parent.subpath.total_weight - subpath.total_weight));
+						if DEBUG {
+							println!("invalidating at {} = {} - ({} - {})", 
+								time.saturating_sub(left_parent.subpath.total_weight - subpath.total_weight),
+								*time,
+								left_parent.subpath.total_weight, subpath.total_weight); // subpath.time_taken,
+								// left_parent.subpath.time_taken);
+						}
 					}
 					for time in to_push {
 						intervals_to_invalidate[PathMatrix::idx_of(&left_parent.subpath)].insert(time);
@@ -655,6 +698,9 @@ impl<'a> PathMatrix<'a> {
 						continue;
 					}
 					let right_parent = &self.paths[(subpath.start as usize, right)];
+					if DEBUG {
+						println!("right parent : {}--{}-->{}", right_parent.subpath.start, right_parent.subpath.total_weight, right_parent.subpath.end);
+					}
 					let mut to_push = vec![];
 					for time in &intervals_to_invalidate[i] {
 						to_push.push(*time);
@@ -669,6 +715,17 @@ impl<'a> PathMatrix<'a> {
 				for time in &intervals_to_invalidate[i] {
 					dma[(*time as Tick, subpath.start, subpath.end)] = 0;
 				}
+				if false && DEBUG {
+					let mut aff=vec![];
+					for time in &intervals_to_invalidate[i] {
+						aff.push(time);
+					}
+					println!("Temps de {}--{}-->{}", subpath.start, subpath.total_weight, subpath.end);
+					aff.sort();
+					for time in &aff {
+						println!("{}", *time);
+					}
+				}
 			}
 			to_invalidate=vec![];
 			for i in 0..tmp.dim() {
@@ -678,7 +735,10 @@ impl<'a> PathMatrix<'a> {
 					}
 				}
 			}
-			println!("len : {}", to_invalidate.len());
+			if DEBUG {
+				println!("len at level {level} : {}", to_invalidate.len());
+			}
+			level+=1;
 		}
 
 		/*

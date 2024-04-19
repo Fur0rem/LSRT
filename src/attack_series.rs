@@ -116,7 +116,7 @@ impl<'a> AttackSeries<'a> {
 				let attack = &self.series[e].1;
 				let mut already_done = SquareMatrix::new(self.graph.nb_nodes() as usize, false);
 				let mut times_matrix = SquareMatrix::new(self.graph.nb_nodes() as usize, None);
-				let mut path_matrix = path_matrix.clone();
+				let path_matrix = path_matrix.clone();
 				// push the blocked links times
 				let blocked_links = attack.blocked_links();
 				for link in blocked_links.iter() {
@@ -128,7 +128,7 @@ impl<'a> AttackSeries<'a> {
 					for path in paths.iter() {
 						path.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
 					}
-					*/
+					// */
 					path_matrix.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
 					
 
@@ -146,7 +146,7 @@ impl<'a> AttackSeries<'a> {
 					}
 				}
 
-				let backup_dma = dma.clone();
+				// let backup_dma = dma.clone();
 
 				println!(
 					"Zeroes: {}/{}",
@@ -155,7 +155,7 @@ impl<'a> AttackSeries<'a> {
 				);
 				
 
-			 //	dma.print(max_time);
+				// dma.print(max_time);
 
 				(
 					self.series[e].0,
