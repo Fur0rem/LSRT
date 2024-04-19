@@ -82,6 +82,14 @@ def longitude_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int
     
     return sorted_attack(graph, nbTimes, budget, delta, get_edge_longitude, costPerLane)
 
+def latitude_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
+    """It removes the edge to the most north (by latitude) until the budget is reached or no more edges are available"""
+    def get_edge_latitude(edge_idx : int) -> float :
+        edge = graph.get_edge_at(edge_idx)
+        return min(graph.graph.nodes[edge[0]]["y"], graph.graph.nodes[edge[1]]["y"])
+
+    return sorted_attack(graph, nbTimes, budget, delta, get_edge_latitude, costPerLane)
+
 def identifier_attack(graph : CityGraph, nbTimes : int, budget : int, delta : int, costPerLane : bool) -> StaticAttack :
     """Each time, it removes the edge with the highest index until the budget is reached or no more edges are available"""
     return sorted_attack(graph, nbTimes, budget, delta, lambda x : -x, costPerLane)
@@ -327,6 +335,7 @@ def main():
         "random_moving" : random_moving_attack,
         "identifier" : identifier_attack,
         "longitude" : longitude_attack,
+        "latitude" : latitude_attack,
         "longitude_moving" : longitude_moving_attack,
         #"connex" : connex_attack,
         "none" : no_attack,
