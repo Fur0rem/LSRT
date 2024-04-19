@@ -317,13 +317,9 @@ impl<'a> AttackSeries<'a> {
 
 	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
 		let nb_threads = std::env::var("LSRT_NB_THREADS");
-		match nb_threads {
-			Ok(nb_threads) => {
-				let nb_threads = nb_threads.parse().unwrap();
-				// If the number of threads is 0, rayon will use the number of cores
-				rayon::ThreadPoolBuilder::new().num_threads(nb_threads).build_global().unwrap();
-			}
-			Err(_) => {}
+		if let Ok(nb_threads) = nb_threads {
+			let nb_threads = nb_threads.parse().unwrap();
+			rayon::ThreadPoolBuilder::new().num_threads(nb_threads).build_global().unwrap();
 		}
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
@@ -334,9 +330,11 @@ impl<'a> AttackSeries<'a> {
 
 		if line.starts_with('S') {
 			StaticAttackSeries::efficiencies(directory, files, graph)
-		} else if line.starts_with('D') {
+		}
+		else if line.starts_with('D') {
 			DynamicAttackSeries::efficiencies(directory, files, graph)
-		} else {
+		}
+		else {
 			panic!("Invalid attack file");
 		}
 	}
