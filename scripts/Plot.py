@@ -1,9 +1,15 @@
 import argparse as arg
+import math
 import numpy as np 
 import matplotlib.pyplot as plt 
 from matplotlib.pyplot import cm
 
 import os
+
+import matplotlib.pyplot as plt
+import matplotlib.scale as mscale
+import matplotlib.transforms as mtransforms
+import numpy as np
 
 def load_file(path):
     """
@@ -52,18 +58,32 @@ def plot_data(ax, data,y_index=1):
     dt_from_dir_fn
     """
     for i in data.keys() :
-
+        if i == "none":
+            continue
         x = [ j[0]for j in data[i]]
+        if len(x) == 1 :
+            continue
         y = []
         if y_index == 1 : 
             y = [ j[y_index] * 1000 for  j in data[i] ]
         else :
             y = [ j[y_index] for  j in data[i] ]
 
-        ax.plot(x,y,label=i)
+        #ax.xlabel("sizes")
+        #ax.ylabel("prices")
+
+        z = [a for a in range(len(x))]
+        ax.plot(z,y,label=i)
+
+        xticks = [str(int(a)) for (i,a) in enumerate(x) if i%2 == 0]
+        ax.set_xticks([i for i in range(len(x)) if i%2 == 0])  # set x-ticks on the Axes object
+        ax.set_xticklabels(xticks)  # set x-tick labels on the Axes object
+        
+
+        #ax.plot(x,y,label=i)
 
     ax.legend()
-    ax.set_xscale("log")
+    #ax.set_xscale("linear")
     #ax.show()
     
     #ax.savefig("res")
@@ -133,12 +153,17 @@ def plot_rand(ax, data, y_index=1):
                 y = [ j[y_index] * 1000 for  j in values ]
             else :
                 y = [ j[y_index] for  j in values ]
-            ax.plot(x,y, color=c)
+            
+            z = [a for a in range(len(x))]
+            ax.plot(z,y, color=c,label=i)
+            
+            xticks = [str(int(a)) for (i,a) in enumerate(x) if i%2 == 0]
+            plt.xticks([i for i in range(len(x)) if i%2 == 0],xticks)
 
-        ax.plot([],[],label=i, color=c)
+
 
     ax.legend()
-    ax.set_xscale("log")
+    #ax.set_xscale("log")
 
 def mk_plot_rand(ax, city_name, y_index=1) : 
     """
@@ -179,7 +204,6 @@ def main():
     if not os.path.exists("plots"):
         os.makedirs("plots")
     fig.savefig("plots/plot_"+args.path_ville)
-
     
 if __name__ == "__main__" : 
     main()
