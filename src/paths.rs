@@ -7,7 +7,7 @@ use crate::time_varying_graph::TimeVaryingGraph;
 
 use std::ops::{Index, IndexMut};
 
-const DEBUG: bool = false;
+pub const DEBUG: bool = false;
 
 pub struct Path<'a> {
 	pub graph: &'a Graph,
@@ -679,10 +679,10 @@ impl<'a> PathMatrix<'a> {
 
 					let mut to_push = vec![];
 					for time in &intervals_to_invalidate[i] {
-						to_push.push(time.saturating_sub(left_parent.subpath.total_weight - subpath.total_weight));
+						to_push.push(time.saturating_sub((left_parent.subpath.total_weight).saturating_sub(subpath.total_weight)));
 						if DEBUG {
 							println!("invalidating at {} = {} - ({} - {})", 
-								time.saturating_sub(left_parent.subpath.total_weight - subpath.total_weight),
+								time.saturating_sub((left_parent.subpath.total_weight).saturating_sub(subpath.total_weight)),
 								*time,
 								left_parent.subpath.total_weight, subpath.total_weight); // subpath.time_taken,
 								// left_parent.subpath.time_taken);

@@ -5,7 +5,7 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallel
 use crate::{
 	distance_matrix::{DistanceMatrixArray, SquareMatrix},
 	graph::{dijkstra, Graph, Node, Tick},
-	paths::{Path, TemporalSubPathsPyramid, PathMatrix},
+	paths::{Path, TemporalSubPathsPyramid, PathMatrix, DEBUG},
 	// paths_matrix::paths_matrix,
 	time_varying_graph::{self, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write},
 	Attack, DynamicAttack,
@@ -105,7 +105,7 @@ impl<'a> AttackSeries<'a> {
 	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
-		let (dst_mat, paths, path_matrix) = self.graph.all_pairs_distances_and_paths(max_time);
+		let (dst_mat, _paths, path_matrix) = self.graph.all_pairs_distances_and_paths(max_time);
 		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
 
 		let results = dmas
@@ -125,37 +125,35 @@ impl<'a> AttackSeries<'a> {
 
 				benchmark!("unvalidating paths", {
 					/*
-					for path in paths.iter() {
+					for path in _paths.iter() {
 						path.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
 					}
 					// */
 					path_matrix.unvalidate_path(dma, &attack, &mut already_done, &times_matrix);
-					
-
 				});
 				
+				if DEBUG {
+				
 				// Count the number of 0's
-				let mut count = 0;
-				for t in 0..max_time {
-					for i in 0..self.graph.nb_nodes() {
-						for j in 0..self.graph.nb_nodes() {
-							if dma[(t, i, j)] == 0 {
-								count += 1;
+					let mut count = 0;
+					for t in 0..max_time {
+						for i in 0..self.graph.nb_nodes() {
+							for j in 0..self.graph.nb_nodes() {
+								if dma[(t, i, j)] == 0 {
+									count += 1;
+								}
 							}
 						}
 					}
+
+					// let backup_dma = dma.clone();
+					println!(
+						"Zeroes: {}/{}",
+						count,
+						self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_time as usize
+					);
+					dma.print(max_time);
 				}
-
-				// let backup_dma = dma.clone();
-
-				println!(
-					"Zeroes: {}/{}",
-					count,
-					self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_time as usize
-				);
-				
-
-				// dma.print(max_time);
 
 				(
 					self.series[e].0,
