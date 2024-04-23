@@ -1,6 +1,8 @@
 #!/bin/bash
 # Takes 2 arguments : city and budget_max
 
+make rust
+
 # Parameters
 # TODO: Change the number of random attacks
 NB_ATTACK_RANDOMS=5
