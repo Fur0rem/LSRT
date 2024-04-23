@@ -40,7 +40,7 @@ impl TimeVaryingGraph {
 		self.nodes.len() as Node
 	}
 
-	pub fn from(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
+	pub fn from_kind(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta);
 		let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
 		for (node, neighbours) in phantoms.iter().enumerate() {
@@ -190,8 +190,81 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 	return phantoms;
 }
 
+pub fn create_phantom_edges_aggressive(
+	graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8,
+) -> Vec<Vec<PhantomEdge>> {
+	let mut phantoms = vec![];
+
+	for (node, neighbours) in graph.edges.iter().enumerate() {
+		let mut edges = vec![];
+
+		// For all the edges, we create a phantom edge
+		for neighbour in neighbours {
+			let weight = neighbour.weight;
+			let mut weights = vec![weight; max_time as usize];
+			for deleted_edge in deleted_edges {
+				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
+					for t in &deleted_edge.times {
+						let t = *t as usize;
+						let t_with_delta = t * delta as usize;
+						for td in t_with_delta..t_with_delta + delta as usize {
+							if td < max_time as usize {
+								weights[td] = 0;
+							}
+						}
+					}
+					// For all the elements in the array, see if we have time to get through (more non-zero elements in a row than weight)
+					let mut i = max_time as usize - 1;
+					while i > 0 {
+						if weights[i] != 0 {
+							let mut j = i;
+							let mut count = 0;
+							while j > 0 && weights[j] != 0 {
+								count += 1;
+								j -= 1;
+							}
+							if count < weight as usize {
+								for k in j..=i {
+									weights[k] = 0;
+								}
+							}
+							i = j;
+						} else {
+							i -= 1;
+						}
+					}
+
+					// If the last element is 0, we set it to MAX
+					let last_elem_idx = weights.len() - 1;
+					if weights[last_elem_idx] == 0 {
+						weights[last_elem_idx] = Tick::MAX;
+					}
+					for i in (0..max_time as usize - 1).rev() {
+						if weights[i] == 0 {
+							weights[i] = weights[i + 1].saturating_add(1);
+						}
+					}
+
+					break;
+				}
+			}
+			edges.push(PhantomEdge {
+				neighbour: neighbour.node,
+				weights,
+			});
+		}
+		phantoms.push(edges);
+	}
+
+	return phantoms;
+}
+
 pub fn graph_to_temporal(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
-	let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta);
+	#[cfg(feature = "aggressive")]
+	let phantoms = create_phantom_edges_aggressive(graph, max_time, deleted_edges, delta);
+	#[cfg(not(feature = "aggressive"))]
+	let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta); // replace with your non-aggressive function
+
 	let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
 	for (node, neighbours) in phantoms.iter().enumerate() {
 		for neighbour in neighbours {

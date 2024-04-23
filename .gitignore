@@ -10,3 +10,7 @@ lsrt_new/*
 target/
 tstex_modules/*
 tstex_modules
+data/*
+data
+plots/*
+plots

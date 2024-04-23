@@ -6,6 +6,12 @@ for city in $cities; do
     echo "City: $city"
     # Remove "graph" file
     attacks=$(ls data/$city/ | grep -v graph)
+
+    # If graph file does not exist or is empty,
+    if [ ! -s data/$city/graph ]; then
+        echo "Graph file does not exist or is empty"
+        exit 1
+    fi
     for attack in $attacks; do
         if [ ! -s data/$city/$attack/result ]; then
             echo "Attack: $attack"

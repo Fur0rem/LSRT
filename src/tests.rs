@@ -4,7 +4,9 @@ mod tests {
 	use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 	use crate::graph::{dijkstra, Graph, Neighbour, Node, Tick};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
-	use crate::time_varying_graph::{create_phantom_edges, temporal_dijkstra, temporal_dijkstra_write, TimeVaryingGraph};
+	use crate::time_varying_graph::{
+		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, TimeVaryingGraph,
+	};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
 
@@ -73,6 +75,39 @@ mod tests {
 	}
 
 	#[test]
+	fn test_phantom_edges_aggressive() {
+		let graph = make_test_graph();
+		let deleted_edges = make_test_deleted_links();
+
+		let max_time = 10;
+		let delta = 2;
+
+		let phantom_edges = create_phantom_edges_aggressive(&graph, max_time, &deleted_edges, delta);
+
+		println!("Phantom edges: {:?}", phantom_edges);
+
+		let graph = Graph {
+			edges: vec![vec![Neighbour { node: 1, weight: 3 }], vec![Neighbour { node: 2, weight: 2 }]],
+		};
+		let links = vec![
+			DeletedLink {
+				from: 0,
+				to: 1,
+				times: vec![0, 2, 4, 6, 8],
+			},
+			DeletedLink {
+				from: 1,
+				to: 2,
+				times: vec![0, 2],
+			},
+		];
+
+		let phantom_edges = create_phantom_edges_aggressive(&graph, max_time, &links, delta);
+
+		println!("Phantom edges: {:?}", phantom_edges);
+	}
+
+	#[test]
 	fn test_pyramid() {
 		// make a graph line with 4 nodes (0 -> 1 -> 2 -> 3)
 		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
@@ -95,7 +130,7 @@ mod tests {
 		let max_time = 10;
 		let delta = 2;
 
-		let tvg = TimeVaryingGraph::from(&graph, max_time, &deleted_edges, delta);
+		let tvg = TimeVaryingGraph::from_kind(&graph, max_time, &deleted_edges, delta);
 
 		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, 1);
 		path_from_0_to_3_at_time_1.print();
@@ -130,7 +165,7 @@ mod tests {
 		let max_time = 10;
 		let delta = 2;
 
-		let tvg = TimeVaryingGraph::from(&graph, max_time, &deleted_edges, delta);
+		let tvg = TimeVaryingGraph::from_kind(&graph, max_time, &deleted_edges, delta);
 
 		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_time);
 		for time in 0..max_time {
