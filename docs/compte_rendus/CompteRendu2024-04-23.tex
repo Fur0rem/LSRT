@@ -1,0 +1,92 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\title{Compte rendu de la réunion du 24 Avril}
+\date{}
+
+\begin{document}
+	
+\maketitle
+	
+\section*{Premiers résultats}
+	\begin{itemize}
+		\item Les attaques statiques sont meilleurs que les dynamiques
+		\begin{itemize}
+			\item[$\rightarrow$] Hypothèses de départ peuvent êtres fausses
+			\item[$\rightarrow$] Soucis liés à la simulation (implémentation, trop éloignée de la réalité)
+		\end{itemize}
+		\item Pour la suite des simus
+		\begin{itemize}
+			\item Refaire des simulations en faisant varier le delta et comparer au random statique
+			\item Modifier l'algo pour qu'un lien soit traversable uniquement s'il n'est pas bloqué durant toute la durée de la traversée
+			\item Regarder l'accessibilité pour avoir un autre point de vue
+			\item Essayer de faire des heatmap sur des petites villes (à cause du nombre de simulations nécessaires)
+		\end{itemize}		
+	\end{itemize}
+	
+\section*{Optimisations}
+	\begin{itemize}
+		\item On a optimisé Dijkstra pour qu'il écrive plus de résultats
+		\item On a une invalidation de liens en cours de développement
+	\end{itemize}
+
+% \newpage
+	
+\section*{Pour la suite des simus}
+	\begin{itemize}
+		\item Refaire des simulations en faisant varier le delta
+		\item Modifier l'algo pour qu'un lien soit traversable uniquement s'il n'est pas bloqué durant toute la durée de la traversée
+		\item Essayer de faire des heatmap sur des petites villes (à cause du nombre de simulations nécessaires)
+	\end{itemize}
+
+\section*{Compte-rendu}
+	\begin{itemize}
+		\item Intro : Contexte pour présenter le sujet et problématique
+		\item Notions de bases (rappels sur les graphes)
+		\item Trois parties pour montrer la répartition \begin{itemize}
+			\item Traitement du graphe
+			\item Génération des attaques
+			\item Mesures de l'efficacité
+		\end{itemize}
+		\item Perspectives réservé à ce que l'on a pas pu faire
+		
+		$\rightarrow$ Ne pas sortir un nouvel algo
+		
+		\item Les figures doivent êtres accompagnées d'une description et d'un commentaire, et doivent servir le propos
+		\item Imprimer le compte-rendu pour voir ce que ça donne
+	\end{itemize}
+
+\section*{Mise en forme des plots}
+	\begin{itemize}
+		\item Pas plus de 5 courbes par figures
+		\item Toute les fig doivent avoir une description et un commentaire
+		\item Légende, axes cohérent (noms également)
+		\item On peut également s'arranger pour que les courbes ait des allures différentes
+		\item Essayer différents types de plot
+		
+		$\rightarrow$ Par exemple violon plot pour les distributions aléatoires
+		\item Figures actuelles : \begin{itemize}
+			\item Titres (et légendes) beaucoup trop petits
+			\item Trop d'attaques
+		\end{itemize}
+		\item On peut aussi faire des plots pour mesurer le temps de calcul
+		
+		Question typique : "combien de temps ça prend pour ma  ville ?"
+	\end{itemize}
+
+\section*{Oral}
+	\begin{itemize}
+		\item 15 minutes
+		\item Diapo : \begin{itemize}
+			\item Pas plus d'une diapo par minute
+			\item Pas de paragraphes
+		\end{itemize}
+		\item Essayer de répartir le temps et de laisser chacun parler de sa partie
+		\item On présente le principe du nouvel algo (mais pas l'ancien)
+		\item Conclusion : \begin{itemize}
+			\item Dernière diapo (pas de diapo "merci d'avoir écouté")
+			\item Phrases/points sur lesquelles le jury devras rebondir
+		\end{itemize}
+	\end{itemize}
+\end{document}
