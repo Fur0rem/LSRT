@@ -184,6 +184,77 @@ impl<'a> SubPathsPyramid<'a> {
 
 		return SubPathsPyramid { graph, subpaths: elems };
 	}
+
+	pub fn invalidate_path(&self, time_varying_graph: &TimeVaryingGraph) -> Vec<(usize, HashSet<u16>)> {
+		if self.subpaths.is_empty() {
+			return vec![];
+		}
+		// Invalidate the leaves
+		let mut to_invalidate = vec![];
+		for leaf in self.leaves_range() {
+			let subpath = &self.subpaths[leaf];
+			let phantom_edge = unsafe { time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
+			let unattacked_edge = self.graph.get_edge(subpath.start, subpath.end).unwrap();
+			let mut invalid_times = HashSet::new();
+			for t in 0..time_varying_graph.max_tick() {
+				if phantom_edge[t as usize] != unattacked_edge.weight {
+					invalid_times.insert(t);
+				}
+			}
+			if !invalid_times.is_empty() {
+				to_invalidate.push((leaf, invalid_times));
+			}
+		}
+
+		let mut total_invalidations = vec![];
+
+		// Propagate the invalidations to their parents layer by layer
+		while !to_invalidate.is_empty() {
+			let mut next_invalidate: Vec<(usize, HashSet<u16>)> = vec![];
+			for (i, invalid_times) in to_invalidate {
+				let (left_parent, right_parent) = Self::get_idx_parents(i);
+				if let Some(left_parent) = left_parent {
+					let offset = self.subpaths[i].time_taken - self.subpaths[left_parent].time_taken;
+					let length = next_invalidate.len();
+					if length != 0 && next_invalidate[length - 1].0 == left_parent {
+						for t in invalid_times.iter() {
+							if *t >= offset {
+								next_invalidate[length - 1].1.insert(t - offset);
+							}
+						}
+					}
+					else {
+						let mut invalid_times_left = HashSet::new();
+						for t in invalid_times.iter() {
+							if *t >= offset {
+								invalid_times_left.insert(t - offset);
+							}
+						}
+						if !invalid_times_left.is_empty() {
+							next_invalidate.push((left_parent, invalid_times_left));
+						}
+					}
+				}
+
+				if let Some(right_parent) = right_parent {
+					let offset = 0;
+					let mut invalid_times_right = HashSet::new();
+					for t in invalid_times.iter() {
+						if *t >= offset {
+							invalid_times_right.insert(t - offset);
+						}
+					}
+					if !invalid_times_right.is_empty() {
+						next_invalidate.push((right_parent, invalid_times_right));
+					}
+				}
+				total_invalidations.push((i, invalid_times));
+			}
+			to_invalidate = next_invalidate;
+		}
+
+		return total_invalidations;
+	}
 }
 
 /// A path in a time varying graph

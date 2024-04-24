@@ -127,6 +127,10 @@ impl Graph {
 	pub fn from_neighbours(neighbours: Vec<Vec<Neighbour>>) -> Graph {
 		Graph { edges: neighbours }
 	}
+
+	pub fn get_edge(&self, from: Node, to: Node) -> Option<&Neighbour> {
+		self.edges[from as usize].iter().find(|x| x.node == to)
+	}
 }
 
 /// A DijkstraState is a node and the distance to this node

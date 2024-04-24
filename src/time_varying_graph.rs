@@ -59,6 +59,26 @@ impl TimeVaryingGraph {
 			edges_map,
 		};
 	}
+
+	pub fn from_aggressive(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
+		let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
+		let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
+		for (node, neighbours) in phantoms.iter().enumerate() {
+			for neighbour in neighbours {
+				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour as *const PhantomEdge);
+			}
+		}
+		return TimeVaryingGraph {
+			max_tick,
+			nodes: phantoms,
+			edges_map,
+		};
+	}
+
+	pub unsafe fn get_edge_unchecked(&self, from: Node, to: Node) -> &PhantomEdge {
+		let edge = self.edges_map[(from as usize, to as usize)].unwrap();
+		return &*edge;
+	}
 }
 
 /// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
