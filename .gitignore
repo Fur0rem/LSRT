@@ -1,4 +1,4 @@
-lsrt
+/lsrt
 docs/*.pdf
 tests_files/
 .vscode/
@@ -6,7 +6,6 @@ bin/
 test/bin/
 scripts/__pycache__/
 cache/
-lsrt_new/*
 target/
 tstex_modules/*
 tstex_modules
@@ -14,3 +13,6 @@ data/*
 data
 plots/*
 plots
+docs/code_documentation/debug/
+docs/code_documentation/.rust*
+docs/code_documentation/CACHEDIR.TAG

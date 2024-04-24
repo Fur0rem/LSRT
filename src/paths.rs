@@ -1,9 +1,10 @@
 use std::collections::{BinaryHeap, HashSet};
 
-use crate::attack;
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-use crate::graph::{Graph, Neighbour, Node, Tick};
+use crate::graph::{Graph, Neighbour};
 use crate::time_varying_graph::TimeVaryingGraph;
+use crate::{attack, Attack};
+use crate::{Node, Tick};
 
 pub struct Path<'a> {
 	pub graph: &'a Graph,
@@ -217,8 +218,8 @@ impl<'a> SubPathsPyramid<'a> {
 					}
 				}
 				let weight = dma[(0, self.subpaths[i].start, self.subpaths[i].end)];
-				let max_time_reachable = attack.max_time.saturating_sub(weight);
-				for time in 0..max_time_reachable {
+				let max_tick_reachable = attack.max_tick().saturating_sub(weight);
+				for time in 0..max_tick_reachable {
 					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
 				}
 			}
@@ -238,7 +239,7 @@ impl<'a> SubPathsPyramid<'a> {
 			if blocked_links[(subpath.start as usize, subpath.end as usize)] {
 				continue;
 			}
-			for time in 0..dma.max_time {
+			for time in 0..dma.max_tick {
 				dma[(time as Tick, subpath.start, subpath.end)] = subpath.total_weight;
 			}
 		}
@@ -269,7 +270,7 @@ impl<'a> SubPathsPyramid<'a> {
 				for time in times {
 					for delta in 0..attack.delta {
 						let idx = *time as usize * attack.delta as usize + delta as usize;
-						if idx >= dma.max_time {
+						if idx >= dma.max_tick {
 							continue;
 						}
 						intervals_to_invalidate[i].insert(idx as Tick);
@@ -383,8 +384,8 @@ impl<'a> SubPathsPyramid<'a> {
 					//}
 				}
 				let weight = dma[(0, self.subpaths[i].start, self.subpaths[i].end)];
-				let max_time_reachable = attack.max_time.saturating_sub(weight);
-				for time in 0..max_time_reachable {
+				let max_tick_reachable = attack.max_tick().saturating_sub(weight);
+				for time in 0..max_tick_reachable {
 					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
 				}
 			}
@@ -410,7 +411,7 @@ impl<'a> TemporalPath<'a> {
 		let mut current_time = self.start_time;
 		let mut total_weight = 0;
 		for step in &self.steps {
-			if current_time as usize >= self.time_graph.max_time as usize {
+			if current_time as usize >= self.time_graph.max_tick() as usize {
 				return Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -510,7 +511,7 @@ impl TemporalSubPathsPyramid<'_> {
 		let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
 		let mut wait = path.start_time;
 		for step in &path.steps {
-			if wait as usize >= graph.max_time as usize {
+			if wait as usize >= graph.max_tick() as usize {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

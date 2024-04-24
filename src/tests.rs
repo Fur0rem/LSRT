@@ -2,13 +2,14 @@
 mod tests {
 
 	use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-	use crate::graph::{dijkstra, Graph, Neighbour, Node, Tick};
+	use crate::graph::{dijkstra, Graph, Neighbour};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
 	use crate::time_varying_graph::{
 		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, TimeVaryingGraph,
 	};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
+	use crate::{Node, Tick};
 
 	fn make_test_graph() -> Graph {
 		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }, Neighbour { node: 2, weight: 2 }];
@@ -52,10 +53,10 @@ mod tests {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
 
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 2;
 
-		let phantom_edges = create_phantom_edges(&graph, max_time, &deleted_edges, delta);
+		let phantom_edges = create_phantom_edges(&graph, max_tick, &deleted_edges, delta);
 
 		println!("Phantom edges: {:?}", phantom_edges);
 
@@ -71,7 +72,7 @@ mod tests {
 		assert_eq!(phantom_edges[0][1].neighbour, 2);
 		assert_eq!(phantom_edges[0][1][0], 2);
 		assert_eq!(phantom_edges[0][1][1], 2);
-		assert_eq!(phantom_edges[3][0][max_time as usize - 1], Tick::MAX);
+		assert_eq!(phantom_edges[3][0][max_tick as usize - 1], Tick::MAX);
 	}
 
 	#[test]
@@ -79,10 +80,10 @@ mod tests {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
 
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 2;
 
-		let phantom_edges = create_phantom_edges_aggressive(&graph, max_time, &deleted_edges, delta);
+		let phantom_edges = create_phantom_edges_aggressive(&graph, max_tick, &deleted_edges, delta);
 
 		println!("Phantom edges: {:?}", phantom_edges);
 
@@ -102,7 +103,7 @@ mod tests {
 			},
 		];
 
-		let phantom_edges = create_phantom_edges_aggressive(&graph, max_time, &links, delta);
+		let phantom_edges = create_phantom_edges_aggressive(&graph, max_tick, &links, delta);
 
 		println!("Phantom edges: {:?}", phantom_edges);
 	}
@@ -127,10 +128,10 @@ mod tests {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
 
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 2;
 
-		let tvg = TimeVaryingGraph::from_kind(&graph, max_time, &deleted_edges, delta);
+		let tvg = TimeVaryingGraph::from_kind(&graph, max_tick, &deleted_edges, delta);
 
 		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, 1);
 		path_from_0_to_3_at_time_1.print();
@@ -162,13 +163,13 @@ mod tests {
 		let graph = make_test_graph();
 		let deleted_edges = make_test_deleted_links();
 
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 2;
 
-		let tvg = TimeVaryingGraph::from_kind(&graph, max_time, &deleted_edges, delta);
+		let tvg = TimeVaryingGraph::from_kind(&graph, max_tick, &deleted_edges, delta);
 
-		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_time);
-		for time in 0..max_time {
+		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_tick);
+		for time in 0..max_tick {
 			for node in 0..graph.nb_nodes() {
 				for other_node in 0..graph.nb_nodes() {
 					if node == other_node {
@@ -180,8 +181,8 @@ mod tests {
 			}
 		}
 
-		let mut dma2 = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_time);
-		for time in 0..max_time {
+		let mut dma2 = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_tick);
+		for time in 0..max_tick {
 			for node in 0..graph.nb_nodes() {
 				for other_node in 0..graph.nb_nodes() {
 					temporal_dijkstra_write(&tvg, node, other_node, time, &mut dma2);
@@ -189,7 +190,7 @@ mod tests {
 			}
 		}
 
-		for time in 0..max_time {
+		for time in 0..max_tick {
 			for node in 0..graph.nb_nodes() {
 				for other_node in 0..graph.nb_nodes() {
 					assert_eq!(dma[(time, node, other_node)], dma2[(time, node, other_node)]);
@@ -229,7 +230,7 @@ mod tests {
 	#[test]
 	fn coherence_static_dynamic() {
 		let graph = make_test_graph();
-		let max_time = 10;
+		let max_tick = 10;
 		let deleted_links = vec![(0, 1), (1, 2), (3, 1)];
 		let delta = 1;
 
@@ -239,13 +240,13 @@ mod tests {
 			.map(|(from, to)| DeletedLink {
 				from: *from,
 				to: *to,
-				times: (0..max_time).collect(),
+				times: (0..max_tick).collect(),
 			})
 			.collect();
 		let attack_dynamic = DynamicAttack {
 			blocked_links: deleted_links_dynamic,
 			delta,
-			max_time,
+			max_tick,
 		};
 
 		// Build up a static attack with the same deleted links
@@ -256,7 +257,7 @@ mod tests {
 		let attack_static = StaticAttack {
 			blocked_links,
 			delta,
-			max_time,
+			max_tick,
 		};
 
 		assert_eq!(attack_dynamic.blocked_links(), attack_static.blocked_links());
@@ -271,7 +272,7 @@ mod tests {
 	#[test]
 	fn delete_all_links() {
 		let graph = make_test_graph();
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 1;
 		let nb_nodes = graph.edges.len();
 		println!("Nb nodes: {}", nb_nodes);
@@ -280,14 +281,14 @@ mod tests {
 			neighbours.iter().map(move |neighbour| DeletedLink {
 				from: from as Node,
 				to: neighbour.node,
-				times: (0..max_time).collect(),
+				times: (0..max_tick).collect(),
 			})
 		});
 
 		let attack = DynamicAttack {
 			blocked_links: deleted_links.collect(),
 			delta,
-			max_time,
+			max_tick,
 		};
 
 		let attack_result = attack.all_pairs_distances(&graph);
@@ -295,7 +296,7 @@ mod tests {
 			AttackResult::Dynamic(dma) => dma,
 			_ => panic!("Expected a dynamic matrix"),
 		};
-		let (efficiency, reachables) = dma.efficiency_reachables(max_time);
+		let (efficiency, reachables) = dma.efficiency_reachables(max_tick);
 		assert!(efficiency.abs() < 0.0001); // Floating point comparison
 		assert_eq!(reachables, 0);
 	}
@@ -335,7 +336,7 @@ mod tests {
 
 		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
 
-		let max_time = 10;
+		let max_tick = 10;
 		let delta = 3;
 
 		let deleted_links = vec![
@@ -359,15 +360,15 @@ mod tests {
 		let attack = DynamicAttack {
 			blocked_links: deleted_links,
 			delta,
-			max_time,
+			max_tick,
 		};
 
-		let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_time);
+		let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
 		for path in paths.iter() {
 			println!("-----------------");
 			path.print();
 		}
-		let mut dma = DistanceMatrixArray::propagated(&dst_mat, max_time);
+		let mut dma = DistanceMatrixArray::propagated(&dst_mat, max_tick);
 
 		let mut already_done = SquareMatrix::new(graph.edges.len(), false);
 		let mut times_matrix = SquareMatrix::new(graph.edges.len(), None);
@@ -382,7 +383,7 @@ mod tests {
 			path.unvalidate_path(&mut dma, &attack, &mut already_done, &times_matrix);
 		}
 
-		dma.print(max_time);
+		dma.print(max_tick);
 	}
 
 	// TODO : test index pyramid

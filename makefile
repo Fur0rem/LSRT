@@ -1,10 +1,10 @@
 rust_aggressive:
 	rm -f lsrt
-	cargo build --release --features "aggressive" && mv target/release/lsrt_new lsrt
+	cargo build --release --features "aggressive" && mv target/release/lsrt lsrt
 	
 rust:
 	rm -f lsrt
-	cargo build --release && mv target/release/lsrt_new lsrt
+	cargo build --release && mv target/release/lsrt lsrt
 
 TARGET := lsrt
 DEBUG := lsrt_debug

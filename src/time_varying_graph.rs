@@ -1,8 +1,9 @@
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 use crate::graph::DijkstraState;
-use crate::graph::{Graph, Neighbour, Node, Tick};
+use crate::graph::{Graph, Neighbour};
 use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
+use crate::{Node, Tick};
 
 use std::collections::BinaryHeap;
 use std::ops::{Index, IndexMut};
@@ -28,10 +29,10 @@ impl Index<usize> for PhantomEdge {
 /// The graph is represented as an adjacency list, where each edge is a PhantomEdge
 #[derive(Debug)]
 pub struct TimeVaryingGraph {
-	pub max_time: Tick,
+	max_tick: Tick,
 	pub nodes: Vec<Vec<PhantomEdge>>,
 	// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
-	pub edges_map: SquareMatrix<Option<*const PhantomEdge>>,
+	edges_map: SquareMatrix<Option<*const PhantomEdge>>,
 }
 
 impl TimeVaryingGraph {
@@ -40,8 +41,12 @@ impl TimeVaryingGraph {
 		self.nodes.len() as Node
 	}
 
-	pub fn from_kind(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
-		let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta);
+	pub fn max_tick(&self) -> Tick {
+		self.max_tick
+	}
+
+	pub fn from_kind(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
+		let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
 		let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
 		for (node, neighbours) in phantoms.iter().enumerate() {
 			for neighbour in neighbours {
@@ -49,7 +54,7 @@ impl TimeVaryingGraph {
 			}
 		}
 		return TimeVaryingGraph {
-			max_time,
+			max_tick,
 			nodes: phantoms,
 			edges_map,
 		};
@@ -114,7 +119,7 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 		if node == end {
 			break;
 		}
-		if distance.saturating_add(time_start) >= time_graph.max_time {
+		if distance.saturating_add(time_start) >= time_graph.max_tick {
 			dma[(time_start, start, end)] = Tick::MAX;
 			break;
 		}
@@ -145,7 +150,7 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
-pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
+pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
 
 	for (node, neighbours) in graph.edges.iter().enumerate() {
@@ -154,14 +159,14 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 		// For all the edges, we create a phantom edge
 		for neighbour in neighbours {
 			let weight = neighbour.weight;
-			let mut weights = vec![weight; max_time as usize];
+			let mut weights = vec![weight; max_tick as usize];
 			for deleted_edge in deleted_edges {
 				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
 						let t = *t as usize;
 						let t_with_delta = t * delta as usize;
 						for td in t_with_delta..t_with_delta + delta as usize {
-							if td < max_time as usize {
+							if td < max_tick as usize {
 								weights[td] = 0;
 							}
 						}
@@ -170,7 +175,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 					if weights[last_elem_idx] == 0 {
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					for i in (0..max_time as usize - 1).rev() {
+					for i in (0..max_tick as usize - 1).rev() {
 						if weights[i] == 0 {
 							weights[i] = weights[i + 1].saturating_add(1);
 						}
@@ -191,7 +196,7 @@ pub fn create_phantom_edges(graph: &Graph, max_time: Tick, deleted_edges: &Vec<D
 }
 
 pub fn create_phantom_edges_aggressive(
-	graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8,
+	graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8,
 ) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
 
@@ -201,20 +206,20 @@ pub fn create_phantom_edges_aggressive(
 		// For all the edges, we create a phantom edge
 		for neighbour in neighbours {
 			let weight = neighbour.weight;
-			let mut weights = vec![weight; max_time as usize];
+			let mut weights = vec![weight; max_tick as usize];
 			for deleted_edge in deleted_edges {
 				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
 						let t = *t as usize;
 						let t_with_delta = t * delta as usize;
 						for td in t_with_delta..t_with_delta + delta as usize {
-							if td < max_time as usize {
+							if td < max_tick as usize {
 								weights[td] = 0;
 							}
 						}
 					}
 					// For all the elements in the array, see if we have time to get through (more non-zero elements in a row than weight)
-					let mut i = max_time as usize - 1;
+					let mut i = max_tick as usize - 1;
 					while i > 0 {
 						if weights[i] != 0 {
 							let mut j = i;
@@ -229,7 +234,8 @@ pub fn create_phantom_edges_aggressive(
 								}
 							}
 							i = j;
-						} else {
+						}
+						else {
 							i -= 1;
 						}
 					}
@@ -239,7 +245,7 @@ pub fn create_phantom_edges_aggressive(
 					if weights[last_elem_idx] == 0 {
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					for i in (0..max_time as usize - 1).rev() {
+					for i in (0..max_tick as usize - 1).rev() {
 						if weights[i] == 0 {
 							weights[i] = weights[i + 1].saturating_add(1);
 						}
@@ -259,11 +265,11 @@ pub fn create_phantom_edges_aggressive(
 	return phantoms;
 }
 
-pub fn graph_to_temporal(graph: &Graph, max_time: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
+pub fn graph_to_temporal(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
 	#[cfg(feature = "aggressive")]
-	let phantoms = create_phantom_edges_aggressive(graph, max_time, deleted_edges, delta);
+	let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 	#[cfg(not(feature = "aggressive"))]
-	let phantoms = create_phantom_edges(graph, max_time, deleted_edges, delta); // replace with your non-aggressive function
+	let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta); // replace with your non-aggressive function
 
 	let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
 	for (node, neighbours) in phantoms.iter().enumerate() {
@@ -272,7 +278,7 @@ pub fn graph_to_temporal(graph: &Graph, max_time: Tick, deleted_edges: &Vec<Dele
 		}
 	}
 	return TimeVaryingGraph {
-		max_time,
+		max_tick,
 		nodes: phantoms,
 		edges_map,
 	};
@@ -296,7 +302,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		if node == end {
 			break;
 		}
-		if distance + time_start >= time_graph.max_time {
+		if distance + time_start >= time_graph.max_tick {
 			break;
 		}
 		visited[node as usize] = true;

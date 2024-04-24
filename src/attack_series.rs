@@ -4,21 +4,14 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallel
 
 use crate::{
 	distance_matrix::{DistanceMatrixArray, SquareMatrix},
-	graph::{dijkstra, Graph, Node, Tick},
+	graph::{dijkstra, Graph},
 	paths::{Path, TemporalSubPathsPyramid},
 	time_varying_graph::{self, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write},
 	Attack, DynamicAttack, StaticAttack,
 };
+use crate::{Node, Tick};
 
-macro_rules! benchmark {
-	($name:expr, $block:expr) => {{
-		let start = std::time::Instant::now();
-		let result = $block;
-		let duration = start.elapsed();
-		println!("Time elapsed in {} is: {:?}", $name, duration);
-		result
-	}};
-}
+use crate::benchmark;
 
 pub struct DynamicAttackSeries<'a> {
 	pub series: Vec<(&'a str, DynamicAttack)>,
@@ -47,13 +40,13 @@ impl<'a> DynamicAttackSeries<'a> {
 
 	pub fn efficiency(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
-		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
-											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
-		let dst_mat = self.graph.all_pairs_distances(max_time);
+		let max_tick = self.series[0].1.max_tick(); // The max time is the same for all attacks
+											//let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_tick);
+		let dst_mat = self.graph.all_pairs_distances(max_tick);
 
 		// Then, we recopy the distance matrix to all the attacks
-		// We invalidate all the paths except those who took more than max_time to reach the destination
-		let mut dmas = vec![DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_time); self.series.len()];
+		// We invalidate all the paths except those who took more than max_tick to reach the destination
+		let mut dmas = vec![DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick); self.series.len()];
 
 		let results = dmas
 			.par_iter_mut()
@@ -64,8 +57,8 @@ impl<'a> DynamicAttackSeries<'a> {
 				(
 					self.series[e].0,
 					benchmark!(format!("(Dynamic) Recomputing distances for {}", self.series[e].0), {
-						let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-						for t in 0..time_graph.max_time {
+						let time_graph = graph_to_temporal(self.graph, max_tick, &attack.blocked_links(), attack.delta());
+						for t in 0..time_graph.max_tick {
 							for i in 0..time_graph.nb_nodes() {
 								// Doing the j in reverse seems to improve slightly the performance
 								// Probably because nodes that are far in real life apart also have far apart indexes
@@ -78,7 +71,7 @@ impl<'a> DynamicAttackSeries<'a> {
 								}
 							}
 						}
-						dma.efficiency_reachables(max_time)
+						dma.efficiency_reachables(max_tick)
 					}),
 				)
 			})
@@ -98,16 +91,16 @@ impl<'a> DynamicAttackSeries<'a> {
 		line.clear();
 		reader.read_line(&mut line).unwrap();
 		let line = line.split_whitespace().collect::<Vec<&str>>();
-		let max_time = line[2];
-		let max_time = max_time.parse().unwrap();
+		let max_tick = line[2];
+		let max_tick = max_tick.parse().unwrap();
 
-		//println!("Graph diameter: {}", max_time);
+		//println!("Graph diameter: {}", max_tick);
 
 		// Compute the distance matrix for the unattacked graph
 		let dst_mat = graph.all_pairs_distances();
 
 		// Then, we recopy the distance matrix to all the attacks
-		// We invalidate all the paths except those who took more than max_time to reach the destination
+		// We invalidate all the paths except those who took more than max_tick to reach the destination
 		files
 			.par_iter()
 			.map(|budget| {
@@ -118,10 +111,10 @@ impl<'a> DynamicAttackSeries<'a> {
 					let mut line = String::new();
 					reader.read_line(&mut line).unwrap();
 					let attack = DynamicAttack::from_file(&mut reader);
-					let mut dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_time);
-					let time_graph = graph_to_temporal(graph, max_time, &attack.blocked_links(), attack.delta());
+					let mut dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
+					let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
 					std::mem::drop(attack);
-					for t in 0..time_graph.max_time {
+					for t in 0..time_graph.max_tick() {
 						for i in 0..time_graph.nb_nodes() {
 							// Doing the j in reverse seems to improve slightly the performance
 							// Probably because nodes that are far in real
@@ -135,7 +128,7 @@ impl<'a> DynamicAttackSeries<'a> {
 							}
 						}
 					}
-					let (efficiency, reachables) = dma.efficiency_reachables(max_time);
+					let (efficiency, reachables) = dma.efficiency_reachables(max_tick);
 
 					std::mem::drop(dma);
 					(*budget, (efficiency, reachables))
@@ -146,9 +139,9 @@ impl<'a> DynamicAttackSeries<'a> {
 
 	pub fn efficiency_invalidation(&self) -> Vec<(&str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
-		let max_time = self.series[0].1.max_time(); // The max time is the same for all attacks
-		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_time);
-		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_time); self.series.len()];
+		let max_tick = self.series[0].1.max_tick(); // The max time is the same for all attacks
+		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(max_tick);
+		let mut dmas = vec![DistanceMatrixArray::propagated(&dst_mat, max_tick); self.series.len()];
 
 		let results = dmas
 			.par_iter_mut()
@@ -172,7 +165,7 @@ impl<'a> DynamicAttackSeries<'a> {
 
 				// Count the number of 0's
 				/*let mut count = 0;
-				for t in 0..max_time {
+				for t in 0..max_tick {
 					for i in 0..self.graph.nb_nodes() {
 						for j in 0..self.graph.nb_nodes() {
 							if dma[(t, i, j)] == 0 {
@@ -187,14 +180,14 @@ impl<'a> DynamicAttackSeries<'a> {
 				println!(
 					"Zeroes: {}/{}",
 					count,
-					self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_time as usize
+					self.graph.nb_nodes() as usize * self.graph.nb_nodes() as usize * max_tick as usize
 				);*/
 
 				(
 					self.series[e].0,
 					benchmark!("recomputing everything", {
-						let time_graph = graph_to_temporal(self.graph, max_time, &attack.blocked_links(), attack.delta());
-						for t in 0..time_graph.max_time {
+						let time_graph = graph_to_temporal(self.graph, max_tick, &attack.blocked_links(), attack.delta());
+						for t in 0..time_graph.max_tick() {
 							for i in 0..time_graph.nb_nodes() {
 								// Doing the j in reverse seems to improve slightly the performance
 								// Probably because nodes that are far in real life apart also have far apart indexes
@@ -207,7 +200,7 @@ impl<'a> DynamicAttackSeries<'a> {
 								}
 							}
 						}
-						dma.efficiency_reachables(max_time)
+						dma.efficiency_reachables(max_tick)
 					}),
 				)
 			})

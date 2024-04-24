@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["dijkstra","dijkstra_write"],"struct":["DijkstraState","Graph","Neighbour"]};

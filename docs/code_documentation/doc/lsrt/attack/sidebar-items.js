@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AttackResult"],"struct":["DeletedLink","DynamicAttack","StaticAttack"],"trait":["Attack"]};

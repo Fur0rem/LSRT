@@ -1,3 +1,10 @@
+//! A singular attack.
+//!
+//! Attacks are separated into 2 categories:
+//! 1. Static attacks : the blocked links are fixed over the whole time
+//! 2. Dynamic attacks : the blocked links change over time
+//! We did this to optimise the computation time for static attacks, as the distance matrix is the same for all times.
+
 use std::{
 	borrow::Cow,
 	fs::File,
@@ -6,33 +13,38 @@ use std::{
 
 use sscanf::scanf;
 
-use crate::time_varying_graph::graph_to_temporal;
 use crate::{
 	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
 	time_varying_graph::temporal_dijkstra_write,
 };
-use crate::{
-	graph::{Graph, Node, Tick},
-	paths::TemporalSubPathsPyramid,
-};
+use crate::{graph::Graph, paths::TemporalSubPathsPyramid};
+use crate::{time_varying_graph::graph_to_temporal, Time};
+use crate::{Node, Tick};
 
+/// The result of an attack.
+/// For static attacks, it is a distance matrix.
+/// For dynamic attacks, it is a distance matrix array, which contains the distance matrix for each time.
+#[derive(Debug)]
 pub enum AttackResult {
 	Static(DistanceMatrix),
 	Dynamic(DistanceMatrixArray),
 }
 
+/// Trait for an attack.
+/// An attack is a set of blocked links, and contains its delta and max time.
+/// Any attack must implement this trait to have its efficiency computed.
 pub trait Attack: std::fmt::Debug {
 	// efficiency + reachables
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult;
 	fn efficiency(&self, graph: &Graph) -> (f64, u64) {
 		let distance_matrix = self.all_pairs_distances(graph);
 		match distance_matrix {
-			AttackResult::Static(dm) => dm.efficiency_reachables(self.max_time()),
-			AttackResult::Dynamic(dma) => dma.efficiency_reachables(self.max_time()),
+			AttackResult::Static(dm) => dm.efficiency_reachables(self.max_tick()),
+			AttackResult::Dynamic(dma) => dma.efficiency_reachables(self.max_tick()),
 		}
 	}
 
-	fn max_time(&self) -> Tick;
+	fn max_tick(&self) -> Tick;
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
 	fn delta(&self) -> u8;
 }
@@ -41,21 +53,21 @@ pub trait Attack: std::fmt::Debug {
 pub struct DeletedLink {
 	pub from: Node,
 	pub to: Node,
-	pub times: Vec<Tick>,
+	pub times: Vec<Time>,
 }
 
 #[derive(Debug)]
 pub struct DynamicAttack {
 	pub blocked_links: Vec<DeletedLink>,
 	pub delta: u8,
-	pub max_time: Tick,
+	pub max_tick: Tick,
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
 	pub blocked_links: Vec<Vec<Node>>,
 	pub delta: u8,
-	pub max_time: Tick,
+	pub max_tick: Tick,
 }
 
 impl dyn Attack {
@@ -79,11 +91,11 @@ impl dyn Attack {
 
 impl StaticAttack {
 	pub fn from_file(reader: &mut BufReader<File>, graph: &Graph) -> Self {
-		// Format : first line contains max_time and delta
+		// Format : first line contains max_tick and delta
 		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (max_time, delta) = scanf!(line.trim(), "{} {}", Tick, u8).unwrap();
+		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, u8).unwrap();
 
 		// while there is new line, read it and append to the result
 		let mut blocked_links = Vec::with_capacity(graph.nb_nodes() as usize);
@@ -97,14 +109,14 @@ impl StaticAttack {
 		return Self {
 			blocked_links,
 			delta,
-			max_time,
+			max_tick,
 		};
 	}
 }
 
 impl Attack for StaticAttack {
-	fn max_time(&self) -> Tick {
-		return self.max_time;
+	fn max_tick(&self) -> Tick {
+		return self.max_tick;
 	}
 
 	fn delta(&self) -> u8 {
@@ -118,7 +130,7 @@ impl Attack for StaticAttack {
 				blocked_links.push(DeletedLink {
 					from: i as Node,
 					to: self.blocked_links[i][j],
-					times: (0..self.max_time).collect(),
+					times: (0..self.max_tick).collect(),
 				});
 			}
 		}
@@ -130,7 +142,7 @@ impl Attack for StaticAttack {
 		let mut new_graph = graph.clone();
 		for i in 0..self.blocked_links.len() {
 			for j in (0..self.blocked_links[i].len()).rev() {
-				new_graph.remove_link(i as Node, self.blocked_links[i][j]);
+				new_graph.remove_edge(i as Node, self.blocked_links[i][j]).unwrap();
 			}
 		}
 
@@ -145,7 +157,7 @@ impl DynamicAttack {
 	pub fn from_file(reader: &mut BufReader<File>) -> Self {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (nb_edges, delta, max_time) = scanf!(line.trim(), "{} {} {}", usize, u8, Tick).unwrap();
+		let (nb_edges, delta, max_tick) = scanf!(line.trim(), "{} {} {}", usize, u8, Tick).unwrap();
 
 		// Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
 		// For example : 4 (0,2) 5 9 17 18
@@ -179,14 +191,14 @@ impl DynamicAttack {
 		return Self {
 			blocked_links,
 			delta,
-			max_time: max_time as Tick,
+			max_tick: max_tick as Tick,
 		};
 	}
 }
 
 impl Attack for DynamicAttack {
-	fn max_time(&self) -> Tick {
-		return self.max_time;
+	fn max_tick(&self) -> Tick {
+		return self.max_tick;
 	}
 
 	fn delta(&self) -> u8 {
@@ -199,10 +211,10 @@ impl Attack for DynamicAttack {
 
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create the time varying graph
-		let time_graph = graph_to_temporal(graph, self.max_time(), &self.blocked_links(), self.delta());
-		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), self.max_time());
+		let time_graph = graph_to_temporal(graph, self.max_tick(), &self.blocked_links(), self.delta());
+		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), self.max_tick());
 		// Compute all distance matrices
-		for t in 0..time_graph.max_time {
+		for t in 0..time_graph.max_tick() {
 			for i in 0..time_graph.nb_nodes() {
 				// Doing the j in reverse seems to improve slightly the performance
 				// Probably because nodes that are far in real life apart also have far apart indexes
@@ -214,7 +226,7 @@ impl Attack for DynamicAttack {
 					temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
 				}
 			}
-			//println!("{}/{}", t, self.max_time);
+			//println!("{}/{}", t, self.max_tick);
 		}
 
 		return AttackResult::Dynamic(dma);

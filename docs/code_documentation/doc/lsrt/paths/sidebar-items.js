@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Path","SubPath","SubPathsPyramid","TemporalPath","TemporalSubPath","TemporalSubPathsPyramid"]};
