@@ -1,8 +1,9 @@
 use std::collections::{BinaryHeap, HashSet};
+use std::hash::Hash;
 
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour};
-use crate::time_varying_graph::TimeVaryingGraph;
+use crate::time_varying_graph::{self, TimeVaryingGraph};
 use crate::{attack, Attack};
 use crate::{Node, Tick};
 
@@ -40,6 +41,11 @@ pub struct SubPathsPyramid<'a> {
 	pub subpaths: Vec<SubPath>,
 }
 
+// 1 has parents (None, 0), 2 has parents (0, None), 3 has parents (None, 1), 4 has parents (1, 2), 5 has parents (2, None)
+// Structure :
+// 0
+// 1 2
+// 3 4 5
 impl<'a> SubPathsPyramid<'a> {
 	pub fn print(&self) {
 		let mut idx = 0;
@@ -76,11 +82,6 @@ impl<'a> SubPathsPyramid<'a> {
 		if idx == 0 {
 			return (None, None);
 		}
-		// 1 has parents (None, 0), 2 has parents (0, None), 3 has parents (None, 1), 4 has parents (1, 2), 5 has parents (2, None)
-		// Structure :
-		// 0
-		// 1 2
-		// 3 4 5
 		let prof = Self::get_prof(idx);
 		let (minr, maxr) = Self::get_range(prof);
 		let left_parent = if idx == minr { None } else { Some(idx - prof - 1) };
@@ -90,7 +91,6 @@ impl<'a> SubPathsPyramid<'a> {
 
 	pub fn leaves_range(&self) -> std::ops::Range<usize> {
 		// The leaves are the last elements of the pyramid
-		// TODO : maybe the logic works actually
 		if self.subpaths.is_empty() {
 			return 0..0;
 		}
@@ -183,214 +183,6 @@ impl<'a> SubPathsPyramid<'a> {
 		}
 
 		return SubPathsPyramid { graph, subpaths: elems };
-	}
-
-	pub fn invalidate_path(&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack) {
-		// look through all the leaves, if any of them is in the attack, invalidate the path by writing 0 in the matrix,
-		// then propagate the change to the root
-		let mut to_invalidate = vec![];
-		'outer: for (i, subpath) in self.leaves().iter().enumerate() {
-			for blocked_link in &attack.blocked_links {
-				if blocked_link.from == subpath.start && blocked_link.to == subpath.end {
-					to_invalidate.push(i);
-					continue 'outer;
-				}
-			}
-		}
-
-		if to_invalidate.is_empty() {
-			return;
-		}
-
-		// for all the leaves that have been invalidated, propagate the change to their parents
-		while !to_invalidate.is_empty() {
-			let mut new_to_invalidate = vec![];
-			for i in to_invalidate {
-				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
-				if let Some(left_parent) = left_parent {
-					if dma[(0, self.subpaths[left_parent].start, self.subpaths[left_parent].end)] != 0 {
-						new_to_invalidate.push(left_parent);
-					}
-				}
-				if let Some(right_parent) = right_parent {
-					if dma[(0, self.subpaths[right_parent].start, self.subpaths[right_parent].end)] != 0 {
-						new_to_invalidate.push(right_parent);
-					}
-				}
-				let weight = dma[(0, self.subpaths[i].start, self.subpaths[i].end)];
-				let max_tick_reachable = attack.max_tick().saturating_sub(weight);
-				for time in 0..max_tick_reachable {
-					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-				}
-			}
-			to_invalidate = new_to_invalidate;
-		}
-	}
-
-	pub fn validate_path(&self, dma: &mut DistanceMatrixArray, blocked_links: &SquareMatrix<bool>) {
-		if self.subpaths.is_empty() {
-			return;
-		}
-		if dma[(0, self.subpaths[0].start, self.subpaths[0].end)] != 0 {
-			return;
-		}
-		// look through all the leaves, if none of them is in the attack, validate the path by writing the weight in the matrix,
-		for subpath in self.leaves() {
-			if blocked_links[(subpath.start as usize, subpath.end as usize)] {
-				continue;
-			}
-			for time in 0..dma.max_tick {
-				dma[(time as Tick, subpath.start, subpath.end)] = subpath.total_weight;
-			}
-		}
-	}
-
-	// FIXME : broken indices for the pyramid
-	pub fn unvalidate_path(
-		&self, dma: &mut DistanceMatrixArray, attack: &attack::DynamicAttack, already_done: &mut SquareMatrix<bool>,
-		times_matrix: &SquareMatrix<Option<&'a Vec<Tick>>>,
-	) {
-		if self.subpaths.is_empty() {
-			return;
-		}
-		if dma[(0, self.subpaths[0].start, self.subpaths[0].end)] == 0 {
-			return;
-		}
-		if already_done[(self.subpaths[0].start as usize, self.subpaths[0].end as usize)] {
-			return;
-		}
-
-		// This is a vec which, for each subpath, contains a vector of intervals at which the path is invalidated
-		let mut intervals_to_invalidate = vec![HashSet::new(); self.subpaths.len()];
-		// look through all the leaves, write their invalidation intervals in the intervals_to_invalidate vec, then propagate the change to the root
-		for i in self.leaves_range() {
-			let subpath = &self.subpaths[i];
-			//println!("Invalidating path {}--{}-->{}", subpath.start, subpath.total_weight, subpath.end);
-			if let Some(times) = times_matrix[(subpath.start as usize, subpath.end as usize)] {
-				for time in times {
-					for delta in 0..attack.delta {
-						let idx = *time as usize * attack.delta as usize + delta as usize;
-						if idx >= dma.max_tick {
-							continue;
-						}
-						intervals_to_invalidate[i].insert(idx as Tick);
-					}
-				}
-			}
-		}
-
-		// for all the leaves that have been invalidated, propagate the change to their parents
-		// go through the pyramid from the leaves to the root
-
-		/*let mut to_invalidate = HashSet::new();
-		for i in self.leaves_range() {
-			if !intervals_to_invalidate[i].is_empty() {
-				to_invalidate.insert(i);
-			}
-		}
-		while !to_invalidate.is_empty() {
-			let mut new_to_invalidate = HashSet::new();
-			for &i in &to_invalidate {
-				if intervals_to_invalidate[i].is_empty() {
-					continue;
-				}
-				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
-				if let Some(left_parent) = left_parent {
-					//let mut to_push = vec![];
-					let interval_son = &intervals_to_invalidate[i];
-					let interval_parent = &intervals_to_invalidate[left_parent];
-					// AU SECOURS
-					#[allow(mutable_transmutes)]
-					let interval_parent = unsafe { std::mem::transmute::<&HashSet<Tick>, &mut HashSet<Tick>>(interval_parent) };
-					for time in interval_son {
-						//to_push
-						//.push(time.saturating_sub((self.subpaths[i].time_taken).saturating_sub(self.subpaths[left_parent].time_taken)));
-						let offset = self.subpaths[i].time_taken - self.subpaths[left_parent].time_taken;
-						if offset > *time {
-							continue;
-						}
-						interval_parent.insert(*time - offset);
-					}
-					if !intervals_to_invalidate[left_parent].is_empty() {
-						new_to_invalidate.insert(left_parent);
-					}
-				}
-				if let Some(right_parent) = right_parent {
-					let mut to_push = vec![];
-					for time in &intervals_to_invalidate[i] {
-						to_push.push(*time);
-					}
-					for time in to_push {
-						intervals_to_invalidate[right_parent].insert(time);
-					}
-					new_to_invalidate.insert(right_parent);
-				}
-				already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
-				for time in &intervals_to_invalidate[i] {
-					dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-				}
-			}
-			to_invalidate = new_to_invalidate;
-		}*/
-
-		/*for i in (0..self.subpaths.len()).rev() {
-			if intervals_to_invalidate[i].is_empty() {
-				continue;
-			}
-			let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
-			if let Some(left_parent) = left_parent {
-				let mut to_push = vec![];
-				for time in &intervals_to_invalidate[i] {
-					to_push.push(time.saturating_sub((self.subpaths[i].time_taken).saturating_sub(self.subpaths[left_parent].time_taken)));
-				}
-				for time in to_push {
-					intervals_to_invalidate[left_parent].insert(time);
-				}
-			}
-			if let Some(right_parent) = right_parent {
-				let mut to_push = vec![];
-				for time in &intervals_to_invalidate[i] {
-					to_push.push(*time);
-				}
-				for time in to_push {
-					intervals_to_invalidate[right_parent].insert(time);
-				}
-			}
-			already_done[(self.subpaths[i].start as usize, self.subpaths[i].end as usize)] = true;
-			for time in &intervals_to_invalidate[i] {
-				dma[(*time as Tick, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-			}
-		}*/
-
-		let mut to_invalidate = vec![];
-		for i in self.leaves_range().rev() {
-			if !intervals_to_invalidate[i].is_empty() {
-				to_invalidate.push(i);
-			}
-		}
-
-		while !to_invalidate.is_empty() {
-			let mut new_to_invalidate = vec![];
-			for i in to_invalidate {
-				let (left_parent, right_parent) = SubPathsPyramid::get_idx_parents(i);
-				if let Some(left_parent) = left_parent {
-					//if dma[(0, self.subpaths[left_parent].start, self.subpaths[left_parent].end)] != 0 {
-					new_to_invalidate.push(left_parent);
-					//}
-				}
-				if let Some(right_parent) = right_parent {
-					//if dma[(0, self.subpaths[right_parent].start, self.subpaths[right_parent].end)] != 0 {
-					new_to_invalidate.push(right_parent);
-					//}
-				}
-				let weight = dma[(0, self.subpaths[i].start, self.subpaths[i].end)];
-				let max_tick_reachable = attack.max_tick().saturating_sub(weight);
-				for time in 0..max_tick_reachable {
-					dma[(time, self.subpaths[i].start, self.subpaths[i].end)] = 0;
-				}
-			}
-			to_invalidate = new_to_invalidate;
-		}
 	}
 }
 

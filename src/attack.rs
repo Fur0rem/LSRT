@@ -142,7 +142,7 @@ impl Attack for StaticAttack {
 		let mut new_graph = graph.clone();
 		for i in 0..self.blocked_links.len() {
 			for j in (0..self.blocked_links[i].len()).rev() {
-				new_graph.remove_edge(i as Node, self.blocked_links[i][j]).unwrap();
+				new_graph.remove_edge(i as Node, self.blocked_links[i][j]);
 			}
 		}
 

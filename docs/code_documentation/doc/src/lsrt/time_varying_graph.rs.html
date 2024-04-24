@@ -368,7 +368,7 @@
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>PhantomEdge {
 	<span class="kw">pub </span>neighbour: Node,
-	weights: Vec&lt;Tick&gt;,
+	<span class="kw">pub </span>weights: Vec&lt;Tick&gt;,
 }
 
 <span class="kw">impl </span>Index&lt;usize&gt; <span class="kw">for </span>PhantomEdge {
@@ -386,7 +386,7 @@
 	max_tick: Tick,
 	<span class="kw">pub </span>nodes: Vec&lt;Vec&lt;PhantomEdge&gt;&gt;,
 	<span class="comment">// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
-	</span>edges_map: SquareMatrix&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>PhantomEdge&gt;&gt;,
+	</span><span class="kw">pub </span>edges_map: SquareMatrix&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>PhantomEdge&gt;&gt;,
 }
 
 <span class="kw">impl </span>TimeVaryingGraph {

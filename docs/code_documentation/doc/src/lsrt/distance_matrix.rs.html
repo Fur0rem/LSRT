@@ -273,6 +273,23 @@
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
 <a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices and distance matrix arrays to compute distances in graphs.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::graph::Graph;
@@ -426,7 +443,7 @@
 	<span class="comment">// 3D array of distance matrices flattened
 	</span><span class="kw">pub </span>distances: Vec&lt;Tick&gt;,
 	dim: usize,
-	<span class="kw">pub </span>max_tick: usize,
+	<span class="kw">pub </span>max_tick: Tick,
 }
 
 <span class="kw">impl </span>std::ops::Index&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
@@ -458,7 +475,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray {
 			distances,
 			dim: size,
-			max_tick: max_tick <span class="kw">as </span>usize,
+			max_tick,
 		};
 		dma.fill_1_on_diagonals();
 		<span class="kw">return </span>dma;
@@ -470,7 +487,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray {
 			distances,
 			dim: size,
-			max_tick: max_tick <span class="kw">as </span>usize,
+			max_tick,
 		};
 		dma.fill_1_on_diagonals();
 		<span class="kw">return </span>dma;
@@ -488,12 +505,29 @@
 		<span class="kw">return </span>new_matrix;
 	}
 
-	<span class="kw">pub fn </span>propagated_and_unvalidated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
+	<span class="kw">pub fn </span>propagated_and_infinitied(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
 				<span class="kw">let </span>weight = dst_matrix[(i, j)];
 				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight);
+				<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick_reachable {
+					dma[(t, i, j)] = weight;
+				}
+				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
+					dma[(t, i, j)] = Tick::MAX;
+				}
+			}
+		}
+		<span class="kw">return </span>dma;
+	}
+
+	<span class="kw">pub fn </span>propagated_and_unvalidated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
+		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
+			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
+				<span class="kw">let </span>weight = dst_matrix[(i, j)];
+				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(<span class="number">1</span>);
 				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}

@@ -14,7 +14,7 @@ use std::ops::{Index, IndexMut};
 #[derive(Debug, Clone)]
 pub struct PhantomEdge {
 	pub neighbour: Node,
-	weights: Vec<Tick>,
+	pub weights: Vec<Tick>,
 }
 
 impl Index<usize> for PhantomEdge {
@@ -32,7 +32,7 @@ pub struct TimeVaryingGraph {
 	max_tick: Tick,
 	pub nodes: Vec<Vec<PhantomEdge>>,
 	// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
-	edges_map: SquareMatrix<Option<*const PhantomEdge>>,
+	pub edges_map: SquareMatrix<Option<*const PhantomEdge>>,
 }
 
 impl TimeVaryingGraph {

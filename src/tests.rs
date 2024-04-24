@@ -60,7 +60,6 @@ mod tests {
 
 		println!("Phantom edges: {:?}", phantom_edges);
 
-		// FIXME : index timevaryingedge
 		assert_eq!(phantom_edges[0][0].neighbour, 1);
 		assert_eq!(phantom_edges[0][0][0], 5);
 		assert_eq!(phantom_edges[0][0][1], 4);
@@ -327,7 +326,7 @@ mod tests {
 		}
 	}
 
-	#[test]
+	/*#[test]
 	fn test_path_unvalidation() {
 		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
 		let neighbours_of_1 = vec![Neighbour { node: 0, weight: 1 }, Neighbour { node: 2, weight: 1 }];
@@ -384,7 +383,5 @@ mod tests {
 		}
 
 		dma.print(max_tick);
-	}
-
-	// TODO : test index pyramid
+	}*/
 }

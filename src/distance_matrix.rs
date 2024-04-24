@@ -151,7 +151,7 @@ pub struct DistanceMatrixArray {
 	// 3D array of distance matrices flattened
 	pub distances: Vec<Tick>,
 	dim: usize,
-	pub max_tick: usize,
+	pub max_tick: Tick,
 }
 
 impl std::ops::Index<(Tick, Node, Node)> for DistanceMatrixArray {
@@ -183,7 +183,7 @@ impl DistanceMatrixArray {
 		let mut dma = DistanceMatrixArray {
 			distances,
 			dim: size,
-			max_tick: max_tick as usize,
+			max_tick,
 		};
 		dma.fill_1_on_diagonals();
 		return dma;
@@ -195,7 +195,7 @@ impl DistanceMatrixArray {
 		let mut dma = DistanceMatrixArray {
 			distances,
 			dim: size,
-			max_tick: max_tick as usize,
+			max_tick,
 		};
 		dma.fill_1_on_diagonals();
 		return dma;
@@ -213,12 +213,29 @@ impl DistanceMatrixArray {
 		return new_matrix;
 	}
 
-	pub fn propagated_and_unvalidated(dst_matrix: &DistanceMatrix, max_tick: Tick) -> Self {
+	pub fn propagated_and_infinitied(dst_matrix: &DistanceMatrix, max_tick: Tick) -> Self {
 		let mut dma = DistanceMatrixArray::zeroed(dst_matrix.dim() as Node, max_tick);
 		for i in 0..dst_matrix.dim() as Node {
 			for j in 0..dst_matrix.dim() as Node {
 				let weight = dst_matrix[(i, j)];
 				let max_tick_reachable = max_tick.saturating_sub(weight);
+				for t in 0..max_tick_reachable {
+					dma[(t, i, j)] = weight;
+				}
+				for t in max_tick_reachable..max_tick {
+					dma[(t, i, j)] = Tick::MAX;
+				}
+			}
+		}
+		return dma;
+	}
+
+	pub fn propagated_and_unvalidated(dst_matrix: &DistanceMatrix, max_tick: Tick) -> Self {
+		let mut dma = DistanceMatrixArray::zeroed(dst_matrix.dim() as Node, max_tick);
+		for i in 0..dst_matrix.dim() as Node {
+			for j in 0..dst_matrix.dim() as Node {
+				let weight = dst_matrix[(i, j)];
+				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(1);
 				for t in max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}

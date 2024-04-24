@@ -79,10 +79,17 @@ def load_data(dir_path):
         clean_name = split[0]
         results[clean_name].append(load_file(dir_path + "/" + attack + "/result"))
 
+    # Find an attack other than "none" to get the length of the data
+    for attack in results:
+        if attack == "none":
+            continue
+        if len(results[attack]) > 0:
+            budgets = results[attack][0]
+
     # Extend the "none" data to the length of the other data
     if "none" in results:
         none_data = results["none"][0][0]
-        results["none"] = [[Data(random_data.budget, none_data.efficiency, none_data.reachables) for random_data in results["random"][0]]]
+        results["none"] = [[Data(other_data.budget, none_data.efficiency, none_data.reachables) for other_data in budgets]]
         results["none"][0] = [Data(0, none_data.efficiency, none_data.reachables)] + results["none"][0] + [Data(num_links, none_data.efficiency, none_data.reachables)]
 
     # Extend the other data by adding the budget 0 with the efficiency and reachables of the "none" data

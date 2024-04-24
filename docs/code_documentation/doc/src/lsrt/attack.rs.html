@@ -377,7 +377,7 @@
 		</span><span class="kw">let </span><span class="kw-2">mut </span>new_graph = graph.clone();
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.blocked_links.len() {
 			<span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..<span class="self">self</span>.blocked_links[i].len()).rev() {
-				new_graph.remove_edge(i <span class="kw">as </span>Node, <span class="self">self</span>.blocked_links[i][j]).unwrap();
+				new_graph.remove_edge(i <span class="kw">as </span>Node, <span class="self">self</span>.blocked_links[i][j]);
 			}
 		}
 

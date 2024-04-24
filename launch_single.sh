@@ -3,7 +3,7 @@
 # city : name of the city
 # attack : type of attack
 # times : number of attacks
-# delta : TODO je suis pas sur
+# delta : number of steps of simulation between two steps of the attack
 # budget_min : how much budget we start with
 # budget_max : how much budget we stop with
 LONG=city:,attack:,times:,delta:,budget_min:,budget_max:,growth_num:,growth_den:,min_step:

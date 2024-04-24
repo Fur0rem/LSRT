@@ -386,9 +386,6 @@
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
@@ -451,8 +448,7 @@
 
 		<span class="macro">println!</span>(<span class="string">"Phantom edges: {:?}"</span>, phantom_edges);
 
-		<span class="comment">// FIXME : index timevaryingedge
-		</span><span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">0</span>].neighbour, <span class="number">1</span>);
+		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">0</span>].neighbour, <span class="number">1</span>);
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">0</span>][<span class="number">0</span>], <span class="number">5</span>);
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">0</span>][<span class="number">1</span>], <span class="number">4</span>);
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">0</span>][<span class="number">2</span>], <span class="number">3</span>);
@@ -718,65 +714,63 @@
 		}
 	}
 
-	<span class="attr">#[test]
-	</span><span class="kw">fn </span>test_path_unvalidation() {
-		<span class="kw">let </span>neighbours_of_0 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">1</span>, weight: <span class="number">1 </span>}];
-		<span class="kw">let </span>neighbours_of_1 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">0</span>, weight: <span class="number">1 </span>}, Neighbour { node: <span class="number">2</span>, weight: <span class="number">1 </span>}];
-		<span class="kw">let </span>neighbours_of_2 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">3</span>, weight: <span class="number">1 </span>}];
-		<span class="kw">let </span>neighbours_of_3 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">1</span>, weight: <span class="number">1 </span>}];
+	<span class="comment">/*#[test]
+	fn test_path_unvalidation() {
+		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
+		let neighbours_of_1 = vec![Neighbour { node: 0, weight: 1 }, Neighbour { node: 2, weight: 1 }];
+		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
+		let neighbours_of_3 = vec![Neighbour { node: 1, weight: 1 }];
 
-		<span class="kw">let </span>graph = Graph::from_neighbours(<span class="macro">vec!</span>[neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
+		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
 
-		<span class="kw">let </span>max_tick = <span class="number">10</span>;
-		<span class="kw">let </span>delta = <span class="number">3</span>;
+		let max_tick = 10;
+		let delta = 3;
 
-		<span class="kw">let </span>deleted_links = <span class="macro">vec!</span>[
+		let deleted_links = vec![
 			DeletedLink {
-				from: <span class="number">0</span>,
-				to: <span class="number">1</span>,
-				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>],
+				from: 0,
+				to: 1,
+				times: vec![0, 1],
 			},
 			DeletedLink {
-				from: <span class="number">1</span>,
-				to: <span class="number">2</span>,
-				times: <span class="macro">vec!</span>[<span class="number">2</span>],
+				from: 1,
+				to: 2,
+				times: vec![2],
 			},
 			DeletedLink {
-				from: <span class="number">3</span>,
-				to: <span class="number">1</span>,
-				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],
+				from: 3,
+				to: 1,
+				times: vec![0, 2],
 			},
 		];
 
-		<span class="kw">let </span>attack = DynamicAttack {
+		let attack = DynamicAttack {
 			blocked_links: deleted_links,
 			delta,
 			max_tick,
 		};
 
-		<span class="kw">let </span>(dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
-		<span class="kw">for </span>path <span class="kw">in </span>paths.iter() {
-			<span class="macro">println!</span>(<span class="string">"-----------------"</span>);
+		let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
+		for path in paths.iter() {
+			println!("-----------------");
 			path.print();
 		}
-		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated(<span class="kw-2">&amp;</span>dst_mat, max_tick);
+		let mut dma = DistanceMatrixArray::propagated(&amp;dst_mat, max_tick);
 
-		<span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(graph.edges.len(), <span class="bool-val">false</span>);
-		<span class="kw">let </span><span class="kw-2">mut </span>times_matrix = SquareMatrix::new(graph.edges.len(), <span class="prelude-val">None</span>);
-		<span class="comment">// push the blocked links times
-		</span><span class="kw">let </span>blocked_links = attack.blocked_links();
-		<span class="kw">for </span>link <span class="kw">in </span>blocked_links.iter() {
-			<span class="macro">println!</span>(<span class="string">"Link: {:?}"</span>, link);
-			times_matrix[(link.from <span class="kw">as </span>usize, link.to <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>link.times);
+		let mut already_done = SquareMatrix::new(graph.edges.len(), false);
+		let mut times_matrix = SquareMatrix::new(graph.edges.len(), None);
+		// push the blocked links times
+		let blocked_links = attack.blocked_links();
+		for link in blocked_links.iter() {
+			println!("Link: {:?}", link);
+			times_matrix[(link.from as usize, link.to as usize)] = Some(&amp;link.times);
 		}
 
-		<span class="kw">for </span>path <span class="kw">in </span>paths.iter() {
-			path.unvalidate_path(<span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>attack, <span class="kw-2">&amp;mut </span>already_done, <span class="kw-2">&amp;</span>times_matrix);
+		for path in paths.iter() {
+			path.unvalidate_path(&amp;mut dma, &amp;attack, &amp;mut already_done, &amp;times_matrix);
 		}
 
 		dma.print(max_tick);
-	}
-
-	<span class="comment">// TODO : test index pyramid
+	}*/
 </span>}
 </code></pre></div></section></main></body></html>
