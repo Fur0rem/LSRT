@@ -220,10 +220,9 @@ impl Attack for DynamicAttack {
 				// Probably because nodes that are far in real life apart also have far apart indexes
 				for j in (0..time_graph.nb_nodes()).rev() {
 					// Not 0 -> already computed
-					if dma[(t, i, j)] != 0 {
-						continue;
+					if dma[(t, i, j)] == 0 {
+						temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
 					}
-					temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
 				}
 			}
 			//println!("{}/{}", t, self.max_tick);

@@ -335,6 +335,14 @@
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
 <a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::fs::File;
@@ -464,6 +472,10 @@
 	</span><span class="kw">pub fn </span>from_neighbours(neighbours: Vec&lt;Vec&lt;Neighbour&gt;&gt;) -&gt; Graph {
 		Graph { edges: neighbours }
 	}
+
+	<span class="kw">pub fn </span>get_edge(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Neighbour&gt; {
+		<span class="self">self</span>.edges[from <span class="kw">as </span>usize].iter().find(|x| x.node == to)
+	}
 }
 
 <span class="doccomment">/// A DijkstraState is a node and the distance to this node
@@ -577,6 +589,10 @@
 	<span class="comment">// Reconstruct the path from the previous vector
 	</span><span class="kw">let </span><span class="kw-2">mut </span>path = <span class="macro">vec!</span>[];
 	<span class="kw">let </span><span class="kw-2">mut </span>current = end;
+	<span class="kw">if </span>previous[current <span class="kw">as </span>usize].is_none() {
+		dst_mat[(start, end)] = Tick::MAX;
+		<span class="kw">return</span>;
+	}
 	<span class="kw">while let </span><span class="prelude-val">Some</span>(prev) = previous[current <span class="kw">as </span>usize] {
 		path.push(Neighbour {
 			node: current,

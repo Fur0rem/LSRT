@@ -232,7 +232,6 @@
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -455,10 +454,9 @@
 				// Probably because nodes that are far in real life apart also have far apart indexes
 				</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
 					<span class="comment">// Not 0 -&gt; already computed
-					</span><span class="kw">if </span>dma[(t, i, j)] != <span class="number">0 </span>{
-						<span class="kw">continue</span>;
+					</span><span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
+						temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma);
 					}
-					temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma);
 				}
 			}
 			<span class="comment">//println!("{}/{}", t, self.max_tick);

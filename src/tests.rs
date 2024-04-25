@@ -265,6 +265,20 @@ mod tests {
 		let (efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(&graph);
 		let (efficiency_static, reach_static) = attack_static.efficiency(&graph);
 
+		let dm_static = match attack_static.all_pairs_distances(&graph) {
+			AttackResult::Static(dms) => dms,
+			_ => panic!("Expected a static matrix"),
+		};
+		let dm_dynamic = match attack_dynamic.all_pairs_distances(&graph) {
+			AttackResult::Dynamic(dma) => dma,
+			_ => panic!("Expected a dynamic matrix"),
+		};
+
+		dm_static.print();
+		dm_dynamic.print(max_tick);
+
+		println!("Efficiency dynamic: {}", efficiency_dynamic);
+		println!("Efficiency static: {}", efficiency_static);
 		assert!((efficiency_dynamic - efficiency_static).abs() < 0.0001); // Floating point comparison
 		assert_eq!(reach_dynamic, reach_static);
 	}
@@ -329,72 +343,6 @@ mod tests {
 
 	#[test]
 	fn test_path_invalidation() {
-		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 3 }];
-		let neighbours_of_1 = vec![Neighbour { node: 2, weight: 3 }];
-		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 3 }];
-		let neighbours_of_3 = vec![];
-
-		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
-
-		let path = dijkstra(&graph, 0, 3);
-		let path = SubPathsPyramid::from_path(&graph, &path);
-		let deleted_links = vec![DeletedLink {
-			from: 1,
-			to: 2,
-			times: vec![0, 2],
-		}];
-		let max_tick = 10;
-		let delta = 2;
-
-		let tvg = TimeVaryingGraph::from_aggressive(&graph, max_tick, &deleted_links, delta);
-		path.print();
-		println!("TemporalGraph: {:?}", tvg);
-		let invalidations = path.invalidate_path(&tvg);
-		println!("Invalidations: {:?}", invalidations);
-	}
-
-	#[test]
-	fn test_path_invalidation_2() {
-		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
-		let neighbours_of_1 = vec![Neighbour { node: 2, weight: 1 }];
-		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
-		let neighbours_of_3 = vec![Neighbour { node: 4, weight: 1 }];
-		let neighbours_of_4 = vec![];
-
-		let graph = Graph::from_neighbours(vec![
-			neighbours_of_0,
-			neighbours_of_1,
-			neighbours_of_2,
-			neighbours_of_3,
-			neighbours_of_4,
-		]);
-
-		let path = dijkstra(&graph, 0, 4);
-		let path = SubPathsPyramid::from_path(&graph, &path);
-		let deleted_links = vec![
-			DeletedLink {
-				from: 1,
-				to: 2,
-				times: vec![0, 2],
-			},
-			DeletedLink {
-				from: 2,
-				to: 3,
-				times: vec![0, 2],
-			},
-		];
-		let max_tick = 10;
-		let delta = 1;
-
-		let tvg = TimeVaryingGraph::from_aggressive(&graph, max_tick, &deleted_links, delta);
-		path.print();
-		println!("TemporalGraph: {:?}", tvg);
-		let invalidations = path.invalidate_path(&tvg);
-		println!("Invalidations: {:?}", invalidations);
-	}
-
-	#[test]
-	fn test_path_invalidation_3() {
 		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
 		let neighbours_of_1 = vec![Neighbour { node: 2, weight: 1 }];
 		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
@@ -430,56 +378,23 @@ mod tests {
 		let delta = 1;
 
 		let tvg = TimeVaryingGraph::from_aggressive(&graph, max_tick, &deleted_links, delta);
-		path.print();
-		println!("TemporalGraph: {:?}", tvg);
-		let invalidations = path.invalidate_path(&tvg);
-		println!("Invalidations: {:?}", invalidations);
-	}
-
-	#[test]
-	fn test_path_invalidation_better() {
-		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
-		let neighbours_of_1 = vec![Neighbour { node: 2, weight: 1 }];
-		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
-		let neighbours_of_3 = vec![Neighbour { node: 4, weight: 1 }];
-		let neighbours_of_4 = vec![Neighbour { node: 5, weight: 1 }];
-		let neighbours_of_5 = vec![];
-
-		let graph = Graph::from_neighbours(vec![
-			neighbours_of_0,
-			neighbours_of_1,
-			neighbours_of_2,
-			neighbours_of_3,
-			neighbours_of_4,
-			neighbours_of_5,
-		]);
-
-		let path = dijkstra(&graph, 0, 5);
-		let path = SubPathsPyramid::from_path(&graph, &path);
-
-		let deleted_links = vec![
-			DeletedLink {
-				from: 1,
-				to: 2,
-				times: vec![0, 2],
-			},
-			DeletedLink {
-				from: 3,
-				to: 4,
-				times: vec![0, 2],
-			},
-		];
-
-		let max_tick = 10;
-		let delta = 1;
-
-		let tvg = TimeVaryingGraph::from_aggressive(&graph, max_tick, &deleted_links, delta);
-		path.print();
-		println!("TemporalGraph: {:?}", tvg);
-		let invalidations = path.invalidate_path(&tvg);
+		let dst_mat = graph.all_pairs_distances();
+		//dst_mat.print();
+		let mut dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
+		//dma.print(tvg.max_tick());
 		let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
-		let invalidations_better = path.invalidate_path_better(&tvg, &mut already_done);
-		println!("Invalidations: {:?}", invalidations);
-		println!("Invalidations better: {:?}", invalidations_better);
+		path.invalidate_path(&tvg, &mut already_done, &mut dma, &dst_mat);
+		//dma.print(tvg.max_tick());
+
+		path.print();
+		for t in 0..max_tick {
+			for i in 0..graph.nb_nodes() {
+				for j in 0..graph.nb_nodes() {
+					if dma[(t, i, j)] == 0 {
+						println!("Invalidation from {} to {} at time {}", i, j, t);
+					}
+				}
+			}
+		}
 	}
 }

@@ -290,6 +290,10 @@
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices and distance matrix arrays to compute distances in graphs.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::graph::Graph;
@@ -404,7 +408,7 @@
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim {
 				<span class="kw">let </span>distance = <span class="self">self</span>[(i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
 				<span class="comment">// If the distance is 0 or the distance is greater than the max time -&gt; 1/infinity = 0
-				</span><span class="kw">if </span>distance &lt;= max_tick &amp;&amp; distance != <span class="number">0 </span>{
+				</span><span class="kw">if </span>distance &lt; max_tick &amp;&amp; distance != <span class="number">0 </span>{
 					<span class="kw">let </span>difference = max_tick - distance + <span class="number">1</span>;
 					sum += (difference <span class="kw">as </span>f64) / (distance <span class="kw">as </span>f64); <span class="comment">// Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
 					</span>reachables += difference <span class="kw">as </span>u64;
@@ -509,13 +513,17 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
-				<span class="kw">let </span>weight = dst_matrix[(i, j)];
-				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight);
-				<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick_reachable {
+				<span class="comment">/*let weight = dst_matrix[(i, j)];
+				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(1);
+				for t in 0..max_tick_reachable {
 					dma[(t, i, j)] = weight;
 				}
-				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
+				for t in max_tick_reachable..max_tick {
 					dma[(t, i, j)] = Tick::MAX;
+				}*/
+				</span><span class="kw">let </span>weight = dst_matrix[(i, j)];
+				<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
+					dma[(t, i, j)] = weight;
 				}
 			}
 		}
@@ -527,7 +535,7 @@
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
 				<span class="kw">let </span>weight = dst_matrix[(i, j)];
-				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(<span class="number">1</span>);
+				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(<span class="number">2</span>);
 				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}

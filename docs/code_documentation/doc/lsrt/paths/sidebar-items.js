@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Path","SubPath","SubPathsPyramid","TemporalPath","TemporalSubPath","TemporalSubPathsPyramid"]};
+window.SIDEBAR_ITEMS = {"fn":["merge_sorted","merge_sorted_3","merge_sorted_ref"],"struct":["Path","SubPath","SubPathsPyramid","TemporalPath","TemporalSubPath","TemporalSubPathsPyramid"]};

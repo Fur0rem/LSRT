@@ -355,10 +355,239 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::{BinaryHeap, HashSet};
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
+<span class="kw">use </span>std::collections::{BinaryHeap, HashSet};
 <span class="kw">use </span>std::hash::Hash;
 
-<span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrixArray, SquareMatrix};
+<span class="kw">use </span>rayon::vec;
+
+<span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
 <span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{<span class="self">self</span>, TimeVaryingGraph};
 <span class="kw">use crate</span>::{attack, Attack};
@@ -383,6 +612,112 @@
 		}
 		<span class="macro">println!</span>();
 	}
+}
+
+<span class="kw">fn </span>merge_sorted(vec1: Vec&lt;Tick&gt;, vec2: Vec&lt;Tick&gt;) -&gt; Vec&lt;Tick&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
+	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
+	// assume both vecs are sorted, merge them in a sorted way
+	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
+	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
+		<span class="kw">if </span>vec1[i] == vec2[j] {
+			res.push(vec1[i]);
+			i += <span class="number">1</span>;
+			j += <span class="number">1</span>;
+		}
+		<span class="kw">else if </span>vec1[i] &lt; vec2[j] {
+			res.push(vec1[i]);
+			i += <span class="number">1</span>;
+		}
+		<span class="kw">else </span>{
+			res.push(vec2[j]);
+			j += <span class="number">1</span>;
+		}
+	}
+	<span class="kw">while </span>i &lt; vec1.len() {
+		res.push(vec1[i]);
+		i += <span class="number">1</span>;
+	}
+	<span class="kw">while </span>j &lt; vec2.len() {
+		res.push(vec2[j]);
+		j += <span class="number">1</span>;
+	}
+	<span class="comment">//println!("{:?}", res);
+	</span><span class="kw">return </span>res;
+}
+
+<span class="kw">fn </span>merge_sorted_ref(vec1: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, vec2: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;) -&gt; Vec&lt;Tick&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
+	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
+	// assume both vecs are sorted, merge them in a sorted way
+	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
+	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
+		<span class="kw">if </span>vec1[i] == vec2[j] {
+			res.push(vec1[i]);
+			i += <span class="number">1</span>;
+			j += <span class="number">1</span>;
+		}
+		<span class="kw">else if </span>vec1[i] &lt; vec2[j] {
+			res.push(vec1[i]);
+			i += <span class="number">1</span>;
+		}
+		<span class="kw">else </span>{
+			res.push(vec2[j]);
+			j += <span class="number">1</span>;
+		}
+	}
+	<span class="kw">while </span>i &lt; vec1.len() {
+		res.push(vec1[i]);
+		i += <span class="number">1</span>;
+	}
+	<span class="kw">while </span>j &lt; vec2.len() {
+		res.push(vec2[j]);
+		j += <span class="number">1</span>;
+	}
+	<span class="comment">//println!("{:?}", res);
+	</span><span class="kw">return </span>res;
+}
+
+<span class="kw">fn </span>merge_sorted_3(vec1: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, vec2: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
+	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
+	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
+	// assume both vecs are sorted, merge them in a sorted way
+	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
+	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
+		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
+		<span class="kw">let </span>val2 = vec2[j];
+		<span class="kw">if </span>val1 == val2 {
+			res.push(val1);
+			i += <span class="number">1</span>;
+			j += <span class="number">1</span>;
+		}
+		<span class="kw">else if </span>val1 &lt; val2 {
+			res.push(val1);
+			i += <span class="number">1</span>;
+		}
+		<span class="kw">else </span>{
+			res.push(val2);
+			j += <span class="number">1</span>;
+		}
+
+		<span class="kw">if </span><span class="kw-2">*</span>res.last().unwrap() &gt; max_time {
+			<span class="kw">return </span>res;
+		}
+	}
+	<span class="kw">while </span>i &lt; vec1.len() {
+		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
+		res.push(val1);
+		i += <span class="number">1</span>;
+	}
+	<span class="kw">while </span>j &lt; vec2.len() {
+		res.push(vec2[j]);
+		j += <span class="number">1</span>;
+	}
+	<span class="comment">//println!("{:?}", res);
+	</span><span class="kw">return </span>res;
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -444,6 +779,14 @@
 		<span class="kw">let </span>left_parent = <span class="kw">if </span>idx == minr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - prof - <span class="number">1</span>) };
 		<span class="kw">let </span>right_parent = <span class="kw">if </span>idx == maxr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - prof) };
 		<span class="kw">return </span>(left_parent, right_parent);
+	}
+
+	<span class="kw">pub fn </span>get_idx_children(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, usize)&gt; {
+		<span class="kw">let </span>(left_child, right_child) = (<span class="self">Self</span>::get_idx_left_son(idx), <span class="self">Self</span>::get_idx_right_son(idx));
+		<span class="kw">if </span>left_child &gt;= <span class="self">self</span>.subpaths.len() {
+			<span class="kw">return </span><span class="prelude-val">None</span>;
+		}
+		<span class="kw">return </span><span class="prelude-val">Some</span>((right_child, left_child));
 	}
 
 	<span class="kw">pub fn </span>leaves_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::ops::Range&lt;usize&gt; {
@@ -540,6 +883,115 @@
 		}
 
 		<span class="kw">return </span>SubPathsPyramid { graph, subpaths: elems };
+	}
+
+	<span class="doccomment">/// Invalidate the path in the distance matrix array because an attack impacted the path
+	///
+	/// How to use this function :
+	/// ```rust
+	/// let graph = Graph::from_file(&amp;mut reader);
+	/// let attack = DynamicAttack::from_file(&amp;mut reader);
+	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
+	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&amp;dst_mat, max_tick);
+	/// let time_graph = graph_to_temporal(graph, max_tick, &amp;attack.blocked_links(), attack.delta());
+	///	let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+	/// for path in &amp;paths {
+	/// 	path.invalidate_path(&amp;time_graph, &amp;mut already_done, &amp;mut dma, &amp;dst_mat);
+	/// }
+	/// ```
+	///
+	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
+	</span><span class="kw">pub fn </span>invalidate_path(
+		<span class="kw-2">&amp;</span><span class="self">self</span>, time_varying_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, already_done: <span class="kw-2">&amp;mut </span>SquareMatrix&lt;bool&gt;, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray,
+		original_dst_mat: <span class="kw-2">&amp;</span>DistanceMatrix,
+	) {
+		<span class="kw">if </span><span class="self">self</span>.subpaths.is_empty() {
+			<span class="kw">return</span>;
+		}
+		<span class="kw">let </span>total = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[<span class="number">0</span>];
+		<span class="kw">let </span>(from, to) = (total.start, total.end);
+		<span class="kw">if </span>already_done[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)] {
+			<span class="kw">return</span>;
+		}
+
+		<span class="kw">let </span><span class="kw-2">mut </span>times_to_invalidate = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]; <span class="self">self</span>.subpaths.len()];
+		<span class="kw">let </span><span class="kw-2">mut </span>total_invalidations = <span class="macro">vec!</span>[];
+		<span class="comment">// Invalidate the leaves
+		</span><span class="kw">let </span><span class="kw-2">mut </span>to_invalidate = <span class="macro">vec!</span>[];
+		<span class="kw">for </span>leaf <span class="kw">in </span><span class="self">self</span>.leaves_range().rev() {
+			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[leaf];
+			<span class="kw">let </span>phantom_edge = <span class="kw">unsafe </span>{ time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
+			<span class="kw">let </span>unattacked_edge = <span class="self">self</span>.graph.get_edge(subpath.start, subpath.end).unwrap();
+			<span class="kw">let </span><span class="kw-2">mut </span>invalid_times = <span class="macro">vec!</span>[];
+			<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_varying_graph
+				.max_tick()
+				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - <span class="number">1</span>)
+			{
+				<span class="kw">if </span>phantom_edge[t <span class="kw">as </span>usize] != unattacked_edge.weight {
+					invalid_times.push(t);
+				}
+			}
+			<span class="kw">if </span>!invalid_times.is_empty() {
+				to_invalidate.push(leaf);
+				times_to_invalidate[leaf] = invalid_times;
+				total_invalidations.push(leaf);
+			}
+		}
+
+		<span class="comment">// Propagate the invalidations to their parents layer by layer
+		</span><span class="kw">while </span>!to_invalidate.is_empty() {
+			<span class="kw">let </span><span class="kw-2">mut </span>next_invalidate: Vec&lt;usize&gt; = <span class="macro">vec!</span>[];
+			<span class="kw">for </span>i <span class="kw">in </span>to_invalidate {
+				<span class="kw">if let </span><span class="prelude-val">Some</span>((right_child, left_child)) = <span class="self">self</span>.get_idx_children(i) {
+					<span class="comment">// gather all the invalid times from your children
+					</span><span class="kw">let </span>right_children_offset = <span class="self">self</span>.subpaths[right_child].time_taken - <span class="self">self</span>.subpaths[i].time_taken;
+					<span class="kw">let </span><span class="kw-2">mut </span>invalid_times_right = Vec::with_capacity(times_to_invalidate[right_child].len());
+					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>times_to_invalidate[right_child] {
+						<span class="kw">if </span><span class="kw-2">*</span>t &gt;= right_children_offset {
+							invalid_times_right.push(t - right_children_offset);
+						}
+					}
+					<span class="kw">let </span>invalid_times_left = <span class="kw-2">&amp;</span>times_to_invalidate[left_child];
+					<span class="kw">let </span>invalid_times = merge_sorted_ref(<span class="kw-2">&amp;</span>invalid_times_right, <span class="kw-2">&amp;</span>invalid_times_left);
+
+					<span class="attr">#[allow(mutable_transmutes)]
+					</span><span class="kw">let </span>times_to_invalidate = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;<span class="kw-2">&amp;</span>Vec&lt;Vec&lt;Tick&gt;&gt;, <span class="kw-2">&amp;mut </span>Vec&lt;Vec&lt;Tick&gt;&gt;&gt;(<span class="kw-2">&amp;</span>times_to_invalidate) };
+					times_to_invalidate[i] = invalid_times;
+				}
+
+				<span class="kw">if </span>times_to_invalidate[i].is_empty() {
+					<span class="kw">continue</span>;
+				}
+
+				total_invalidations.push(i);
+
+				<span class="kw">let </span>(left_parent, right_parent) = <span class="self">Self</span>::get_idx_parents(i);
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(right_parent) = right_parent {
+					<span class="kw">let </span>length = next_invalidate.len();
+					<span class="kw">if </span>length == <span class="number">0 </span>|| next_invalidate[length - <span class="number">1</span>] != right_parent {
+						next_invalidate.push(right_parent);
+					}
+				}
+				<span class="kw">if let </span><span class="prelude-val">Some</span>(left_parent) = left_parent {
+					next_invalidate.push(left_parent);
+				}
+			}
+			to_invalidate = next_invalidate;
+		}
+
+		<span class="comment">// Invalidate the paths
+		</span><span class="kw">for </span>i <span class="kw">in </span>total_invalidations {
+			<span class="kw">let </span>invalid_times = <span class="kw-2">&amp;</span>times_to_invalidate[i];
+			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[i];
+			<span class="kw">for </span><span class="kw-2">&amp;</span>tick <span class="kw">in </span>invalid_times {
+				<span class="comment">// If we can't find a path short enough to fit in the time budget, we can't use it
+				</span><span class="kw">if </span>subpath.total_weight.saturating_add(tick) &gt; time_varying_graph.max_tick() {
+					<span class="kw">break</span>;
+				}
+				dma[(tick, subpath.start, subpath.end)] = <span class="number">0</span>;
+			}
+			already_done[(subpath.start.into(), subpath.end.into())] = <span class="bool-val">true</span>;
+		}
 	}
 }
 
@@ -660,7 +1112,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = path.start_time;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
-			<span class="kw">if </span>wait <span class="kw">as </span>usize &gt;= graph.max_tick() <span class="kw">as </span>usize {
+			<span class="kw">if </span>wait <span class="kw">as </span>usize &gt; graph.max_tick() <span class="kw">as </span>usize {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

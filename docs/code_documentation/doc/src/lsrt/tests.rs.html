@@ -386,6 +386,19 @@
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
@@ -393,7 +406,8 @@
 	<span class="kw">use </span><span class="kw">crate</span>::graph::{dijkstra, Graph, Neighbour};
 	<span class="kw">use </span><span class="kw">crate</span>::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
 	<span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{
-		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, TimeVaryingGraph,
+		create_phantom_edges, create_phantom_edges_aggressive, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write,
+		TimeVaryingGraph,
 	};
 	<span class="kw">use crate</span>::{Attack, DynamicAttack, StaticAttack};
 	<span class="kw">use crate</span>::{AttackResult, DeletedLink};
@@ -652,6 +666,20 @@
 		<span class="kw">let </span>(efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(<span class="kw-2">&amp;</span>graph);
 		<span class="kw">let </span>(efficiency_static, reach_static) = attack_static.efficiency(<span class="kw-2">&amp;</span>graph);
 
+		<span class="kw">let </span>dm_static = <span class="kw">match </span>attack_static.all_pairs_distances(<span class="kw-2">&amp;</span>graph) {
+			AttackResult::Static(dms) =&gt; dms,
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Expected a static matrix"</span>),
+		};
+		<span class="kw">let </span>dm_dynamic = <span class="kw">match </span>attack_dynamic.all_pairs_distances(<span class="kw-2">&amp;</span>graph) {
+			AttackResult::Dynamic(dma) =&gt; dma,
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Expected a dynamic matrix"</span>),
+		};
+
+		dm_static.print();
+		dm_dynamic.print(max_tick);
+
+		<span class="macro">println!</span>(<span class="string">"Efficiency dynamic: {}"</span>, efficiency_dynamic);
+		<span class="macro">println!</span>(<span class="string">"Efficiency static: {}"</span>, efficiency_static);
 		<span class="macro">assert!</span>((efficiency_dynamic - efficiency_static).abs() &lt; <span class="number">0.0001</span>); <span class="comment">// Floating point comparison
 		</span><span class="macro">assert_eq!</span>(reach_dynamic, reach_static);
 	}
@@ -714,63 +742,61 @@
 		}
 	}
 
-	<span class="comment">/*#[test]
-	fn test_path_unvalidation() {
-		let neighbours_of_0 = vec![Neighbour { node: 1, weight: 1 }];
-		let neighbours_of_1 = vec![Neighbour { node: 0, weight: 1 }, Neighbour { node: 2, weight: 1 }];
-		let neighbours_of_2 = vec![Neighbour { node: 3, weight: 1 }];
-		let neighbours_of_3 = vec![Neighbour { node: 1, weight: 1 }];
+	<span class="attr">#[test]
+	</span><span class="kw">fn </span>test_path_invalidation() {
+		<span class="kw">let </span>neighbours_of_0 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">1</span>, weight: <span class="number">1 </span>}];
+		<span class="kw">let </span>neighbours_of_1 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">2</span>, weight: <span class="number">1 </span>}];
+		<span class="kw">let </span>neighbours_of_2 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">3</span>, weight: <span class="number">1 </span>}];
+		<span class="kw">let </span>neighbours_of_3 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">4</span>, weight: <span class="number">1 </span>}];
+		<span class="kw">let </span>neighbours_of_4 = <span class="macro">vec!</span>[Neighbour { node: <span class="number">5</span>, weight: <span class="number">1 </span>}];
+		<span class="kw">let </span>neighbours_of_5 = <span class="macro">vec!</span>[];
 
-		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
+		<span class="kw">let </span>graph = Graph::from_neighbours(<span class="macro">vec!</span>[
+			neighbours_of_0,
+			neighbours_of_1,
+			neighbours_of_2,
+			neighbours_of_3,
+			neighbours_of_4,
+			neighbours_of_5,
+		]);
 
-		let max_tick = 10;
-		let delta = 3;
-
-		let deleted_links = vec![
+		<span class="kw">let </span>path = dijkstra(<span class="kw-2">&amp;</span>graph, <span class="number">0</span>, <span class="number">5</span>);
+		<span class="kw">let </span>path = SubPathsPyramid::from_path(<span class="kw-2">&amp;</span>graph, <span class="kw-2">&amp;</span>path);
+		<span class="kw">let </span>deleted_links = <span class="macro">vec!</span>[
 			DeletedLink {
-				from: 0,
-				to: 1,
-				times: vec![0, 1],
+				from: <span class="number">1</span>,
+				to: <span class="number">2</span>,
+				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],
 			},
 			DeletedLink {
-				from: 1,
-				to: 2,
-				times: vec![2],
-			},
-			DeletedLink {
-				from: 3,
-				to: 1,
-				times: vec![0, 2],
+				from: <span class="number">3</span>,
+				to: <span class="number">4</span>,
+				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],
 			},
 		];
 
-		let attack = DynamicAttack {
-			blocked_links: deleted_links,
-			delta,
-			max_tick,
-		};
+		<span class="kw">let </span>max_tick = <span class="number">10</span>;
+		<span class="kw">let </span>delta = <span class="number">1</span>;
 
-		let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
-		for path in paths.iter() {
-			println!("-----------------");
-			path.print();
+		<span class="kw">let </span>tvg = TimeVaryingGraph::from_aggressive(<span class="kw-2">&amp;</span>graph, max_tick, <span class="kw-2">&amp;</span>deleted_links, delta);
+		<span class="kw">let </span>dst_mat = graph.all_pairs_distances();
+		<span class="comment">//dst_mat.print();
+		</span><span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated_and_infinitied(<span class="kw-2">&amp;</span>dst_mat, max_tick);
+		<span class="comment">//dma.print(tvg.max_tick());
+		</span><span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(graph.nb_nodes().into(), <span class="bool-val">false</span>);
+		path.invalidate_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;mut </span>already_done, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>dst_mat);
+		<span class="comment">//dma.print(tvg.max_tick());
+
+		</span>path.print();
+		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
+			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..graph.nb_nodes() {
+				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..graph.nb_nodes() {
+					<span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
+						<span class="macro">println!</span>(<span class="string">"Invalidation from {} to {} at time {}"</span>, i, j, t);
+					}
+				}
+			}
 		}
-		let mut dma = DistanceMatrixArray::propagated(&amp;dst_mat, max_tick);
-
-		let mut already_done = SquareMatrix::new(graph.edges.len(), false);
-		let mut times_matrix = SquareMatrix::new(graph.edges.len(), None);
-		// push the blocked links times
-		let blocked_links = attack.blocked_links();
-		for link in blocked_links.iter() {
-			println!("Link: {:?}", link);
-			times_matrix[(link.from as usize, link.to as usize)] = Some(&amp;link.times);
-		}
-
-		for path in paths.iter() {
-			path.unvalidate_path(&amp;mut dma, &amp;attack, &amp;mut already_done, &amp;times_matrix);
-		}
-
-		dma.print(max_tick);
-	}*/
-</span>}
+	}
+}
 </code></pre></div></section></main></body></html>

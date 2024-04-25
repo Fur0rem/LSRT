@@ -112,7 +112,7 @@ impl DistanceMatrix {
 			for j in 0..self.dim {
 				let distance = self[(i as Node, j as Node)];
 				// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-				if distance <= max_tick && distance != 0 {
+				if distance < max_tick && distance != 0 {
 					let difference = max_tick - distance + 1;
 					sum += (difference as f64) / (distance as f64); // Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
 					reachables += difference as u64;
@@ -257,7 +257,7 @@ impl DistanceMatrixArray {
 				for j in 0..distances_len {
 					let distance = self[(t, i as Node, j as Node)];
 					// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-					if distance.saturating_add(t) < max_tick && distance != 0 {
+					if distance.saturating_add(t) <= max_tick && distance != 0 {
 						sum += 1.0 / (distance as f64);
 						reachables += 1;
 					}

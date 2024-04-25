@@ -244,6 +244,10 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 	// Reconstruct the path from the previous vector
 	let mut path = vec![];
 	let mut current = end;
+	if previous[current as usize].is_none() {
+		dst_mat[(start, end)] = Tick::MAX;
+		return;
+	}
 	while let Some(prev) = previous[current as usize] {
 		path.push(Neighbour {
 			node: current,

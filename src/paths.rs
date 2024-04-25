@@ -1,9 +1,10 @@
+use std::borrow::Cow;
 use std::collections::{BinaryHeap, HashSet};
 use std::hash::Hash;
 
 use rayon::vec;
 
-use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
+use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour};
 use crate::time_varying_graph::{self, TimeVaryingGraph};
 use crate::{attack, Attack};
@@ -86,6 +87,46 @@ fn merge_sorted_ref(vec1: &Vec<Tick>, vec2: &Vec<Tick>) -> Vec<Tick> {
 	}
 	while i < vec1.len() {
 		res.push(vec1[i]);
+		i += 1;
+	}
+	while j < vec2.len() {
+		res.push(vec2[j]);
+		j += 1;
+	}
+	//println!("{:?}", res);
+	return res;
+}
+
+fn merge_sorted_3(vec1: &Vec<Tick>, vec2: &Vec<Tick>, offset_vec_1: Tick, max_time: Tick) -> Vec<Tick> {
+	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
+	//print!("Merging {:?} and {:?} : ", vec1, vec2);
+	// assume both vecs are sorted, merge them in a sorted way
+	let mut i = 0;
+	let mut j = 0;
+	while i < vec1.len() && j < vec2.len() {
+		let val1 = vec1[i].saturating_sub(offset_vec_1);
+		let val2 = vec2[j];
+		if val1 == val2 {
+			res.push(val1);
+			i += 1;
+			j += 1;
+		}
+		else if val1 < val2 {
+			res.push(val1);
+			i += 1;
+		}
+		else {
+			res.push(val2);
+			j += 1;
+		}
+
+		if *res.last().unwrap() > max_time {
+			return res;
+		}
+	}
+	while i < vec1.len() {
+		let val1 = vec1[i].saturating_sub(offset_vec_1);
+		res.push(val1);
 		i += 1;
 	}
 	while j < vec2.len() {
@@ -261,150 +302,25 @@ impl<'a> SubPathsPyramid<'a> {
 		return SubPathsPyramid { graph, subpaths: elems };
 	}
 
-	pub fn invalidate_path(&self, time_varying_graph: &TimeVaryingGraph) -> Vec<(usize, HashSet<u16>)> {
-		if self.subpaths.is_empty() {
-			return vec![];
-		}
-		// Invalidate the leaves
-		let mut to_invalidate = vec![];
-		for leaf in self.leaves_range().rev() {
-			let subpath = &self.subpaths[leaf];
-			let phantom_edge = unsafe { time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
-			let unattacked_edge = self.graph.get_edge(subpath.start, subpath.end).unwrap();
-			let mut invalid_times = HashSet::new();
-			for t in 0..time_varying_graph.max_tick() {
-				if phantom_edge[t as usize] != unattacked_edge.weight {
-					invalid_times.insert(t);
-				}
-			}
-			if !invalid_times.is_empty() {
-				to_invalidate.push((leaf, invalid_times));
-			}
-		}
-
-		let mut total_invalidations = vec![];
-
-		// Propagate the invalidations to their parents layer by layer
-		while !to_invalidate.is_empty() {
-			let mut next_invalidate: Vec<(usize, HashSet<u16>)> = vec![];
-			for (i, invalid_times) in to_invalidate {
-				let (left_parent, right_parent) = Self::get_idx_parents(i);
-
-				if let Some(right_parent) = right_parent {
-					let length = next_invalidate.len();
-					if length != 0 && next_invalidate[length - 1].0 == right_parent {
-						for t in invalid_times.iter() {
-							next_invalidate[length - 1].1.insert(*t);
-						}
-					}
-					else {
-						let mut invalid_times_right = HashSet::new();
-						for t in invalid_times.iter() {
-							invalid_times_right.insert(*t);
-						}
-						if !invalid_times_right.is_empty() {
-							next_invalidate.push((right_parent, invalid_times_right));
-						}
-					}
-				}
-
-				if let Some(left_parent) = left_parent {
-					let offset = self.subpaths[i].time_taken - self.subpaths[left_parent].time_taken;
-					let mut invalid_times_left = HashSet::new();
-					for t in invalid_times.iter() {
-						invalid_times_left.insert(t.saturating_sub(offset));
-					}
-					if !invalid_times_left.is_empty() {
-						next_invalidate.push((left_parent, invalid_times_left));
-					}
-				}
-
-				total_invalidations.push((i, invalid_times));
-			}
-			to_invalidate = next_invalidate;
-		}
-
-		return total_invalidations;
-	}
-
-	pub fn invalidate_path_better(
-		&self, time_varying_graph: &TimeVaryingGraph, already_done: &mut SquareMatrix<bool>,
-	) -> Vec<(usize, Vec<u16>)> {
-		if self.subpaths.is_empty() {
-			return vec![];
-		}
-		let total = &self.subpaths[0];
-		let (from, to) = (total.start, total.end);
-		if already_done[(from as usize, to as usize)] {
-			return vec![];
-		}
-
-		let mut times_to_invalidate = vec![vec![]; self.subpaths.len()];
-		let mut total_invalidations = vec![];
-		// Invalidate the leaves
-		let mut to_invalidate = vec![];
-		for leaf in self.leaves_range().rev() {
-			let subpath = &self.subpaths[leaf];
-			let phantom_edge = unsafe { time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
-			let unattacked_edge = self.graph.get_edge(subpath.start, subpath.end).unwrap();
-			let mut invalid_times = vec![];
-			for t in 0..time_varying_graph.max_tick() {
-				if phantom_edge[t as usize] != unattacked_edge.weight {
-					invalid_times.push(t);
-				}
-			}
-			if !invalid_times.is_empty() {
-				to_invalidate.push(leaf);
-				times_to_invalidate[leaf] = invalid_times.clone();
-				total_invalidations.push((leaf, invalid_times));
-			}
-		}
-
-		let mut total_invalidations = vec![];
-
-		// Propagate the invalidations to their parents layer by layer
-		while !to_invalidate.is_empty() {
-			let mut next_invalidate: Vec<usize> = vec![];
-			for i in to_invalidate {
-				if let Some((right_child, left_child)) = self.get_idx_children(i) {
-					// gather all the invalid times from your children
-					let right_children_offset = self.subpaths[right_child].time_taken - self.subpaths[i].time_taken;
-					let mut invalid_times_right = Vec::with_capacity(times_to_invalidate[right_child].len());
-					for t in &times_to_invalidate[right_child] {
-						if *t >= right_children_offset {
-							invalid_times_right.push(t - right_children_offset);
-						}
-					}
-					let invalid_times_left = times_to_invalidate[left_child].clone();
-					let invalid_times = merge_sorted(invalid_times_right, invalid_times_left);
-					times_to_invalidate[i] = invalid_times;
-				}
-
-				if times_to_invalidate[i].is_empty() {
-					continue;
-				}
-
-				total_invalidations.push((i, times_to_invalidate[i].clone()));
-
-				let (left_parent, right_parent) = Self::get_idx_parents(i);
-				if let Some(right_parent) = right_parent {
-					let length = next_invalidate.len();
-					if length == 0 || next_invalidate[length - 1] != right_parent {
-						next_invalidate.push(right_parent);
-					}
-				}
-				if let Some(left_parent) = left_parent {
-					next_invalidate.push(left_parent);
-				}
-			}
-			to_invalidate = next_invalidate;
-		}
-
-		return total_invalidations;
-	}
-
-	pub fn invalidate_path_even_better(
+	/// Invalidate the path in the distance matrix array because an attack impacted the path
+	///
+	/// How to use this function :
+	/// ```rust
+	/// let graph = Graph::from_file(&mut reader);
+	/// let attack = DynamicAttack::from_file(&mut reader);
+	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
+	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
+	/// let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
+	///	let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+	/// for path in &paths {
+	/// 	path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
+	/// }
+	/// ```
+	///
+	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
+	pub fn invalidate_path(
 		&self, time_varying_graph: &TimeVaryingGraph, already_done: &mut SquareMatrix<bool>, dma: &mut DistanceMatrixArray,
+		original_dst_mat: &DistanceMatrix,
 	) {
 		if self.subpaths.is_empty() {
 			return;
@@ -424,19 +340,20 @@ impl<'a> SubPathsPyramid<'a> {
 			let phantom_edge = unsafe { time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
 			let unattacked_edge = self.graph.get_edge(subpath.start, subpath.end).unwrap();
 			let mut invalid_times = vec![];
-			for t in 0..time_varying_graph.max_tick() {
+			for t in 0..time_varying_graph
+				.max_tick()
+				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - 1)
+			{
 				if phantom_edge[t as usize] != unattacked_edge.weight {
 					invalid_times.push(t);
 				}
 			}
 			if !invalid_times.is_empty() {
 				to_invalidate.push(leaf);
-				times_to_invalidate[leaf] = invalid_times.clone();
-				total_invalidations.push((leaf, invalid_times));
+				times_to_invalidate[leaf] = invalid_times;
+				total_invalidations.push(leaf);
 			}
 		}
-
-		let mut total_invalidations = vec![];
 
 		// Propagate the invalidations to their parents layer by layer
 		while !to_invalidate.is_empty() {
@@ -463,7 +380,7 @@ impl<'a> SubPathsPyramid<'a> {
 					continue;
 				}
 
-				total_invalidations.push((i, &times_to_invalidate[i]));
+				total_invalidations.push(i);
 
 				let (left_parent, right_parent) = Self::get_idx_parents(i);
 				if let Some(right_parent) = right_parent {
@@ -480,13 +397,15 @@ impl<'a> SubPathsPyramid<'a> {
 		}
 
 		// Invalidate the paths
-		for (i, invalid_times) in total_invalidations {
+		for i in total_invalidations {
+			let invalid_times = &times_to_invalidate[i];
 			let subpath = &self.subpaths[i];
-			for tick in invalid_times {
-				let old_value = dma[(*tick, subpath.start, subpath.end)];
-				if old_value.saturating_add(*tick) < time_varying_graph.max_tick() {
-					dma[(*tick, subpath.start, subpath.end)] = 0;
+			for &tick in invalid_times {
+				// If we can't find a path short enough to fit in the time budget, we can't use it
+				if subpath.total_weight.saturating_add(tick) > time_varying_graph.max_tick() {
+					break;
 				}
+				dma[(tick, subpath.start, subpath.end)] = 0;
 			}
 			already_done[(subpath.start.into(), subpath.end.into())] = true;
 		}

@@ -5,6 +5,7 @@ use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
 use crate::{Node, Tick};
 
+use core::time;
 use std::collections::BinaryHeap;
 use std::ops::{Index, IndexMut};
 
@@ -322,7 +323,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		if node == end {
 			break;
 		}
-		if distance + time_start >= time_graph.max_tick {
+		if distance.saturating_add(time_start) >= time_graph.max_tick {
 			break;
 		}
 		visited[node as usize] = true;

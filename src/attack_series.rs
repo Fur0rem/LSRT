@@ -19,7 +19,7 @@ pub struct DynamicAttackSeries<'a> {
 }
 
 impl<'a> DynamicAttackSeries<'a> {
-	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+	/*pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		// Read the first file to get the max time
 		let file_name = format!("{}{}", directory, files[0]);
@@ -34,9 +34,9 @@ impl<'a> DynamicAttackSeries<'a> {
 		let max_tick = max_tick.parse().unwrap();
 
 		// Compute the distance matrix for the unattacked graph
-		let dst_mat = graph.all_pairs_distances();
-		let dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
-
+		//let dst_mat = graph.all_pairs_distances();
+		//let dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
+		let dma = DistanceMatrixArray::zeroed(graph.nb_nodes().into(), max_tick);
 		/*let mut nb_zeros = 0;
 		for t in 0..max_tick {
 			for i in 0..graph.nb_nodes() {
@@ -78,7 +78,63 @@ impl<'a> DynamicAttackSeries<'a> {
 								if dma[(t, i, j)] != 0 {
 									continue;
 								}
-								temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
+								let path = temporal_dijkstra(&time_graph, i as Node, j as Node, t);
+								dma[(t, i, j)] = path.cost() as Tick;
+							}
+						}
+					}
+					let (efficiency, reachables) = dma.efficiency_reachables(max_tick);
+
+					std::mem::drop(dma);
+					(*budget, (efficiency, reachables))
+				})
+			})
+			.collect()
+	}*/
+
+	pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+		// First, compute the paths for the unattacked graph
+		// Read the first file to get the max time
+		let file_name = format!("{}{}", directory, files[0]);
+		let file = std::fs::File::open(file_name).unwrap();
+		let mut reader = std::io::BufReader::new(file);
+		let mut line = String::new();
+		reader.read_line(&mut line).unwrap();
+		line.clear();
+		reader.read_line(&mut line).unwrap();
+		let line = line.split_whitespace().collect::<Vec<&str>>();
+		let max_tick = line[2];
+		let max_tick = max_tick.parse().unwrap();
+
+		// Compute the distance matrix for the unattacked graph
+		let dst_mat = graph.all_pairs_distances();
+		let dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
+
+		// Then, we recopy the distance matrix to all the attacks
+		// We invalidate all the paths except those who took more than max_tick to reach the destination
+		files
+			.par_iter()
+			.map(|budget| {
+				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
+					let file_name = format!("{}{}", directory, budget);
+					let file = std::fs::File::open(file_name).unwrap();
+					let mut reader = std::io::BufReader::new(file);
+					let mut line = String::new();
+					reader.read_line(&mut line).unwrap();
+					let mut dma = dma.clone();
+					let attack = DynamicAttack::from_file(&mut reader);
+					let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
+					std::mem::drop(attack);
+					for t in 0..time_graph.max_tick() {
+						for i in 0..time_graph.nb_nodes() {
+							// Doing the j in reverse seems to improve slightly the performance
+							// Probably because nodes that are far in real
+							// life apart also have far apart indexes
+							for j in (0..time_graph.nb_nodes()).rev() {
+								// Not 0 -> already computed
+								if dma[(t, i, j)] == 0 {
+									temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
+								}
 							}
 						}
 					}
@@ -91,7 +147,7 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
-	/*pub fn efficiencies(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
+	/*pub fn efficienciese(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		// Read the first file to get the max time
 		let file_name = format!("{}{}", directory, files[0]);
@@ -140,15 +196,21 @@ impl<'a> DynamicAttackSeries<'a> {
 						}
 					}*/
 
-					benchmark!("Invalidate paths", {
+					/*benchmark!("Invalidate paths", {
 						for path in &paths {
 							path.invalidate_path_even_better(&time_graph, &mut already_done, &mut dma);
+						}
+					});*/
+
+					benchmark!("Invalidate paths", {
+						for path in &paths {
+							path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
 						}
 					});
 
 					//dma.fill_1_on_diagonals();
 
-					/*let mut nb_zeros = 0;
+					let mut nb_zeros = 0;
 					for t in 0..max_tick {
 						for i in 0..time_graph.nb_nodes() {
 							for j in 0..time_graph.nb_nodes() {
@@ -164,7 +226,7 @@ impl<'a> DynamicAttackSeries<'a> {
 						nb_zeros,
 						time_graph.max_tick() as usize * time_graph.nb_nodes() as usize * time_graph.nb_nodes() as usize,
 						budget
-					);*/
+					);
 
 					benchmark!("Recomputing everything", {
 						std::mem::drop(attack);
