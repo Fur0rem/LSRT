@@ -37,7 +37,7 @@ impl<'a> DynamicAttackSeries<'a> {
 		let dst_mat = graph.all_pairs_distances();
 		let dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
 
-		let mut nb_zeros = 0;
+		/*let mut nb_zeros = 0;
 		for t in 0..max_tick {
 			for i in 0..graph.nb_nodes() {
 				for j in 0..graph.nb_nodes() {
@@ -51,7 +51,7 @@ impl<'a> DynamicAttackSeries<'a> {
 			"Nb zeros: {} / {} for unattacked graph",
 			nb_zeros,
 			graph.nb_nodes() as usize * graph.nb_nodes() as usize * max_tick as usize
-		);
+		);*/
 
 		// Then, we recopy the distance matrix to all the attacks
 		// We invalidate all the paths except those who took more than max_tick to reach the destination
