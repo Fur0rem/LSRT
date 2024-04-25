@@ -6,7 +6,7 @@ mod tests {
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
 	use crate::time_varying_graph::{
 		create_phantom_edges, create_phantom_edges_aggressive, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write,
-		TimeVaryingGraph,
+		PhantomEdgesMap, TimeVaryingGraph,
 	};
 	use crate::{Attack, DynamicAttack, StaticAttack};
 	use crate::{AttackResult, DeletedLink};
@@ -132,26 +132,27 @@ mod tests {
 		let delta = 2;
 
 		let tvg = TimeVaryingGraph::from_kind(&graph, max_tick, &deleted_edges, delta);
+		let edges_map = PhantomEdgesMap::from_graph(&tvg);
 
-		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, 1);
+		let path_from_0_to_3_at_time_1 = temporal_dijkstra(&tvg, 0, 3, 1, &edges_map);
 		path_from_0_to_3_at_time_1.print();
 		println!("Total weight: {}", path_from_0_to_3_at_time_1.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_3_at_time_1);
 		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_0_to_2_at_time_0 = temporal_dijkstra(&tvg, 0, 2, 0);
+		let path_from_0_to_2_at_time_0 = temporal_dijkstra(&tvg, 0, 2, 0, &edges_map);
 		path_from_0_to_2_at_time_0.print();
 		println!("Total weight: {}", path_from_0_to_2_at_time_0.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_2_at_time_0);
 		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_0_to_2_at_time_5 = temporal_dijkstra(&tvg, 0, 2, 5);
+		let path_from_0_to_2_at_time_5 = temporal_dijkstra(&tvg, 0, 2, 5, &edges_map);
 		path_from_0_to_2_at_time_5.print();
 		println!("Total weight: {}", path_from_0_to_2_at_time_5.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_0_to_2_at_time_5);
 		println!("Pyramid: {:?}", pyr.subpaths);
 
-		let path_from_1_to_2_at_time_7 = temporal_dijkstra(&tvg, 1, 2, 7);
+		let path_from_1_to_2_at_time_7 = temporal_dijkstra(&tvg, 1, 2, 7, &edges_map);
 		path_from_1_to_2_at_time_7.print();
 		println!("Total weight: {}", path_from_1_to_2_at_time_7.cost());
 		let pyr = TemporalSubPathsPyramid::from_path(&tvg, &path_from_1_to_2_at_time_7);
@@ -167,6 +168,7 @@ mod tests {
 		let delta = 2;
 
 		let tvg = TimeVaryingGraph::from_kind(&graph, max_tick, &deleted_edges, delta);
+		let edges_map = PhantomEdgesMap::from_graph(&tvg);
 
 		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_tick);
 		for time in 0..max_tick {
@@ -175,7 +177,7 @@ mod tests {
 					if node == other_node {
 						continue;
 					}
-					let path = temporal_dijkstra(&tvg, node, other_node, time);
+					let path = temporal_dijkstra(&tvg, node, other_node, time, &edges_map);
 					dma[(time, node, other_node)] = path.cost();
 				}
 			}
@@ -185,7 +187,7 @@ mod tests {
 		for time in 0..max_tick {
 			for node in 0..graph.nb_nodes() {
 				for other_node in 0..graph.nb_nodes() {
-					temporal_dijkstra_write(&tvg, node, other_node, time, &mut dma2);
+					temporal_dijkstra_write(&tvg, node, other_node, time, &mut dma2, &edges_map);
 				}
 			}
 		}
@@ -262,8 +264,8 @@ mod tests {
 
 		assert_eq!(attack_dynamic.blocked_links(), attack_static.blocked_links());
 
-		let (efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(&graph);
-		let (efficiency_static, reach_static) = attack_static.efficiency(&graph);
+		let (efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency_reachables(&graph);
+		let (efficiency_static, reach_static) = attack_static.efficiency_reachables(&graph);
 
 		let dm_static = match attack_static.all_pairs_distances(&graph) {
 			AttackResult::Static(dms) => dms,
@@ -378,12 +380,13 @@ mod tests {
 		let delta = 1;
 
 		let tvg = TimeVaryingGraph::from_aggressive(&graph, max_tick, &deleted_links, delta);
+		let edges_map = PhantomEdgesMap::from_graph(&tvg);
 		let dst_mat = graph.all_pairs_distances();
 		//dst_mat.print();
 		let mut dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
 		//dma.print(tvg.max_tick());
 		let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
-		path.invalidate_path(&tvg, &mut already_done, &mut dma, &dst_mat);
+		path.invalidate_path(&tvg, &mut already_done, &mut dma, &dst_mat, &edges_map);
 		//dma.print(tvg.max_tick());
 
 		path.print();

@@ -519,68 +519,6 @@
 <a href="#518" id="518">518</a>
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::collections::{BinaryHeap, HashSet};
 <span class="kw">use </span>std::hash::Hash;
@@ -589,7 +527,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
-<span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{<span class="self">self</span>, TimeVaryingGraph};
+<span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{<span class="self">self</span>, PhantomEdgesMap, TimeVaryingGraph};
 <span class="kw">use crate</span>::{attack, Attack};
 <span class="kw">use crate</span>::{Node, Tick};
 
@@ -614,93 +552,28 @@
 	}
 }
 
-<span class="kw">fn </span>merge_sorted(vec1: Vec&lt;Tick&gt;, vec2: Vec&lt;Tick&gt;) -&gt; Vec&lt;Tick&gt; {
+<span class="kw">pub fn </span>merge_sorted(vec1: <span class="kw-2">&amp;</span>[Tick], vec2: <span class="kw-2">&amp;</span>[Tick], offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
-	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
-	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
-	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
-		<span class="kw">if </span>vec1[i] == vec2[j] {
-			res.push(vec1[i]);
-			i += <span class="number">1</span>;
-			j += <span class="number">1</span>;
-		}
-		<span class="kw">else if </span>vec1[i] &lt; vec2[j] {
-			res.push(vec1[i]);
-			i += <span class="number">1</span>;
-		}
-		<span class="kw">else </span>{
-			res.push(vec2[j]);
-			j += <span class="number">1</span>;
-		}
-	}
-	<span class="kw">while </span>i &lt; vec1.len() {
-		res.push(vec1[i]);
-		i += <span class="number">1</span>;
-	}
-	<span class="kw">while </span>j &lt; vec2.len() {
-		res.push(vec2[j]);
-		j += <span class="number">1</span>;
-	}
-	<span class="comment">//println!("{:?}", res);
-	</span><span class="kw">return </span>res;
-}
-
-<span class="kw">fn </span>merge_sorted_ref(vec1: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, vec2: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;) -&gt; Vec&lt;Tick&gt; {
-	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
-	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
-	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
-	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
-		<span class="kw">if </span>vec1[i] == vec2[j] {
-			res.push(vec1[i]);
-			i += <span class="number">1</span>;
-			j += <span class="number">1</span>;
-		}
-		<span class="kw">else if </span>vec1[i] &lt; vec2[j] {
-			res.push(vec1[i]);
-			i += <span class="number">1</span>;
-		}
-		<span class="kw">else </span>{
-			res.push(vec2[j]);
-			j += <span class="number">1</span>;
-		}
-	}
-	<span class="kw">while </span>i &lt; vec1.len() {
-		res.push(vec1[i]);
-		i += <span class="number">1</span>;
-	}
-	<span class="kw">while </span>j &lt; vec2.len() {
-		res.push(vec2[j]);
-		j += <span class="number">1</span>;
-	}
-	<span class="comment">//println!("{:?}", res);
-	</span><span class="kw">return </span>res;
-}
-
-<span class="kw">fn </span>merge_sorted_3(vec1: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, vec2: <span class="kw-2">&amp;</span>Vec&lt;Tick&gt;, offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
-	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
-	<span class="comment">//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
+	<span class="comment">// assume both vecs are sorted, merge them in a sorted way
 	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
 	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
 	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
 		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
 		<span class="kw">let </span>val2 = vec2[j];
-		<span class="kw">if </span>val1 == val2 {
-			res.push(val1);
-			i += <span class="number">1</span>;
-			j += <span class="number">1</span>;
-		}
-		<span class="kw">else if </span>val1 &lt; val2 {
-			res.push(val1);
-			i += <span class="number">1</span>;
-		}
-		<span class="kw">else </span>{
-			res.push(val2);
-			j += <span class="number">1</span>;
+		<span class="kw">match </span>val1.cmp(<span class="kw-2">&amp;</span>val2) {
+			std::cmp::Ordering::Less =&gt; {
+				res.push(val1);
+				i += <span class="number">1</span>;
+			}
+			std::cmp::Ordering::Equal =&gt; {
+				res.push(val1);
+				i += <span class="number">1</span>;
+				j += <span class="number">1</span>;
+			}
+			std::cmp::Ordering::Greater =&gt; {
+				res.push(val2);
+				j += <span class="number">1</span>;
+			}
 		}
 
 		<span class="kw">if </span><span class="kw-2">*</span>res.last().unwrap() &gt; max_time {
@@ -716,8 +589,7 @@
 		res.push(vec2[j]);
 		j += <span class="number">1</span>;
 	}
-	<span class="comment">//println!("{:?}", res);
-	</span><span class="kw">return </span>res;
+	<span class="kw">return </span>res;
 }
 
 <span class="attr">#[derive(Debug, Clone)]
@@ -894,16 +766,17 @@
 	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
 	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&amp;dst_mat, max_tick);
 	/// let time_graph = graph_to_temporal(graph, max_tick, &amp;attack.blocked_links(), attack.delta());
-	///	let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+	/// let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
 	/// for path in &amp;paths {
-	/// 	path.invalidate_path(&amp;time_graph, &amp;mut already_done, &amp;mut dma, &amp;dst_mat);
+	///     path.invalidate_path(&amp;time_graph, &amp;mut already_done, &amp;mut dma, &amp;dst_mat);
 	/// }
 	/// ```
 	///
-	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
+	/// Note: This approach is far slower than just recomputing everything, the method used in [the actual algorithm][`crate::attack_series::AttackSeries::efficiencies_reachables`]
+	/// for computing the distances and reachables.
 	</span><span class="kw">pub fn </span>invalidate_path(
 		<span class="kw-2">&amp;</span><span class="self">self</span>, time_varying_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, already_done: <span class="kw-2">&amp;mut </span>SquareMatrix&lt;bool&gt;, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray,
-		original_dst_mat: <span class="kw-2">&amp;</span>DistanceMatrix,
+		original_dst_mat: <span class="kw-2">&amp;</span>DistanceMatrix, edges_map: <span class="kw-2">&amp;</span>PhantomEdgesMap,
 	) {
 		<span class="kw">if </span><span class="self">self</span>.subpaths.is_empty() {
 			<span class="kw">return</span>;
@@ -920,7 +793,7 @@
 		</span><span class="kw">let </span><span class="kw-2">mut </span>to_invalidate = <span class="macro">vec!</span>[];
 		<span class="kw">for </span>leaf <span class="kw">in </span><span class="self">self</span>.leaves_range().rev() {
 			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[leaf];
-			<span class="kw">let </span>phantom_edge = <span class="kw">unsafe </span>{ time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
+			<span class="kw">let </span>phantom_edge = edges_map.get_edge(subpath.start, subpath.end).unwrap();
 			<span class="kw">let </span>unattacked_edge = <span class="self">self</span>.graph.get_edge(subpath.start, subpath.end).unwrap();
 			<span class="kw">let </span><span class="kw-2">mut </span>invalid_times = <span class="macro">vec!</span>[];
 			<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_varying_graph
@@ -952,10 +825,13 @@
 						}
 					}
 					<span class="kw">let </span>invalid_times_left = <span class="kw-2">&amp;</span>times_to_invalidate[left_child];
-					<span class="kw">let </span>invalid_times = merge_sorted_ref(<span class="kw-2">&amp;</span>invalid_times_right, <span class="kw-2">&amp;</span>invalid_times_left);
+					<span class="kw">let </span>invalid_times = merge_sorted(
+						<span class="kw-2">&amp;</span>invalid_times_right,
+						invalid_times_left,
+						right_children_offset,
+						time_varying_graph.max_tick(),
+					);
 
-					<span class="attr">#[allow(mutable_transmutes)]
-					</span><span class="kw">let </span>times_to_invalidate = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;<span class="kw-2">&amp;</span>Vec&lt;Vec&lt;Tick&gt;&gt;, <span class="kw-2">&amp;mut </span>Vec&lt;Vec&lt;Tick&gt;&gt;&gt;(<span class="kw-2">&amp;</span>times_to_invalidate) };
 					times_to_invalidate[i] = invalid_times;
 				}
 

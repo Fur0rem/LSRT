@@ -120,7 +120,7 @@ pub fn main() {
 	// Run all the attacks
 	benchmark!("Series of attack", {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
-		let results = AttackSeries::efficiencies(&attack_directory, &attack_files, &graph);
+		let results = AttackSeries::efficiencies_reachables(&attack_directory, &attack_files, &graph);
 		for (budget, (efficiency, reachables)) in results {
 			writeln!(result_file, "{} {} {}", budget, efficiency, reachables).unwrap();
 		}

@@ -399,6 +399,9 @@
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
@@ -407,7 +410,7 @@
 	<span class="kw">use </span><span class="kw">crate</span>::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
 	<span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{
 		create_phantom_edges, create_phantom_edges_aggressive, graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write,
-		TimeVaryingGraph,
+		PhantomEdgesMap, TimeVaryingGraph,
 	};
 	<span class="kw">use crate</span>::{Attack, DynamicAttack, StaticAttack};
 	<span class="kw">use crate</span>::{AttackResult, DeletedLink};
@@ -533,26 +536,27 @@
 		<span class="kw">let </span>delta = <span class="number">2</span>;
 
 		<span class="kw">let </span>tvg = TimeVaryingGraph::from_kind(<span class="kw-2">&amp;</span>graph, max_tick, <span class="kw-2">&amp;</span>deleted_edges, delta);
+		<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>tvg);
 
-		<span class="kw">let </span>path_from_0_to_3_at_time_1 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">3</span>, <span class="number">1</span>);
+		<span class="kw">let </span>path_from_0_to_3_at_time_1 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="kw-2">&amp;</span>edges_map);
 		path_from_0_to_3_at_time_1.print();
 		<span class="macro">println!</span>(<span class="string">"Total weight: {}"</span>, path_from_0_to_3_at_time_1.cost());
 		<span class="kw">let </span>pyr = TemporalSubPathsPyramid::from_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;</span>path_from_0_to_3_at_time_1);
 		<span class="macro">println!</span>(<span class="string">"Pyramid: {:?}"</span>, pyr.subpaths);
 
-		<span class="kw">let </span>path_from_0_to_2_at_time_0 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>);
+		<span class="kw">let </span>path_from_0_to_2_at_time_0 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="kw-2">&amp;</span>edges_map);
 		path_from_0_to_2_at_time_0.print();
 		<span class="macro">println!</span>(<span class="string">"Total weight: {}"</span>, path_from_0_to_2_at_time_0.cost());
 		<span class="kw">let </span>pyr = TemporalSubPathsPyramid::from_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;</span>path_from_0_to_2_at_time_0);
 		<span class="macro">println!</span>(<span class="string">"Pyramid: {:?}"</span>, pyr.subpaths);
 
-		<span class="kw">let </span>path_from_0_to_2_at_time_5 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">2</span>, <span class="number">5</span>);
+		<span class="kw">let </span>path_from_0_to_2_at_time_5 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">0</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="kw-2">&amp;</span>edges_map);
 		path_from_0_to_2_at_time_5.print();
 		<span class="macro">println!</span>(<span class="string">"Total weight: {}"</span>, path_from_0_to_2_at_time_5.cost());
 		<span class="kw">let </span>pyr = TemporalSubPathsPyramid::from_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;</span>path_from_0_to_2_at_time_5);
 		<span class="macro">println!</span>(<span class="string">"Pyramid: {:?}"</span>, pyr.subpaths);
 
-		<span class="kw">let </span>path_from_1_to_2_at_time_7 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">1</span>, <span class="number">2</span>, <span class="number">7</span>);
+		<span class="kw">let </span>path_from_1_to_2_at_time_7 = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, <span class="number">1</span>, <span class="number">2</span>, <span class="number">7</span>, <span class="kw-2">&amp;</span>edges_map);
 		path_from_1_to_2_at_time_7.print();
 		<span class="macro">println!</span>(<span class="string">"Total weight: {}"</span>, path_from_1_to_2_at_time_7.cost());
 		<span class="kw">let </span>pyr = TemporalSubPathsPyramid::from_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;</span>path_from_1_to_2_at_time_7);
@@ -568,6 +572,7 @@
 		<span class="kw">let </span>delta = <span class="number">2</span>;
 
 		<span class="kw">let </span>tvg = TimeVaryingGraph::from_kind(<span class="kw-2">&amp;</span>graph, max_tick, <span class="kw-2">&amp;</span>deleted_edges, delta);
+		<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>tvg);
 
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), max_tick);
 		<span class="kw">for </span>time <span class="kw">in </span><span class="number">0</span>..max_tick {
@@ -576,7 +581,7 @@
 					<span class="kw">if </span>node == other_node {
 						<span class="kw">continue</span>;
 					}
-					<span class="kw">let </span>path = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, node, other_node, time);
+					<span class="kw">let </span>path = temporal_dijkstra(<span class="kw-2">&amp;</span>tvg, node, other_node, time, <span class="kw-2">&amp;</span>edges_map);
 					dma[(time, node, other_node)] = path.cost();
 				}
 			}
@@ -586,7 +591,7 @@
 		<span class="kw">for </span>time <span class="kw">in </span><span class="number">0</span>..max_tick {
 			<span class="kw">for </span>node <span class="kw">in </span><span class="number">0</span>..graph.nb_nodes() {
 				<span class="kw">for </span>other_node <span class="kw">in </span><span class="number">0</span>..graph.nb_nodes() {
-					temporal_dijkstra_write(<span class="kw-2">&amp;</span>tvg, node, other_node, time, <span class="kw-2">&amp;mut </span>dma2);
+					temporal_dijkstra_write(<span class="kw-2">&amp;</span>tvg, node, other_node, time, <span class="kw-2">&amp;mut </span>dma2, <span class="kw-2">&amp;</span>edges_map);
 				}
 			}
 		}
@@ -663,8 +668,8 @@
 
 		<span class="macro">assert_eq!</span>(attack_dynamic.blocked_links(), attack_static.blocked_links());
 
-		<span class="kw">let </span>(efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency(<span class="kw-2">&amp;</span>graph);
-		<span class="kw">let </span>(efficiency_static, reach_static) = attack_static.efficiency(<span class="kw-2">&amp;</span>graph);
+		<span class="kw">let </span>(efficiency_dynamic, reach_dynamic) = attack_dynamic.efficiency_reachables(<span class="kw-2">&amp;</span>graph);
+		<span class="kw">let </span>(efficiency_static, reach_static) = attack_static.efficiency_reachables(<span class="kw-2">&amp;</span>graph);
 
 		<span class="kw">let </span>dm_static = <span class="kw">match </span>attack_static.all_pairs_distances(<span class="kw-2">&amp;</span>graph) {
 			AttackResult::Static(dms) =&gt; dms,
@@ -779,12 +784,13 @@
 		<span class="kw">let </span>delta = <span class="number">1</span>;
 
 		<span class="kw">let </span>tvg = TimeVaryingGraph::from_aggressive(<span class="kw-2">&amp;</span>graph, max_tick, <span class="kw-2">&amp;</span>deleted_links, delta);
+		<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>tvg);
 		<span class="kw">let </span>dst_mat = graph.all_pairs_distances();
 		<span class="comment">//dst_mat.print();
 		</span><span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated_and_infinitied(<span class="kw-2">&amp;</span>dst_mat, max_tick);
 		<span class="comment">//dma.print(tvg.max_tick());
 		</span><span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(graph.nb_nodes().into(), <span class="bool-val">false</span>);
-		path.invalidate_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;mut </span>already_done, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>dst_mat);
+		path.invalidate_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;mut </span>already_done, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>dst_mat, <span class="kw-2">&amp;</span>edges_map);
 		<span class="comment">//dma.print(tvg.max_tick());
 
 		</span>path.print();

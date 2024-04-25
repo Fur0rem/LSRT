@@ -6,7 +6,7 @@ use rayon::vec;
 
 use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour};
-use crate::time_varying_graph::{self, TimeVaryingGraph};
+use crate::time_varying_graph::{self, PhantomEdgesMap, TimeVaryingGraph};
 use crate::{attack, Attack};
 use crate::{Node, Tick};
 
@@ -31,93 +31,28 @@ impl Path<'_> {
 	}
 }
 
-fn merge_sorted(vec1: Vec<Tick>, vec2: Vec<Tick>) -> Vec<Tick> {
+pub fn merge_sorted(vec1: &[Tick], vec2: &[Tick], offset_vec_1: Tick, max_time: Tick) -> Vec<Tick> {
 	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	let mut i = 0;
-	let mut j = 0;
-	while i < vec1.len() && j < vec2.len() {
-		if vec1[i] == vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-			j += 1;
-		}
-		else if vec1[i] < vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-		}
-		else {
-			res.push(vec2[j]);
-			j += 1;
-		}
-	}
-	while i < vec1.len() {
-		res.push(vec1[i]);
-		i += 1;
-	}
-	while j < vec2.len() {
-		res.push(vec2[j]);
-		j += 1;
-	}
-	//println!("{:?}", res);
-	return res;
-}
-
-fn merge_sorted_ref(vec1: &Vec<Tick>, vec2: &Vec<Tick>) -> Vec<Tick> {
-	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	let mut i = 0;
-	let mut j = 0;
-	while i < vec1.len() && j < vec2.len() {
-		if vec1[i] == vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-			j += 1;
-		}
-		else if vec1[i] < vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-		}
-		else {
-			res.push(vec2[j]);
-			j += 1;
-		}
-	}
-	while i < vec1.len() {
-		res.push(vec1[i]);
-		i += 1;
-	}
-	while j < vec2.len() {
-		res.push(vec2[j]);
-		j += 1;
-	}
-	//println!("{:?}", res);
-	return res;
-}
-
-fn merge_sorted_3(vec1: &Vec<Tick>, vec2: &Vec<Tick>, offset_vec_1: Tick, max_time: Tick) -> Vec<Tick> {
-	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
 	// assume both vecs are sorted, merge them in a sorted way
 	let mut i = 0;
 	let mut j = 0;
 	while i < vec1.len() && j < vec2.len() {
 		let val1 = vec1[i].saturating_sub(offset_vec_1);
 		let val2 = vec2[j];
-		if val1 == val2 {
-			res.push(val1);
-			i += 1;
-			j += 1;
-		}
-		else if val1 < val2 {
-			res.push(val1);
-			i += 1;
-		}
-		else {
-			res.push(val2);
-			j += 1;
+		match val1.cmp(&val2) {
+			std::cmp::Ordering::Less => {
+				res.push(val1);
+				i += 1;
+			}
+			std::cmp::Ordering::Equal => {
+				res.push(val1);
+				i += 1;
+				j += 1;
+			}
+			std::cmp::Ordering::Greater => {
+				res.push(val2);
+				j += 1;
+			}
 		}
 
 		if *res.last().unwrap() > max_time {
@@ -133,7 +68,6 @@ fn merge_sorted_3(vec1: &Vec<Tick>, vec2: &Vec<Tick>, offset_vec_1: Tick, max_ti
 		res.push(vec2[j]);
 		j += 1;
 	}
-	//println!("{:?}", res);
 	return res;
 }
 
@@ -311,16 +245,17 @@ impl<'a> SubPathsPyramid<'a> {
 	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
 	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
 	/// let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
-	///	let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+	/// let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
 	/// for path in &paths {
-	/// 	path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
+	///     path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
 	/// }
 	/// ```
 	///
-	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
+	/// Note: This approach is far slower than just recomputing everything, the method used in [the actual algorithm][`crate::attack_series::AttackSeries::efficiencies_reachables`]
+	/// for computing the distances and reachables.
 	pub fn invalidate_path(
 		&self, time_varying_graph: &TimeVaryingGraph, already_done: &mut SquareMatrix<bool>, dma: &mut DistanceMatrixArray,
-		original_dst_mat: &DistanceMatrix,
+		original_dst_mat: &DistanceMatrix, edges_map: &PhantomEdgesMap,
 	) {
 		if self.subpaths.is_empty() {
 			return;
@@ -337,7 +272,7 @@ impl<'a> SubPathsPyramid<'a> {
 		let mut to_invalidate = vec![];
 		for leaf in self.leaves_range().rev() {
 			let subpath = &self.subpaths[leaf];
-			let phantom_edge = unsafe { time_varying_graph.get_edge_unchecked(subpath.start, subpath.end) };
+			let phantom_edge = edges_map.get_edge(subpath.start, subpath.end).unwrap();
 			let unattacked_edge = self.graph.get_edge(subpath.start, subpath.end).unwrap();
 			let mut invalid_times = vec![];
 			for t in 0..time_varying_graph
@@ -369,10 +304,13 @@ impl<'a> SubPathsPyramid<'a> {
 						}
 					}
 					let invalid_times_left = &times_to_invalidate[left_child];
-					let invalid_times = merge_sorted_ref(&invalid_times_right, &invalid_times_left);
+					let invalid_times = merge_sorted(
+						&invalid_times_right,
+						invalid_times_left,
+						right_children_offset,
+						time_varying_graph.max_tick(),
+					);
 
-					#[allow(mutable_transmutes)]
-					let times_to_invalidate = unsafe { std::mem::transmute::<&Vec<Vec<Tick>>, &mut Vec<Vec<Tick>>>(&times_to_invalidate) };
 					times_to_invalidate[i] = invalid_times;
 				}
 

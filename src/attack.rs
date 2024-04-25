@@ -15,7 +15,7 @@ use sscanf::scanf;
 
 use crate::{
 	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
-	time_varying_graph::temporal_dijkstra_write,
+	time_varying_graph::{temporal_dijkstra_write, PhantomEdgesMap},
 };
 use crate::{graph::Graph, paths::TemporalSubPathsPyramid};
 use crate::{time_varying_graph::graph_to_temporal, Time};
@@ -36,7 +36,7 @@ pub enum AttackResult {
 pub trait Attack: std::fmt::Debug {
 	// efficiency + reachables
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult;
-	fn efficiency(&self, graph: &Graph) -> (f64, u64) {
+	fn efficiency_reachables(&self, graph: &Graph) -> (f64, u64) {
 		let distance_matrix = self.all_pairs_distances(graph);
 		match distance_matrix {
 			AttackResult::Static(dm) => dm.efficiency_reachables(self.max_tick()),
@@ -212,6 +212,7 @@ impl Attack for DynamicAttack {
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult {
 		// Create the time varying graph
 		let time_graph = graph_to_temporal(graph, self.max_tick(), &self.blocked_links(), self.delta());
+		let edges_map = PhantomEdgesMap::from_graph(&time_graph);
 		let mut dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), self.max_tick());
 		// Compute all distance matrices
 		for t in 0..time_graph.max_tick() {
@@ -221,7 +222,7 @@ impl Attack for DynamicAttack {
 				for j in (0..time_graph.nb_nodes()).rev() {
 					// Not 0 -> already computed
 					if dma[(t, i, j)] == 0 {
-						temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma);
+						temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma, &edges_map);
 					}
 				}
 			}

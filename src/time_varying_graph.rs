@@ -30,10 +30,35 @@ impl Index<usize> for PhantomEdge {
 /// The graph is represented as an adjacency list, where each edge is a PhantomEdge
 #[derive(Debug)]
 pub struct TimeVaryingGraph {
+	/// The maximum tick of the simulation
 	max_tick: Tick,
-	pub nodes: Vec<Vec<PhantomEdge>>,
+	/// The adjacency list of the graph
+	nodes: Vec<Vec<PhantomEdge>>,
+	// A map to get the PhantomEdge from the graph from the node indexes for fast access
 	// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
-	pub edges_map: SquareMatrix<Option<*const PhantomEdge>>,
+	//edges_map: SquareMatrix<Option<*const PhantomEdge>>,
+}
+
+pub struct PhantomEdgesMap<'a> {
+	edges_map: SquareMatrix<Option<&'a PhantomEdge>>,
+}
+
+impl<'a> PhantomEdgesMap<'a> {
+	pub fn from_graph(time_graph: &'a TimeVaryingGraph) -> Self {
+		let mut edges_map = SquareMatrix::new(time_graph.nb_nodes() as usize, None);
+		for (node, neighbours) in time_graph.nodes.iter().enumerate() {
+			for neighbour in neighbours {
+				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour);
+			}
+		}
+		return PhantomEdgesMap { edges_map: edges_map };
+	}
+
+	/// Get the PhantomEdge from the graph from the node indexes
+	pub fn get_edge(&'a self, from: Node, to: Node) -> Option<&'a PhantomEdge> {
+		let edge = self.edges_map[(from as usize, to as usize)];
+		return edge;
+	}
 }
 
 impl TimeVaryingGraph {
@@ -48,44 +73,20 @@ impl TimeVaryingGraph {
 
 	pub fn from_kind(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
-		let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
-		for (node, neighbours) in phantoms.iter().enumerate() {
-			for neighbour in neighbours {
-				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour as *const PhantomEdge);
-			}
-		}
-		return TimeVaryingGraph {
-			max_tick,
-			nodes: phantoms,
-			edges_map,
-		};
+		return TimeVaryingGraph { max_tick, nodes: phantoms };
 	}
 
 	pub fn from_aggressive(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
-		let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
-		for (node, neighbours) in phantoms.iter().enumerate() {
-			for neighbour in neighbours {
-				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour as *const PhantomEdge);
-			}
-		}
-		return TimeVaryingGraph {
-			max_tick,
-			nodes: phantoms,
-			edges_map,
-		};
-	}
-
-	pub unsafe fn get_edge_unchecked(&self, from: Node, to: Node) -> &PhantomEdge {
-		let edge = self.edges_map[(from as usize, to as usize)].unwrap();
-		return &*edge;
+		return TimeVaryingGraph { max_tick, nodes: phantoms };
 	}
 }
 
 /// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
 /// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
-fn write_info_to_dma(
+fn write_info_to_dma<'a>(
 	dma: &mut DistanceMatrixArray, time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dist: &[Tick], prev: &[Node],
+	edges_map: &'a PhantomEdgesMap,
 ) {
 	if dist[end as usize] == Tick::MAX {
 		dma[(time_start, start, end)] = Tick::MAX;
@@ -99,8 +100,7 @@ fn write_info_to_dma(
 		if prev_node == Node::MAX {
 			break;
 		}
-		let phantom_edge = time_graph.edges_map[(prev_node as usize, node as usize)].unwrap();
-		let phantom_edge = unsafe { &*phantom_edge };
+		let phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
@@ -122,7 +122,9 @@ fn write_info_to_dma(
 	}
 }
 
-pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: &mut DistanceMatrixArray) {
+pub fn temporal_dijkstra_write(
+	time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: &mut DistanceMatrixArray, edges_map: &PhantomEdgesMap,
+) {
 	// Initialize the distance, previous node and visited arrays
 	let max_node_index = time_graph.nb_nodes() as usize;
 	let mut dist = vec![Tick::MAX; max_node_index];
@@ -167,7 +169,7 @@ pub fn temporal_dijkstra_write(time_graph: &TimeVaryingGraph, start: Node, end: 
 	}
 
 	// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
-	write_info_to_dma(dma, time_graph, start, end, time_start, &dist, &prev);
+	write_info_to_dma(dma, time_graph, start, end, time_start, &dist, &prev, edges_map);
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
@@ -291,21 +293,12 @@ pub fn graph_to_temporal(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<Dele
 	let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 	#[cfg(not(feature = "aggressive"))]
 	let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta); // replace with your non-aggressive function
-
-	let mut edges_map = SquareMatrix::new(graph.nb_nodes() as usize, None);
-	for (node, neighbours) in phantoms.iter().enumerate() {
-		for neighbour in neighbours {
-			edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour as *const PhantomEdge);
-		}
-	}
-	return TimeVaryingGraph {
-		max_tick,
-		nodes: phantoms,
-		edges_map,
-	};
+	return TimeVaryingGraph { max_tick, nodes: phantoms };
 }
 
-pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick) -> TemporalPath {
+pub fn temporal_dijkstra<'a>(
+	time_graph: &'a TimeVaryingGraph, start: Node, end: Node, time_start: Tick, edges_map: &'a PhantomEdgesMap,
+) -> TemporalPath<'a> {
 	// Initialize the distance, previous node and visited arrays
 	let max_node_index = time_graph.nb_nodes() as usize;
 	let mut dist = vec![Tick::MAX; max_node_index];
@@ -353,8 +346,7 @@ pub fn temporal_dijkstra(time_graph: &TimeVaryingGraph, start: Node, end: Node, 
 		if prev_node == Node::MAX {
 			break;
 		}
-		let phantom_edge = time_graph.edges_map[(prev_node as usize, node as usize)].unwrap();
-		let phantom_edge = unsafe { &*phantom_edge };
+		let phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,

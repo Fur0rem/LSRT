@@ -232,6 +232,7 @@
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -249,7 +250,7 @@
 
 <span class="kw">use crate</span>::{
 	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
-	time_varying_graph::temporal_dijkstra_write,
+	time_varying_graph::{temporal_dijkstra_write, PhantomEdgesMap},
 };
 <span class="kw">use crate</span>::{graph::Graph, paths::TemporalSubPathsPyramid};
 <span class="kw">use crate</span>::{time_varying_graph::graph_to_temporal, Time};
@@ -270,7 +271,7 @@
 </span><span class="kw">pub trait </span>Attack: std::fmt::Debug {
 	<span class="comment">// efficiency + reachables
 	</span><span class="kw">fn </span>all_pairs_distances(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; AttackResult;
-	<span class="kw">fn </span>efficiency(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; (f64, u64) {
+	<span class="kw">fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; (f64, u64) {
 		<span class="kw">let </span>distance_matrix = <span class="self">self</span>.all_pairs_distances(graph);
 		<span class="kw">match </span>distance_matrix {
 			AttackResult::Static(dm) =&gt; dm.efficiency_reachables(<span class="self">self</span>.max_tick()),
@@ -446,6 +447,7 @@
 	<span class="kw">fn </span>all_pairs_distances(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; AttackResult {
 		<span class="comment">// Create the time varying graph
 		</span><span class="kw">let </span>time_graph = graph_to_temporal(graph, <span class="self">self</span>.max_tick(), <span class="kw-2">&amp;</span><span class="self">self</span>.blocked_links(), <span class="self">self</span>.delta());
+		<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>time_graph);
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(graph.nb_nodes(), <span class="self">self</span>.max_tick());
 		<span class="comment">// Compute all distance matrices
 		</span><span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_graph.max_tick() {
@@ -455,7 +457,7 @@
 				</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
 					<span class="comment">// Not 0 -&gt; already computed
 					</span><span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
-						temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma);
+						temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
 					}
 				}
 			}

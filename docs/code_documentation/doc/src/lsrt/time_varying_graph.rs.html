@@ -365,14 +365,6 @@
 <a href="#364" id="364">364</a>
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::DijkstraState;
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
@@ -405,10 +397,35 @@
 /// The graph is represented as an adjacency list, where each edge is a PhantomEdge
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>TimeVaryingGraph {
-	max_tick: Tick,
-	<span class="kw">pub </span>nodes: Vec&lt;Vec&lt;PhantomEdge&gt;&gt;,
-	<span class="comment">// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
-	</span><span class="kw">pub </span>edges_map: SquareMatrix&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>PhantomEdge&gt;&gt;,
+	<span class="doccomment">/// The maximum tick of the simulation
+	</span>max_tick: Tick,
+	<span class="doccomment">/// The adjacency list of the graph
+	</span>nodes: Vec&lt;Vec&lt;PhantomEdge&gt;&gt;,
+	<span class="comment">// A map to get the PhantomEdge from the graph from the node indexes for fast access
+	// One day God will give me a safe way to do self-referential structs in Rust, that day is not today
+	//edges_map: SquareMatrix&lt;Option&lt;*const PhantomEdge&gt;&gt;,
+</span>}
+
+<span class="kw">pub struct </span>PhantomEdgesMap&lt;<span class="lifetime">'a</span>&gt; {
+	edges_map: SquareMatrix&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdge&gt;&gt;,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PhantomEdgesMap&lt;<span class="lifetime">'a</span>&gt; {
+	<span class="kw">pub fn </span>from_graph(time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(time_graph.nb_nodes() <span class="kw">as </span>usize, <span class="prelude-val">None</span>);
+		<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>time_graph.nodes.iter().enumerate() {
+			<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
+				edges_map[(node, neighbour.neighbour <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(neighbour);
+			}
+		}
+		<span class="kw">return </span>PhantomEdgesMap { edges_map: edges_map };
+	}
+
+	<span class="doccomment">/// Get the PhantomEdge from the graph from the node indexes
+	</span><span class="kw">pub fn </span>get_edge(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdge&gt; {
+		<span class="kw">let </span>edge = <span class="self">self</span>.edges_map[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)];
+		<span class="kw">return </span>edge;
+	}
 }
 
 <span class="kw">impl </span>TimeVaryingGraph {
@@ -423,44 +440,20 @@
 
 	<span class="kw">pub fn </span>from_kind(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;DeletedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
-		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(graph.nb_nodes() <span class="kw">as </span>usize, <span class="prelude-val">None</span>);
-		<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>phantoms.iter().enumerate() {
-			<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
-				edges_map[(node, neighbour.neighbour <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(neighbour <span class="kw">as </span><span class="kw-2">*const </span>PhantomEdge);
-			}
-		}
-		<span class="kw">return </span>TimeVaryingGraph {
-			max_tick,
-			nodes: phantoms,
-			edges_map,
-		};
+		<span class="kw">return </span>TimeVaryingGraph { max_tick, nodes: phantoms };
 	}
 
 	<span class="kw">pub fn </span>from_aggressive(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;DeletedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
-		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(graph.nb_nodes() <span class="kw">as </span>usize, <span class="prelude-val">None</span>);
-		<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>phantoms.iter().enumerate() {
-			<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
-				edges_map[(node, neighbour.neighbour <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(neighbour <span class="kw">as </span><span class="kw-2">*const </span>PhantomEdge);
-			}
-		}
-		<span class="kw">return </span>TimeVaryingGraph {
-			max_tick,
-			nodes: phantoms,
-			edges_map,
-		};
-	}
-
-	<span class="kw">pub unsafe fn </span>get_edge_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="kw-2">&amp;</span>PhantomEdge {
-		<span class="kw">let </span>edge = <span class="self">self</span>.edges_map[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)].unwrap();
-		<span class="kw">return </span><span class="kw-2">&amp;*</span>edge;
+		<span class="kw">return </span>TimeVaryingGraph { max_tick, nodes: phantoms };
 	}
 }
 
 <span class="doccomment">/// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
 /// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
-</span><span class="kw">fn </span>write_info_to_dma(
+</span><span class="kw">fn </span>write_info_to_dma&lt;<span class="lifetime">'a</span>&gt;(
 	dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray, time_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dist: <span class="kw-2">&amp;</span>[Tick], prev: <span class="kw-2">&amp;</span>[Node],
+	edges_map: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdgesMap,
 ) {
 	<span class="kw">if </span>dist[end <span class="kw">as </span>usize] == Tick::MAX {
 		dma[(time_start, start, end)] = Tick::MAX;
@@ -474,8 +467,7 @@
 		<span class="kw">if </span>prev_node == Node::MAX {
 			<span class="kw">break</span>;
 		}
-		<span class="kw">let </span>phantom_edge = time_graph.edges_map[(prev_node <span class="kw">as </span>usize, node <span class="kw">as </span>usize)].unwrap();
-		<span class="kw">let </span>phantom_edge = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>phantom_edge };
+		<span class="kw">let </span>phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
 		<span class="kw">let </span>neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
@@ -497,7 +489,9 @@
 	}
 }
 
-<span class="kw">pub fn </span>temporal_dijkstra_write(time_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray) {
+<span class="kw">pub fn </span>temporal_dijkstra_write(
+	time_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray, edges_map: <span class="kw-2">&amp;</span>PhantomEdgesMap,
+) {
 	<span class="comment">// Initialize the distance, previous node and visited arrays
 	</span><span class="kw">let </span>max_node_index = time_graph.nb_nodes() <span class="kw">as </span>usize;
 	<span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[Tick::MAX; max_node_index];
@@ -542,7 +536,7 @@
 	}
 
 	<span class="comment">// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
-	</span>write_info_to_dma(dma, time_graph, start, end, time_start, <span class="kw-2">&amp;</span>dist, <span class="kw-2">&amp;</span>prev);
+	</span>write_info_to_dma(dma, time_graph, start, end, time_start, <span class="kw-2">&amp;</span>dist, <span class="kw-2">&amp;</span>prev, edges_map);
 }
 
 <span class="doccomment">/// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
@@ -666,21 +660,12 @@
 	</span><span class="kw">let </span>phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 	<span class="attr">#[cfg(not(feature = <span class="string">"aggressive"</span>))]
 	</span><span class="kw">let </span>phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta); <span class="comment">// replace with your non-aggressive function
-
-	</span><span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(graph.nb_nodes() <span class="kw">as </span>usize, <span class="prelude-val">None</span>);
-	<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>phantoms.iter().enumerate() {
-		<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
-			edges_map[(node, neighbour.neighbour <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(neighbour <span class="kw">as </span><span class="kw-2">*const </span>PhantomEdge);
-		}
-	}
-	<span class="kw">return </span>TimeVaryingGraph {
-		max_tick,
-		nodes: phantoms,
-		edges_map,
-	};
+	</span><span class="kw">return </span>TimeVaryingGraph { max_tick, nodes: phantoms };
 }
 
-<span class="kw">pub fn </span>temporal_dijkstra(time_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick) -&gt; TemporalPath {
+<span class="kw">pub fn </span>temporal_dijkstra&lt;<span class="lifetime">'a</span>&gt;(
+	time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, edges_map: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdgesMap,
+) -&gt; TemporalPath&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="comment">// Initialize the distance, previous node and visited arrays
 	</span><span class="kw">let </span>max_node_index = time_graph.nb_nodes() <span class="kw">as </span>usize;
 	<span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[Tick::MAX; max_node_index];
@@ -728,8 +713,7 @@
 		<span class="kw">if </span>prev_node == Node::MAX {
 			<span class="kw">break</span>;
 		}
-		<span class="kw">let </span>phantom_edge = time_graph.edges_map[(prev_node <span class="kw">as </span>usize, node <span class="kw">as </span>usize)].unwrap();
-		<span class="kw">let </span>phantom_edge = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>phantom_edge };
+		<span class="kw">let </span>phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
 		<span class="kw">let </span>neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
