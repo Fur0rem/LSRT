@@ -92,8 +92,7 @@ impl<'a> SubPathsPyramid<'a> {
 				println!();
 				prof += 1;
 				idx = 0;
-			}
-			else {
+			} else {
 				idx += 1;
 			}
 		}
@@ -103,7 +102,7 @@ impl<'a> SubPathsPyramid<'a> {
 			return idx;
 		}
 		//stack exchange get inverse of formula for sum of intergers from 1 to n?
-		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5) as usize;
+		return (((2 * idx) as f64 + 0.25).sqrt() - 0.5).floor() as usize;
 	}
 
 	pub fn get_idx_left_son(idx: usize) -> usize {
@@ -155,7 +154,7 @@ impl<'a> SubPathsPyramid<'a> {
 	}
 
 	/// Inclusive range
-	pub fn get_range(prof: usize) -> (usize, usize) {
+	pub const fn get_range(prof: usize) -> (usize, usize) {
 		if prof == 0 {
 			return (0, 0);
 		}
@@ -434,7 +433,7 @@ impl TemporalSubPathsPyramid<'_> {
 		return SubPathsPyramid::get_idx_parents(idx);
 	}
 
-	fn get_range(prof: usize) -> (usize, usize) {
+	const fn get_range(prof: usize) -> (usize, usize) {
 		return SubPathsPyramid::get_range(prof);
 	}
 
@@ -467,8 +466,7 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			}
-			else {
+			} else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

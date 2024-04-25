@@ -66,18 +66,18 @@ impl TimeVaryingGraph {
 		self.nodes.len() as Node
 	}
 
-	pub fn max_tick(&self) -> Tick {
+	pub const fn max_tick(&self) -> Tick {
 		self.max_tick
 	}
 
 	pub fn from_kind(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
-		return TimeVaryingGraph { max_tick, nodes: phantoms };
+		return Self { max_tick, nodes: phantoms };
 	}
 
 	pub fn from_aggressive(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
-		return TimeVaryingGraph { max_tick, nodes: phantoms };
+		return Self { max_tick, nodes: phantoms };
 	}
 }
 
@@ -249,8 +249,7 @@ pub fn create_phantom_edges_aggressive(
 								}
 							}
 							i = j;
-						}
-						else {
+						} else {
 							i -= 1;
 						}
 					}

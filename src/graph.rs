@@ -38,7 +38,7 @@ impl Graph {
 	/// The third line contains the column index of the elements
 	/// The fourth line contains the row index of the elements
 	/// The graph cannot be empty
-	pub fn from_sparse_row_format(filename: &str) -> Result<Graph, Box<dyn Error>> {
+	pub fn from_sparse_row_format(filename: &str) -> Result<Self, Box<dyn Error>> {
 		let file = File::open(filename)?;
 		let mut reader = BufReader::new(file);
 
@@ -82,8 +82,7 @@ impl Graph {
 			let row_start = row_index[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_index[i + 1]
 			};
 			for j in row_start..row_end {
@@ -94,7 +93,7 @@ impl Graph {
 			}
 		}
 
-		Ok(Graph { edges })
+		Ok(Self { edges })
 	}
 
 	/// Prints the graph
@@ -124,8 +123,8 @@ impl Graph {
 	}
 
 	/// Creates a graph from a list of neighbours
-	pub fn from_neighbours(neighbours: Vec<Vec<Neighbour>>) -> Graph {
-		Graph { edges: neighbours }
+	pub fn from_neighbours(neighbours: Vec<Vec<Neighbour>>) -> Self {
+		Self { edges: neighbours }
 	}
 
 	pub fn get_edge(&self, from: Node, to: Node) -> Option<&Neighbour> {

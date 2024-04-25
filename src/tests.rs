@@ -277,7 +277,7 @@ mod tests {
 		};
 
 		dm_static.print();
-		dm_dynamic.print(max_tick);
+		dm_dynamic.print();
 
 		println!("Efficiency dynamic: {}", efficiency_dynamic);
 		println!("Efficiency static: {}", efficiency_static);
@@ -383,7 +383,7 @@ mod tests {
 		let edges_map = PhantomEdgesMap::from_graph(&tvg);
 		let dst_mat = graph.all_pairs_distances();
 		//dst_mat.print();
-		let mut dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
+		let mut dma = DistanceMatrixArray::propagated(&dst_mat, max_tick);
 		//dma.print(tvg.max_tick());
 		let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
 		path.invalidate_path(&tvg, &mut already_done, &mut dma, &dst_mat, &edges_map);

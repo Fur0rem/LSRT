@@ -1,10 +1,10 @@
 //! Optimised implementation of computing the efficiency of multiple attacks.
 
-use std::io::BufRead;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 use crate::benchmark;
 use crate::time_varying_graph::PhantomEdgesMap;
-use crate::Node;
 use crate::{
 	distance_matrix::DistanceMatrixArray,
 	graph::Graph,
@@ -27,8 +27,8 @@ impl<'a> DynamicAttackSeries<'a> {
 	pub fn efficiencies_reachables(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
 		// Read the first file to get the max time
 		let file_name = format!("{}{}", directory, files[0]);
-		let file = std::fs::File::open(file_name).unwrap();
-		let mut reader = std::io::BufReader::new(file);
+		let file = File::open(file_name).unwrap();
+		let mut reader = BufReader::new(file);
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 		line.clear();
@@ -43,14 +43,14 @@ impl<'a> DynamicAttackSeries<'a> {
 		// We invalidate all the paths except those who took more than max_tick to reach the destination
 		let dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, max_tick);
 
-		files
+		let results = files
 			.par_iter()
 			.map(|budget| {
 				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
 					// Open the file
 					let file_name = format!("{}{}", directory, budget);
 					let file = std::fs::File::open(file_name).unwrap();
-					let mut reader = std::io::BufReader::new(file);
+					let mut reader = BufReader::new(file);
 					let mut line = String::new();
 					reader.read_line(&mut line).unwrap();
 
@@ -60,7 +60,7 @@ impl<'a> DynamicAttackSeries<'a> {
 					let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
 					let edges_map = PhantomEdgesMap::from_graph(&time_graph);
 					// Early drop of the attack to free memory
-					std::mem::drop(attack);
+					core::mem::drop(attack);
 					for t in 0..time_graph.max_tick() {
 						for i in 0..time_graph.nb_nodes() {
 							// Doing the j in reverse seems to improve slightly the performance
@@ -68,18 +68,20 @@ impl<'a> DynamicAttackSeries<'a> {
 							for j in (0..time_graph.nb_nodes()).rev() {
 								// Not 0 -> already computed
 								if dma[(t, i, j)] == 0 {
-									temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma, &edges_map);
+									temporal_dijkstra_write(&time_graph, i, j, t, &mut dma, &edges_map);
 								}
 							}
 						}
 					}
 					let (efficiency, reachables) = dma.efficiency_reachables(max_tick);
-
 					std::mem::drop(dma);
+
 					(*budget, (efficiency, reachables))
 				})
 			})
-			.collect()
+			.collect();
+
+		return results;
 	}
 }
 
@@ -90,23 +92,19 @@ pub struct StaticAttackSeries<'a> {
 
 impl<'a> StaticAttackSeries<'a> {
 	pub fn efficiencies_reachables(directory: &str, files: &[&'a str], graph: &'a Graph) -> Vec<(&'a str, (f64, u64))> {
-		files
+		let results = files
 			.par_iter()
 			.map(|budget| {
-				let file_name = format!("{}{}", directory, budget);
-				let file = std::fs::File::open(file_name).unwrap();
-				let mut reader = std::io::BufReader::new(file);
-				let mut line = String::new();
-				reader.read_line(&mut line).unwrap();
-				let attack = StaticAttack::from_file(&mut reader, graph);
-				(
-					*budget,
-					benchmark!(format!("(Static) Efficiency for {}", budget), {
-						attack.efficiency_reachables(graph)
-					}),
-				)
+				let attack = StaticAttack::from_file_name(format!("{}{}", directory, budget), graph);
+				let efficiency = benchmark!(format!("(Static) Efficiency for {}", budget), {
+					attack.efficiency_reachables(graph)
+				});
+
+				(*budget, efficiency)
 			})
-			.collect()
+			.collect();
+
+		return results;
 	}
 }
 
@@ -124,18 +122,16 @@ impl<'a> AttackSeries<'a> {
 		}
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
-		let file = std::fs::File::open(file_name).unwrap();
-		let mut reader = std::io::BufReader::new(file);
+		let file = File::open(file_name).unwrap();
+		let mut reader = BufReader::new(file);
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 
 		if line.starts_with('S') {
-			StaticAttackSeries::efficiencies_reachables(directory, files, graph)
-		}
-		else if line.starts_with('D') {
-			DynamicAttackSeries::efficiencies_reachables(directory, files, graph)
-		}
-		else {
+			return StaticAttackSeries::efficiencies_reachables(directory, files, graph);
+		} else if line.starts_with('D') {
+			return DynamicAttackSeries::efficiencies_reachables(directory, files, graph);
+		} else {
 			panic!("Invalid attack file");
 		}
 	}

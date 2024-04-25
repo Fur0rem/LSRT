@@ -1,5 +1,18 @@
+#![warn(
+	clippy::all,
+	// clippy::implicit_return,
+	// clippy::restriction,
+	// clippy::pedantic,
+	// clippy::nursery,
+	// clippy::cargo,
+	// clippy::cognitive_complexity,
+	// clippy::complexity,
+	// clippy::cyclomatic_complexity
+)]
 #![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
+#![warn(clippy::uninlined_format_args)]
+#![warn(clippy::cast_lossless)]
 
 //! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -61,6 +74,9 @@ macro_rules! benchmark {
 	}};
 }
 
+/// The name of the directory containing the files for the project.
+const FILES_DIR_NAME: &str = "data";
+
 /// Main function of the program.
 ///
 /// The program takes 3 arguments:
@@ -104,7 +120,6 @@ pub fn main() {
 	}
 
 	// Load graph and attack files
-	const FILES_DIR_NAME: &str = "data";
 	let graph_filename = format!("{FILES_DIR_NAME}/{}/graph", &args[1]);
 	let attack_directory = format!("{FILES_DIR_NAME}/{}/{}/", &args[1], &args[2]);
 	let attack_files: Vec<&str> = args[3].split_ascii_whitespace().collect();

@@ -80,8 +80,7 @@ impl dyn Attack {
 
 		if line.starts_with('S') {
 			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		}
-		else if line.starts_with('D') {
+		} else if line.starts_with('D') {
 			return Box::new(DynamicAttack::from_file(&mut reader));
 		}
 
@@ -106,11 +105,23 @@ impl StaticAttack {
 			blocked_links.push(blocks);
 		}
 
+		if blocked_links.len() > Node::MAX as usize {
+			panic!("Too many nodes");
+		}
+
 		return Self {
 			blocked_links,
 			delta,
 			max_tick,
 		};
+	}
+
+	pub fn from_file_name(file_name: String, graph: &Graph) -> Self {
+		let file = std::fs::File::open(file_name).unwrap();
+		let mut reader = BufReader::new(file);
+		let mut line = String::new();
+		reader.read_line(&mut line).unwrap();
+		return Self::from_file(&mut reader, graph);
 	}
 }
 
@@ -172,8 +183,8 @@ impl DynamicAttack {
 
 			let nb_blocked = nb_blocked.parse().unwrap();
 			// remove the paranthesis and comma
-			let from: usize = from[1..from.len() - 1].parse().unwrap();
-			let to: usize = to[0..to.len() - 1].parse().unwrap();
+			let from: Node = from[1..from.len() - 1].parse().unwrap();
+			let to: Node = to[0..to.len() - 1].parse().unwrap();
 
 			let mut times = vec![];
 			for _ in 0..nb_blocked {
