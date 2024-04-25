@@ -51,7 +51,7 @@ impl<'a> PhantomEdgesMap<'a> {
 				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour);
 			}
 		}
-		return PhantomEdgesMap { edges_map: edges_map };
+		return PhantomEdgesMap { edges_map };
 	}
 
 	/// Get the PhantomEdge from the graph from the node indexes
@@ -84,44 +84,6 @@ impl TimeVaryingGraph {
 
 /// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
 /// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
-fn write_info_to_dma<'a>(
-	dma: &mut DistanceMatrixArray, time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dist: &[Tick], prev: &[Node],
-	edges_map: &'a PhantomEdgesMap,
-) {
-	if dist[end as usize] == Tick::MAX {
-		dma[(time_start, start, end)] = Tick::MAX;
-		return;
-	}
-	// Reconstruction of the path
-	let mut node = end;
-	let mut steps = vec![];
-	while node != start {
-		let prev_node = prev[node as usize];
-		if prev_node == Node::MAX {
-			break;
-		}
-		let phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
-		let neighbour_node = phantom_edge.neighbour;
-		steps.push(Neighbour {
-			node: neighbour_node,
-			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
-		});
-		node = prev_node;
-	}
-	steps.reverse();
-	let path = TemporalPath {
-		steps,
-		time_graph,
-		start,
-		start_time: time_start,
-	};
-	let pyramid = TemporalSubPathsPyramid::from_path(time_graph, &path);
-	for subpath in &pyramid.subpaths {
-		let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
-		dma[(time_start, from, to)] = total_length;
-	}
-}
-
 pub fn temporal_dijkstra_write(
 	time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: &mut DistanceMatrixArray, edges_map: &PhantomEdgesMap,
 ) {
@@ -169,7 +131,38 @@ pub fn temporal_dijkstra_write(
 	}
 
 	// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
-	write_info_to_dma(dma, time_graph, start, end, time_start, &dist, &prev, edges_map);
+	if dist[end as usize] == Tick::MAX {
+		dma[(time_start, start, end)] = Tick::MAX;
+		return;
+	}
+	// Reconstruction of the path
+	let mut node = end;
+	let mut steps = vec![];
+	while node != start {
+		let prev_node = prev[node as usize];
+		if prev_node == Node::MAX {
+			break;
+		}
+		let phantom_edge = edges_map.get_edge(prev_node, node).unwrap();
+		let neighbour_node = phantom_edge.neighbour;
+		steps.push(Neighbour {
+			node: neighbour_node,
+			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
+		});
+		node = prev_node;
+	}
+	steps.reverse();
+	let path = TemporalPath {
+		steps,
+		time_graph,
+		start,
+		start_time: time_start,
+	};
+	let pyramid = TemporalSubPathsPyramid::from_path(time_graph, &path);
+	for subpath in &pyramid.subpaths {
+		let (from, to, time_start, total_length) = (subpath.start, subpath.end, subpath.start_time, subpath.total_weight);
+		dma[(time_start, from, to)] = total_length;
+	}
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
@@ -257,8 +250,7 @@ pub fn create_phantom_edges_aggressive(
 								}
 							}
 							i = j;
-						}
-						else {
+						} else {
 							i -= 1;
 						}
 					}
