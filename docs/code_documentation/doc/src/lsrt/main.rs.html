@@ -124,8 +124,54 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
-</pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::needless_return)]
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+</pre></div><pre class="rust"><code><span class="attr">#![warn(
+	clippy::all,
+	<span class="comment">// clippy::implicit_return,
+	// clippy::restriction,
+	// clippy::pedantic,
+	// clippy::nursery,
+	// clippy::cargo,
+	// clippy::cognitive_complexity,
+	// clippy::complexity,
+</span>)]
+#![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
+#![warn(clippy::uninlined_format_args)]
+</span><span class="comment">//#![warn(clippy::as_conversions)]
+</span><span class="attr">#![warn(clippy::cast_lossless)]
+#![warn(clippy::unnecessary_cast)]
+#![warn(clippy::self_assignment)]
+#![warn(clippy::self_named_constructors)]
+#![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::unwrap_used)]
+</span><span class="comment">//#![warn(clippy::cast_precision_loss)]
+//#![warn(clippy::as_conversions)]
+//#![warn(clippy::cast_possible_truncation)]
+//#![warn(clippy::min_ident_chars)]
 
 </span><span class="doccomment">//! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -168,7 +214,7 @@
 </span><span class="kw">pub type </span>Node = u16;
 <span class="doccomment">/// A Tick is a unit of time in the graph, it represents one step in the simulation.
 /// Paris has a diameter of 1404 ticks, so u16 should be enough.
-/// A tick of 0 or Tick::MAX represents an infinite weight, or a removed edge.
+/// A tick of 0 or `Tick::MAX` represents an infinite weight, or a removed edge.
 </span><span class="kw">pub type </span>Tick = u16;
 <span class="doccomment">/// A Time is a unit of time in the graph, it represents one step in the attack.
 /// Each attack has a delta, which is the number of ticks for one time.
@@ -186,6 +232,9 @@
 		result
 	}};
 }
+
+<span class="doccomment">/// The name of the directory containing the files for the project.
+</span><span class="kw">const </span>FILES_DIR_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"data"</span>;
 
 <span class="doccomment">/// Main function of the program.
 ///
@@ -221,7 +270,7 @@
 </span><span class="kw">pub fn </span>main() {
 	<span class="comment">// Collect args
 	</span><span class="kw">let </span>args: Vec&lt;String&gt; = std::env::args().collect();
-	<span class="macro">println!</span>(<span class="string">"Args: {:?}"</span>, args);
+	<span class="macro">println!</span>(<span class="string">"Args: {args:?}"</span>);
 
 	<span class="comment">// Check if the number of arguments is correct
 	</span><span class="kw">if </span>args.len() != <span class="number">4 </span>{
@@ -230,8 +279,7 @@
 	}
 
 	<span class="comment">// Load graph and attack files
-	</span><span class="kw">const </span>FILES_DIR_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"data"</span>;
-	<span class="kw">let </span>graph_filename = <span class="macro">format!</span>(<span class="string">"{FILES_DIR_NAME}/{}/graph"</span>, <span class="kw-2">&amp;</span>args[<span class="number">1</span>]);
+	</span><span class="kw">let </span>graph_filename = <span class="macro">format!</span>(<span class="string">"{FILES_DIR_NAME}/{}/graph"</span>, <span class="kw-2">&amp;</span>args[<span class="number">1</span>]);
 	<span class="kw">let </span>attack_directory = <span class="macro">format!</span>(<span class="string">"{FILES_DIR_NAME}/{}/{}/"</span>, <span class="kw-2">&amp;</span>args[<span class="number">1</span>], <span class="kw-2">&amp;</span>args[<span class="number">2</span>]);
 	<span class="kw">let </span>attack_files: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = args[<span class="number">3</span>].split_ascii_whitespace().collect();
 
@@ -245,7 +293,7 @@
 		<span class="kw">let </span>graph = Graph::from_sparse_row_format(<span class="kw-2">&amp;</span>graph_filename).unwrap();
 		<span class="kw">let </span>results = AttackSeries::efficiencies_reachables(<span class="kw-2">&amp;</span>attack_directory, <span class="kw-2">&amp;</span>attack_files, <span class="kw-2">&amp;</span>graph);
 		<span class="kw">for </span>(budget, (efficiency, reachables)) <span class="kw">in </span>results {
-			<span class="macro">writeln!</span>(result_file, <span class="string">"{} {} {}"</span>, budget, efficiency, reachables).unwrap();
+			<span class="macro">writeln!</span>(result_file, <span class="string">"{budget} {efficiency} {reachables}"</span>).unwrap();
 		}
 	});
 }

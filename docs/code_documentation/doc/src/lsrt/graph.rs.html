@@ -343,10 +343,44 @@
 <a href="#342" id="342">342</a>
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::fs::File;
 <span class="kw">use </span>std::io::{BufRead, BufReader};
+<span class="kw">use </span>std::num::ParseIntError;
+<span class="kw">use </span>std::ops::{Index, IndexMut};
 
 <span class="kw">use </span><span class="kw">crate</span>::distance_matrix::DistanceMatrix;
 <span class="kw">use </span><span class="kw">crate</span>::paths::{Path, SubPathsPyramid};
@@ -383,7 +417,7 @@
 	/// The third line contains the column index of the elements
 	/// The fourth line contains the row index of the elements
 	/// The graph cannot be empty
-	</span><span class="kw">pub fn </span>from_sparse_row_format(filename: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Graph, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+	</span><span class="kw">pub fn </span>from_sparse_row_format(filename: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
 		<span class="kw">let </span>file = File::open(filename)<span class="question-mark">?</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 
@@ -391,14 +425,14 @@
 		</span><span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>sizes = line.split_whitespace();
-		<span class="kw">let </span>size_elem_array: usize = sizes.next().unwrap().parse()<span class="question-mark">?</span>;
-		<span class="kw">let </span>size_row_array: usize = sizes.next().unwrap().parse()<span class="question-mark">?</span>;
+		<span class="kw">let </span>size_elem_array: usize = sizes.next().ok_or(<span class="string">"Number of elements missing"</span>)<span class="question-mark">?</span>.parse()<span class="question-mark">?</span>;
+		<span class="kw">let </span>size_row_array: usize = sizes.next().ok_or(<span class="string">"Number of rows missing"</span>)<span class="question-mark">?</span>.parse()<span class="question-mark">?</span>;
 
 		<span class="comment">// Error handling in case of bad data
 		</span><span class="kw">if </span>size_elem_array == <span class="number">0 </span>|| size_row_array == <span class="number">0 </span>{
 			<span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Empty graph"</span>.into());
 		}
-		<span class="kw">if </span>size_row_array &gt; Node::MAX <span class="kw">as </span>usize {
+		<span class="kw">if </span>size_row_array &gt; Node::MAX.into() {
 			<span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Too many nodes"</span>.into());
 		}
 
@@ -407,45 +441,49 @@
 		<span class="comment">// The second line contains the weights of the elements
 		</span>reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
 		<span class="kw">let </span>weights = line.split_whitespace();
-		<span class="kw">let </span>weights = weights.map(|x| x.parse::&lt;Tick&gt;().unwrap()).collect::&lt;Vec&lt;Tick&gt;&gt;();
+		<span class="kw">let </span>weights = weights.map(|x| x.parse::&lt;Tick&gt;()).collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Tick&gt;, ParseIntError&gt;&gt;()<span class="question-mark">?</span>;
 		line.clear();
 
 		<span class="comment">// The third line contains the column index of the elements
 		</span>reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
-		<span class="kw">let </span>col_index = line.split_whitespace();
-		<span class="kw">let </span>col_index = col_index.map(|x| x.parse::&lt;Node&gt;().unwrap()).collect::&lt;Vec&lt;Node&gt;&gt;();
+		<span class="kw">let </span>col_indices = line
+			.split_whitespace()
+			.map(|x| x.parse::&lt;Node&gt;())
+			.collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Node&gt;, ParseIntError&gt;&gt;()<span class="question-mark">?</span>;
 		line.clear();
 
 		<span class="comment">// The fourth line contains the row index of the elements
 		</span>reader.read_line(<span class="kw-2">&amp;mut </span>line)<span class="question-mark">?</span>;
-		<span class="kw">let </span>row_index = line.split_whitespace();
-		<span class="kw">let </span>row_index = row_index.map(|x| x.parse::&lt;usize&gt;().unwrap()).collect::&lt;Vec&lt;usize&gt;&gt;();
+		<span class="kw">let </span>row_indices = line
+			.split_whitespace()
+			.map(|x| x.parse::&lt;usize&gt;())
+			.collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;usize&gt;, ParseIntError&gt;&gt;()<span class="question-mark">?</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>edges = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]; size_row_array];
 
 		<span class="comment">// Create the adjacency list
 		</span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..size_row_array {
-			<span class="kw">let </span>row_start = row_index[i];
+			<span class="kw">let </span>row_start = row_indices[i];
 			<span class="kw">let </span>row_end = <span class="kw">if </span>size_row_array - <span class="number">1 </span>== i {
 				size_elem_array
 			}
 			<span class="kw">else </span>{
-				row_index[i + <span class="number">1</span>]
+				row_indices[i + <span class="number">1</span>]
 			};
 			<span class="kw">for </span>j <span class="kw">in </span>row_start..row_end {
 				edges[i].push(Neighbour {
-					node: col_index[j],
+					node: col_indices[j],
 					weight: weights[j],
 				});
 			}
 		}
 
-		<span class="prelude-val">Ok</span>(Graph { edges })
+		<span class="prelude-val">Ok</span>(<span class="self">Self </span>{ edges })
 	}
 
 	<span class="doccomment">/// Prints the graph
 	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="kw">for </span>(i, row) <span class="kw">in </span><span class="self">self</span>.edges.iter().enumerate() {
-			<span class="macro">print!</span>(<span class="string">"{}: "</span>, i);
+			<span class="macro">print!</span>(<span class="string">"{i}: "</span>);
 			<span class="kw">for </span>neighbour <span class="kw">in </span>row {
 				<span class="macro">print!</span>(<span class="string">"{}--{}--&gt;{} "</span>, i, neighbour.weight, neighbour.node);
 			}
@@ -458,9 +496,10 @@
 	/// Returns Some(()) if the edge was removed
 	</span><span class="kw">pub fn </span>remove_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="prelude-ty">Option</span>&lt;()&gt; {
 		<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
-		<span class="kw">while </span>i &lt; <span class="self">self</span>.edges[from <span class="kw">as </span>usize].len() {
-			<span class="kw">if </span><span class="self">self</span>.edges[from <span class="kw">as </span>usize][i].node == to {
-				<span class="self">self</span>.edges[from <span class="kw">as </span>usize].remove(i);
+		<span class="kw">let </span>from = usize::from(from);
+		<span class="kw">while </span>i &lt; <span class="self">self</span>.edges[from].len() {
+			<span class="kw">if </span><span class="self">self</span>.edges[from][i].node == to {
+				<span class="self">self</span>.edges[from].remove(i);
 				<span class="kw">return </span><span class="prelude-val">Some</span>(());
 			}
 			i += <span class="number">1</span>;
@@ -469,12 +508,12 @@
 	}
 
 	<span class="doccomment">/// Creates a graph from a list of neighbours
-	</span><span class="kw">pub fn </span>from_neighbours(neighbours: Vec&lt;Vec&lt;Neighbour&gt;&gt;) -&gt; Graph {
-		Graph { edges: neighbours }
+	</span><span class="kw">pub fn </span>from_neighbours(neighbours: Vec&lt;Vec&lt;Neighbour&gt;&gt;) -&gt; <span class="self">Self </span>{
+		<span class="self">Self </span>{ edges: neighbours }
 	}
 
 	<span class="kw">pub fn </span>get_edge(<span class="kw-2">&amp;</span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Neighbour&gt; {
-		<span class="self">self</span>.edges[from <span class="kw">as </span>usize].iter().find(|x| x.node == to)
+		<span class="self">self</span>.edges[usize::from(from)].iter().find(|x| x.node == to)
 	}
 }
 
@@ -499,33 +538,58 @@
 	}
 }
 
+<span class="kw">pub struct </span>DijkstraInformation&lt;T&gt;(Vec&lt;T&gt;);
+
+<span class="kw">impl</span>&lt;T&gt; Index&lt;Node&gt; <span class="kw">for </span>DijkstraInformation&lt;T&gt; {
+	<span class="kw">type </span>Output = T;
+
+	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Node) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+		<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[usize::from(index)]
+	}
+}
+
+<span class="kw">impl</span>&lt;T&gt; IndexMut&lt;Node&gt; <span class="kw">for </span>DijkstraInformation&lt;T&gt; {
+	<span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: Node) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Output {
+		<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>[usize::from(index)]
+	}
+}
+
+<span class="kw">impl</span>&lt;T&gt; DijkstraInformation&lt;T&gt; {
+	<span class="kw">pub fn </span>new(default: T, size: Node) -&gt; <span class="self">Self
+	</span><span class="kw">where
+		</span>T: Clone,
+	{
+		<span class="self">Self</span>(<span class="macro">vec!</span>[default; usize::from(size)])
+	}
+}
+
 <span class="doccomment">/// [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) to find the shortest [`Path`] between two [`Node`]s
 </span><span class="kw">pub fn </span>dijkstra(graph: <span class="kw-2">&amp;</span>Graph, start: Node, end: Node) -&gt; Path {
 	<span class="comment">// Initialize the heap with the start node, and the distances and previous vectors
 	</span><span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
-	<span class="kw">let </span><span class="kw-2">mut </span>previous = <span class="macro">vec!</span>[<span class="prelude-val">None</span>; graph.nb_nodes() <span class="kw">as </span>usize];
+	<span class="kw">let </span><span class="kw-2">mut </span>previous = DijkstraInformation::new(<span class="prelude-val">None</span>, graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: <span class="number">1 </span>});
-	<span class="kw">let </span><span class="kw-2">mut </span>distances = <span class="macro">vec!</span>[Tick::MAX; graph.nb_nodes() <span class="kw">as </span>usize];
-	distances[start <span class="kw">as </span>usize] = <span class="number">1</span>;
+	distances[start] = <span class="number">1</span>;
 
 	<span class="comment">// While there are nodes to visit, pop the node with the smallest distance
 	</span><span class="kw">while let </span><span class="prelude-val">Some</span>(DijkstraState { node, distance }) = heap.pop() {
 		<span class="kw">if </span>node == end {
 			<span class="kw">break</span>;
 		}
-		<span class="kw">if </span>distance &gt; distances[node <span class="kw">as </span>usize] {
+		<span class="kw">if </span>distance &gt; distances[node] {
 			<span class="kw">continue</span>;
 		}
 		<span class="comment">// For each neighbour, update the distance if it is smaller, and push it to the heap
-		</span><span class="kw">for </span>neighbour <span class="kw">in </span><span class="kw-2">&amp;</span>graph.edges[node <span class="kw">as </span>usize] {
+		</span><span class="kw">for </span>neighbour <span class="kw">in </span><span class="kw-2">&amp;</span>graph.edges[usize::from(node)] {
 			<span class="kw">let </span>new_distance = distance + neighbour.weight;
-			<span class="kw">if </span>new_distance &lt; distances[neighbour.node <span class="kw">as </span>usize] {
-				distances[neighbour.node <span class="kw">as </span>usize] = new_distance;
+			<span class="kw">if </span>new_distance &lt; distances[neighbour.node] {
+				distances[neighbour.node] = new_distance;
 				heap.push(DijkstraState {
 					node: neighbour.node,
 					distance: new_distance,
 				});
-				previous[neighbour.node <span class="kw">as </span>usize] = <span class="prelude-val">Some</span>(node);
+				previous[neighbour.node] = <span class="prelude-val">Some</span>(node);
 			}
 		}
 	}
@@ -533,10 +597,10 @@
 	<span class="comment">// Reconstruct the path from the previous vector
 	</span><span class="kw">let </span><span class="kw-2">mut </span>steps = <span class="macro">vec!</span>[];
 	<span class="kw">let </span><span class="kw-2">mut </span>current = end;
-	<span class="kw">while let </span><span class="prelude-val">Some</span>(prev) = previous[current <span class="kw">as </span>usize] {
+	<span class="kw">while let </span><span class="prelude-val">Some</span>(prev) = previous[current] {
 		steps.push(Neighbour {
 			node: current,
-			weight: distances[current <span class="kw">as </span>usize] - distances[prev <span class="kw">as </span>usize],
+			weight: distances[current] - distances[prev],
 		});
 		current = prev;
 	}
@@ -551,17 +615,17 @@
 </span><span class="kw">pub fn </span>dijkstra_write(graph: <span class="kw-2">&amp;</span>Graph, start: Node, end: Node, dst_mat: <span class="kw-2">&amp;mut </span>DistanceMatrix) {
 	<span class="comment">// Initialize the heap with the start node, and the distances and previous vectors
 	</span><span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
-	<span class="kw">let </span><span class="kw-2">mut </span>previous = <span class="macro">vec!</span>[<span class="prelude-val">None</span>; graph.nb_nodes() <span class="kw">as </span>usize];
+	<span class="kw">let </span><span class="kw-2">mut </span>previous = DijkstraInformation::new(<span class="prelude-val">None</span>, graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: <span class="number">0 </span>});
-	<span class="kw">let </span><span class="kw-2">mut </span>distances = <span class="macro">vec!</span>[Tick::MAX; graph.nb_nodes() <span class="kw">as </span>usize];
-	distances[start <span class="kw">as </span>usize] = <span class="number">0</span>;
+	distances[start] = <span class="number">0</span>;
 
 	<span class="comment">// While there are nodes to visit, pop the node with the smallest distance
 	</span><span class="kw">while let </span><span class="prelude-val">Some</span>(DijkstraState { node, distance }) = heap.pop() {
 		<span class="kw">if </span>node == end {
 			<span class="kw">break</span>;
 		}
-		<span class="kw">if </span>distance &gt; distances[node <span class="kw">as </span>usize] {
+		<span class="kw">if </span>distance &gt; distances[node] {
 			<span class="kw">continue</span>;
 		}
 
@@ -573,15 +637,15 @@
 		</span><span class="kw">else </span>{
 			dst_mat[(start, node)] = distance;
 		}
-		<span class="kw">for </span>neighbour <span class="kw">in </span><span class="kw-2">&amp;</span>graph.edges[node <span class="kw">as </span>usize] {
+		<span class="kw">for </span>neighbour <span class="kw">in </span><span class="kw-2">&amp;</span>graph.edges[usize::from(node)] {
 			<span class="kw">let </span>new_distance = distance + neighbour.weight;
-			<span class="kw">if </span>new_distance &lt; distances[neighbour.node <span class="kw">as </span>usize] {
-				distances[neighbour.node <span class="kw">as </span>usize] = new_distance;
+			<span class="kw">if </span>new_distance &lt; distances[neighbour.node] {
+				distances[neighbour.node] = new_distance;
 				heap.push(DijkstraState {
 					node: neighbour.node,
 					distance: new_distance,
 				});
-				previous[neighbour.node <span class="kw">as </span>usize] = <span class="prelude-val">Some</span>(node);
+				previous[neighbour.node] = <span class="prelude-val">Some</span>(node);
 			}
 		}
 	}
@@ -589,14 +653,14 @@
 	<span class="comment">// Reconstruct the path from the previous vector
 	</span><span class="kw">let </span><span class="kw-2">mut </span>path = <span class="macro">vec!</span>[];
 	<span class="kw">let </span><span class="kw-2">mut </span>current = end;
-	<span class="kw">if </span>previous[current <span class="kw">as </span>usize].is_none() {
+	<span class="kw">if </span>previous[current].is_none() {
 		dst_mat[(start, end)] = Tick::MAX;
 		<span class="kw">return</span>;
 	}
-	<span class="kw">while let </span><span class="prelude-val">Some</span>(prev) = previous[current <span class="kw">as </span>usize] {
+	<span class="kw">while let </span><span class="prelude-val">Some</span>(prev) = previous[current] {
 		path.push(Neighbour {
 			node: current,
-			weight: distances[current <span class="kw">as </span>usize] - distances[prev <span class="kw">as </span>usize],
+			weight: distances[current] - distances[prev],
 		});
 		current = prev;
 	}
@@ -623,7 +687,7 @@
 				}
 
 				<span class="comment">// Compute the path from node to node2
-				</span><span class="kw">let </span>path = dijkstra(<span class="self">self</span>, node <span class="kw">as </span>Node, node2 <span class="kw">as </span>Node);
+				</span><span class="kw">let </span>path = dijkstra(<span class="self">self</span>, node, node2);
 
 				<span class="comment">// If the path is too long, set the value to infinity (max of possible weight)
 				</span><span class="kw">let </span>subpaths = SubPathsPyramid::from_path(<span class="self">self</span>, <span class="kw-2">&amp;</span>path);
@@ -648,7 +712,7 @@
 				</span><span class="kw">if </span>dst_mat[(node, node2)] != <span class="number">0 </span>{
 					<span class="kw">continue</span>;
 				}
-				dijkstra_write(<span class="self">self</span>, node <span class="kw">as </span>Node, node2 <span class="kw">as </span>Node, <span class="kw-2">&amp;mut </span>dst_mat);
+				dijkstra_write(<span class="self">self</span>, node, node2, <span class="kw-2">&amp;mut </span>dst_mat);
 			}
 		}
 
@@ -669,7 +733,7 @@
 				}
 
 				<span class="comment">// Compute the path from node to node2
-				</span><span class="kw">let </span>path = dijkstra(<span class="self">self</span>, node <span class="kw">as </span>Node, node2 <span class="kw">as </span>Node);
+				</span><span class="kw">let </span>path = dijkstra(<span class="self">self</span>, node, node2);
 
 				<span class="comment">// If the path is too long, set the value to infinity (max of possible weight)
 				</span><span class="kw">let </span>subpaths = SubPathsPyramid::from_path(<span class="self">self</span>, <span class="kw-2">&amp;</span>path);

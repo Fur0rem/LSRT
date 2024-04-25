@@ -233,6 +233,10 @@
 <a href="#232" id="232">232</a>
 <a href="#233" id="233">233</a>
 <a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -311,16 +315,13 @@
 		</span><span class="kw">let </span>file = File::open(file).unwrap();
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
-		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
+		reader.read_line(<span class="kw-2">&amp;mut </span>line).expect(<span class="string">"Empty attack file"</span>);
 
-		<span class="kw">if </span>line.starts_with(<span class="string">'S'</span>) {
-			<span class="kw">return </span>Box::new(StaticAttack::from_file(<span class="kw-2">&amp;mut </span>reader, graph));
+		<span class="kw">match </span>line.trim() {
+			<span class="string">"D" </span>=&gt; Box::new(DynamicAttack::from_file(<span class="kw-2">&amp;mut </span>reader)),
+			<span class="string">"S" </span>=&gt; Box::new(StaticAttack::from_file(<span class="kw-2">&amp;mut </span>reader, graph)),
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid attack file"</span>),
 		}
-		<span class="kw">else if </span>line.starts_with(<span class="string">'D'</span>) {
-			<span class="kw">return </span>Box::new(DynamicAttack::from_file(<span class="kw-2">&amp;mut </span>reader));
-		}
-
-		<span class="macro">panic!</span>(<span class="string">"Invalid attack file"</span>);
 	}
 }
 
@@ -333,7 +334,7 @@
 		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, u8).unwrap();
 
 		<span class="comment">// while there is new line, read it and append to the result
-		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes() <span class="kw">as </span>usize);
+		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		<span class="kw">for _ in </span><span class="number">0</span>..graph.nb_nodes() {
 			<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 			reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
@@ -341,11 +342,23 @@
 			blocked_links.push(blocks);
 		}
 
+		<span class="kw">if </span>blocked_links.len() &gt; Node::MAX.into() {
+			<span class="macro">panic!</span>(<span class="string">"Too many nodes"</span>);
+		}
+
 		<span class="kw">return </span><span class="self">Self </span>{
 			blocked_links,
 			delta,
 			max_tick,
 		};
+	}
+
+	<span class="kw">pub fn </span>from_file_name(file_name: String, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
+		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
+		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
+		<span class="kw">return </span><span class="self">Self</span>::from_file(<span class="kw-2">&amp;mut </span>reader, graph);
 	}
 }
 
@@ -407,8 +420,8 @@
 
 			<span class="kw">let </span>nb_blocked = nb_blocked.parse().unwrap();
 			<span class="comment">// remove the paranthesis and comma
-			</span><span class="kw">let </span>from: usize = from[<span class="number">1</span>..from.len() - <span class="number">1</span>].parse().unwrap();
-			<span class="kw">let </span>to: usize = to[<span class="number">0</span>..to.len() - <span class="number">1</span>].parse().unwrap();
+			</span><span class="kw">let </span>from: Node = from[<span class="number">1</span>..from.len() - <span class="number">1</span>].parse().unwrap();
+			<span class="kw">let </span>to: Node = to[<span class="number">0</span>..to.len() - <span class="number">1</span>].parse().unwrap();
 
 			<span class="kw">let </span><span class="kw-2">mut </span>times = <span class="macro">vec!</span>[];
 			<span class="kw">for _ in </span><span class="number">0</span>..nb_blocked {
@@ -416,17 +429,13 @@
 				times.push(time);
 			}
 
-			blocked_links.push(DeletedLink {
-				from: from <span class="kw">as </span>Node,
-				to: to <span class="kw">as </span>Node,
-				times,
-			});
+			blocked_links.push(DeletedLink { from, to, times });
 		}
 
 		<span class="kw">return </span><span class="self">Self </span>{
 			blocked_links,
 			delta,
-			max_tick: max_tick <span class="kw">as </span>Tick,
+			max_tick,
 		};
 	}
 }
@@ -457,12 +466,11 @@
 				</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
 					<span class="comment">// Not 0 -&gt; already computed
 					</span><span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
-						temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
+						temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i, j, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
 					}
 				}
 			}
-			<span class="comment">//println!("{}/{}", t, self.max_tick);
-		</span>}
+		}
 
 		<span class="kw">return </span>AttackResult::Dynamic(dma);
 	}

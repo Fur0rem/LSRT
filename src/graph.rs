@@ -2,6 +2,8 @@ use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::num::ParseIntError;
+use std::ops::{Index, IndexMut};
 
 use crate::distance_matrix::DistanceMatrix;
 use crate::paths::{Path, SubPathsPyramid};
@@ -46,14 +48,14 @@ impl Graph {
 		let mut line = String::new();
 		reader.read_line(&mut line)?;
 		let mut sizes = line.split_whitespace();
-		let size_elem_array: usize = sizes.next().unwrap().parse()?;
-		let size_row_array: usize = sizes.next().unwrap().parse()?;
+		let size_elem_array: usize = sizes.next().ok_or("Number of elements missing")?.parse()?;
+		let size_row_array: usize = sizes.next().ok_or("Number of rows missing")?.parse()?;
 
 		// Error handling in case of bad data
 		if size_elem_array == 0 || size_row_array == 0 {
 			return Err("Empty graph".into());
 		}
-		if size_row_array > Node::MAX as usize {
+		if size_row_array > Node::MAX.into() {
 			return Err("Too many nodes".into());
 		}
 
@@ -62,32 +64,37 @@ impl Graph {
 		// The second line contains the weights of the elements
 		reader.read_line(&mut line)?;
 		let weights = line.split_whitespace();
-		let weights = weights.map(|x| x.parse::<Tick>().unwrap()).collect::<Vec<Tick>>();
+		let weights = weights.map(|x| x.parse::<Tick>()).collect::<Result<Vec<Tick>, ParseIntError>>()?;
 		line.clear();
 
 		// The third line contains the column index of the elements
 		reader.read_line(&mut line)?;
-		let col_index = line.split_whitespace();
-		let col_index = col_index.map(|x| x.parse::<Node>().unwrap()).collect::<Vec<Node>>();
+		let col_indices = line
+			.split_whitespace()
+			.map(|x| x.parse::<Node>())
+			.collect::<Result<Vec<Node>, ParseIntError>>()?;
 		line.clear();
 
 		// The fourth line contains the row index of the elements
 		reader.read_line(&mut line)?;
-		let row_index = line.split_whitespace();
-		let row_index = row_index.map(|x| x.parse::<usize>().unwrap()).collect::<Vec<usize>>();
+		let row_indices = line
+			.split_whitespace()
+			.map(|x| x.parse::<usize>())
+			.collect::<Result<Vec<usize>, ParseIntError>>()?;
 		let mut edges = vec![vec![]; size_row_array];
 
 		// Create the adjacency list
 		for i in 0..size_row_array {
-			let row_start = row_index[i];
+			let row_start = row_indices[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			} else {
-				row_index[i + 1]
+			}
+			else {
+				row_indices[i + 1]
 			};
 			for j in row_start..row_end {
 				edges[i].push(Neighbour {
-					node: col_index[j],
+					node: col_indices[j],
 					weight: weights[j],
 				});
 			}
@@ -99,7 +106,7 @@ impl Graph {
 	/// Prints the graph
 	pub fn print(&self) {
 		for (i, row) in self.edges.iter().enumerate() {
-			print!("{}: ", i);
+			print!("{i}: ");
 			for neighbour in row {
 				print!("{}--{}-->{} ", i, neighbour.weight, neighbour.node);
 			}
@@ -112,9 +119,10 @@ impl Graph {
 	/// Returns Some(()) if the edge was removed
 	pub fn remove_edge(&mut self, from: Node, to: Node) -> Option<()> {
 		let mut i = 0;
-		while i < self.edges[from as usize].len() {
-			if self.edges[from as usize][i].node == to {
-				self.edges[from as usize].remove(i);
+		let from = usize::from(from);
+		while i < self.edges[from].len() {
+			if self.edges[from][i].node == to {
+				self.edges[from].remove(i);
 				return Some(());
 			}
 			i += 1;
@@ -128,7 +136,7 @@ impl Graph {
 	}
 
 	pub fn get_edge(&self, from: Node, to: Node) -> Option<&Neighbour> {
-		self.edges[from as usize].iter().find(|x| x.node == to)
+		self.edges[usize::from(from)].iter().find(|x| x.node == to)
 	}
 }
 
@@ -153,33 +161,58 @@ impl PartialOrd for DijkstraState {
 	}
 }
 
+pub struct DijkstraInformation<T>(Vec<T>);
+
+impl<T> Index<Node> for DijkstraInformation<T> {
+	type Output = T;
+
+	fn index(&self, index: Node) -> &Self::Output {
+		&self.0[usize::from(index)]
+	}
+}
+
+impl<T> IndexMut<Node> for DijkstraInformation<T> {
+	fn index_mut(&mut self, index: Node) -> &mut Self::Output {
+		&mut self.0[usize::from(index)]
+	}
+}
+
+impl<T> DijkstraInformation<T> {
+	pub fn new(default: T, size: Node) -> Self
+	where
+		T: Clone,
+	{
+		Self(vec![default; usize::from(size)])
+	}
+}
+
 /// [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) to find the shortest [`Path`] between two [`Node`]s
 pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 	// Initialize the heap with the start node, and the distances and previous vectors
 	let mut heap = BinaryHeap::new();
-	let mut previous = vec![None; graph.nb_nodes() as usize];
+	let mut previous = DijkstraInformation::new(None, graph.nb_nodes());
+	let mut distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: 1 });
-	let mut distances = vec![Tick::MAX; graph.nb_nodes() as usize];
-	distances[start as usize] = 1;
+	distances[start] = 1;
 
 	// While there are nodes to visit, pop the node with the smallest distance
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
 		if node == end {
 			break;
 		}
-		if distance > distances[node as usize] {
+		if distance > distances[node] {
 			continue;
 		}
 		// For each neighbour, update the distance if it is smaller, and push it to the heap
-		for neighbour in &graph.edges[node as usize] {
+		for neighbour in &graph.edges[usize::from(node)] {
 			let new_distance = distance + neighbour.weight;
-			if new_distance < distances[neighbour.node as usize] {
-				distances[neighbour.node as usize] = new_distance;
+			if new_distance < distances[neighbour.node] {
+				distances[neighbour.node] = new_distance;
 				heap.push(DijkstraState {
 					node: neighbour.node,
 					distance: new_distance,
 				});
-				previous[neighbour.node as usize] = Some(node);
+				previous[neighbour.node] = Some(node);
 			}
 		}
 	}
@@ -187,10 +220,10 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 	// Reconstruct the path from the previous vector
 	let mut steps = vec![];
 	let mut current = end;
-	while let Some(prev) = previous[current as usize] {
+	while let Some(prev) = previous[current] {
 		steps.push(Neighbour {
 			node: current,
-			weight: distances[current as usize] - distances[prev as usize],
+			weight: distances[current] - distances[prev],
 		});
 		current = prev;
 	}
@@ -205,17 +238,17 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut DistanceMatrix) {
 	// Initialize the heap with the start node, and the distances and previous vectors
 	let mut heap = BinaryHeap::new();
-	let mut previous = vec![None; graph.nb_nodes() as usize];
+	let mut previous = DijkstraInformation::new(None, graph.nb_nodes());
+	let mut distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: 0 });
-	let mut distances = vec![Tick::MAX; graph.nb_nodes() as usize];
-	distances[start as usize] = 0;
+	distances[start] = 0;
 
 	// While there are nodes to visit, pop the node with the smallest distance
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
 		if node == end {
 			break;
 		}
-		if distance > distances[node as usize] {
+		if distance > distances[node] {
 			continue;
 		}
 
@@ -227,15 +260,15 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 		else {
 			dst_mat[(start, node)] = distance;
 		}
-		for neighbour in &graph.edges[node as usize] {
+		for neighbour in &graph.edges[usize::from(node)] {
 			let new_distance = distance + neighbour.weight;
-			if new_distance < distances[neighbour.node as usize] {
-				distances[neighbour.node as usize] = new_distance;
+			if new_distance < distances[neighbour.node] {
+				distances[neighbour.node] = new_distance;
 				heap.push(DijkstraState {
 					node: neighbour.node,
 					distance: new_distance,
 				});
-				previous[neighbour.node as usize] = Some(node);
+				previous[neighbour.node] = Some(node);
 			}
 		}
 	}
@@ -243,14 +276,14 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 	// Reconstruct the path from the previous vector
 	let mut path = vec![];
 	let mut current = end;
-	if previous[current as usize].is_none() {
+	if previous[current].is_none() {
 		dst_mat[(start, end)] = Tick::MAX;
 		return;
 	}
-	while let Some(prev) = previous[current as usize] {
+	while let Some(prev) = previous[current] {
 		path.push(Neighbour {
 			node: current,
-			weight: distances[current as usize] - distances[prev as usize],
+			weight: distances[current] - distances[prev],
 		});
 		current = prev;
 	}
@@ -277,7 +310,7 @@ impl Graph {
 				}
 
 				// Compute the path from node to node2
-				let path = dijkstra(self, node as Node, node2 as Node);
+				let path = dijkstra(self, node, node2);
 
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
@@ -302,7 +335,7 @@ impl Graph {
 				if dst_mat[(node, node2)] != 0 {
 					continue;
 				}
-				dijkstra_write(self, node as Node, node2 as Node, &mut dst_mat);
+				dijkstra_write(self, node, node2, &mut dst_mat);
 			}
 		}
 
@@ -323,7 +356,7 @@ impl Graph {
 				}
 
 				// Compute the path from node to node2
-				let path = dijkstra(self, node as Node, node2 as Node);
+				let path = dijkstra(self, node, node2);
 
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);

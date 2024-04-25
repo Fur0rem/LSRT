@@ -76,15 +76,13 @@ impl dyn Attack {
 		let file = File::open(file).unwrap();
 		let mut reader = BufReader::new(file);
 		let mut line = String::new();
-		reader.read_line(&mut line).unwrap();
+		reader.read_line(&mut line).expect("Empty attack file");
 
-		if line.starts_with('S') {
-			return Box::new(StaticAttack::from_file(&mut reader, graph));
-		} else if line.starts_with('D') {
-			return Box::new(DynamicAttack::from_file(&mut reader));
+		match line.trim() {
+			"D" => Box::new(DynamicAttack::from_file(&mut reader)),
+			"S" => Box::new(StaticAttack::from_file(&mut reader, graph)),
+			_ => panic!("Invalid attack file"),
 		}
-
-		panic!("Invalid attack file");
 	}
 }
 
@@ -97,7 +95,7 @@ impl StaticAttack {
 		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, u8).unwrap();
 
 		// while there is new line, read it and append to the result
-		let mut blocked_links = Vec::with_capacity(graph.nb_nodes() as usize);
+		let mut blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		for _ in 0..graph.nb_nodes() {
 			let mut line = String::new();
 			reader.read_line(&mut line).unwrap();
@@ -105,7 +103,7 @@ impl StaticAttack {
 			blocked_links.push(blocks);
 		}
 
-		if blocked_links.len() > Node::MAX as usize {
+		if blocked_links.len() > Node::MAX.into() {
 			panic!("Too many nodes");
 		}
 
@@ -192,17 +190,13 @@ impl DynamicAttack {
 				times.push(time);
 			}
 
-			blocked_links.push(DeletedLink {
-				from: from as Node,
-				to: to as Node,
-				times,
-			});
+			blocked_links.push(DeletedLink { from, to, times });
 		}
 
 		return Self {
 			blocked_links,
 			delta,
-			max_tick: max_tick as Tick,
+			max_tick,
 		};
 	}
 }
@@ -233,11 +227,10 @@ impl Attack for DynamicAttack {
 				for j in (0..time_graph.nb_nodes()).rev() {
 					// Not 0 -> already computed
 					if dma[(t, i, j)] == 0 {
-						temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma, &edges_map);
+						temporal_dijkstra_write(&time_graph, i, j, t, &mut dma, &edges_map);
 					}
 				}
 			}
-			//println!("{}/{}", t, self.max_tick);
 		}
 
 		return AttackResult::Dynamic(dma);

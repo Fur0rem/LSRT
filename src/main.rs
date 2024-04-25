@@ -7,12 +7,21 @@
 	// clippy::cargo,
 	// clippy::cognitive_complexity,
 	// clippy::complexity,
-	// clippy::cyclomatic_complexity
 )]
 #![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
 #![warn(clippy::uninlined_format_args)]
+//#![warn(clippy::as_conversions)]
 #![warn(clippy::cast_lossless)]
+#![warn(clippy::unnecessary_cast)]
+#![warn(clippy::self_assignment)]
+#![warn(clippy::self_named_constructors)]
+#![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::unwrap_used)]
+//#![warn(clippy::cast_precision_loss)]
+//#![warn(clippy::as_conversions)]
+//#![warn(clippy::cast_possible_truncation)]
+//#![warn(clippy::min_ident_chars)]
 
 //! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -55,7 +64,7 @@ mod tests;
 pub type Node = u16;
 /// A Tick is a unit of time in the graph, it represents one step in the simulation.
 /// Paris has a diameter of 1404 ticks, so u16 should be enough.
-/// A tick of 0 or Tick::MAX represents an infinite weight, or a removed edge.
+/// A tick of 0 or `Tick::MAX` represents an infinite weight, or a removed edge.
 pub type Tick = u16;
 /// A Time is a unit of time in the graph, it represents one step in the attack.
 /// Each attack has a delta, which is the number of ticks for one time.
@@ -111,7 +120,7 @@ const FILES_DIR_NAME: &str = "data";
 pub fn main() {
 	// Collect args
 	let args: Vec<String> = std::env::args().collect();
-	println!("Args: {:?}", args);
+	println!("Args: {args:?}");
 
 	// Check if the number of arguments is correct
 	if args.len() != 4 {
@@ -134,7 +143,7 @@ pub fn main() {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
 		let results = AttackSeries::efficiencies_reachables(&attack_directory, &attack_files, &graph);
 		for (budget, (efficiency, reachables)) in results {
-			writeln!(result_file, "{} {} {}", budget, efficiency, reachables).unwrap();
+			writeln!(result_file, "{budget} {efficiency} {reachables}").unwrap();
 		}
 	});
 }

@@ -617,7 +617,7 @@
 			<span class="kw">return </span>idx;
 		}
 		<span class="comment">//stack exchange get inverse of formula for sum of intergers from 1 to n?
-		</span><span class="kw">return </span>(((<span class="number">2 </span>* idx) <span class="kw">as </span>f64 + <span class="number">0.25</span>).sqrt() - <span class="number">0.5</span>) <span class="kw">as </span>usize;
+		</span><span class="kw">return </span>(((<span class="number">2 </span>* idx) <span class="kw">as </span>f64 + <span class="number">0.25</span>).sqrt() - <span class="number">0.5</span>).floor() <span class="kw">as </span>usize;
 	}
 
 	<span class="kw">pub fn </span>get_idx_left_son(idx: usize) -&gt; usize {
@@ -669,7 +669,7 @@
 	}
 
 	<span class="doccomment">/// Inclusive range
-	</span><span class="kw">pub fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	</span><span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">if </span>prof == <span class="number">0 </span>{
 			<span class="kw">return </span>(<span class="number">0</span>, <span class="number">0</span>);
 		}
@@ -769,7 +769,7 @@
 		}
 		<span class="kw">let </span>total = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[<span class="number">0</span>];
 		<span class="kw">let </span>(from, to) = (total.start, total.end);
-		<span class="kw">if </span>already_done[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)] {
+		<span class="kw">if </span>already_done[(from.into(), to.into())] {
 			<span class="kw">return</span>;
 		}
 
@@ -786,7 +786,7 @@
 				.max_tick()
 				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - <span class="number">1</span>)
 			{
-				<span class="kw">if </span>phantom_edge[t <span class="kw">as </span>usize] != unattacked_edge.weight {
+				<span class="kw">if </span>phantom_edge[t] != unattacked_edge.weight {
 					invalid_times.push(t);
 				}
 			}
@@ -874,7 +874,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>current_time = <span class="self">self</span>.start_time;
 		<span class="kw">let </span><span class="kw-2">mut </span>total_weight = <span class="number">0</span>;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
-			<span class="kw">if </span>current_time <span class="kw">as </span>usize &gt;= <span class="self">self</span>.time_graph.max_tick() <span class="kw">as </span>usize {
+			<span class="kw">if </span>current_time &gt;= <span class="self">self</span>.time_graph.max_tick() {
 				<span class="kw">return </span>Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -948,7 +948,7 @@
 		<span class="kw">return </span>SubPathsPyramid::get_idx_parents(idx);
 	}
 
-	<span class="kw">fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	<span class="kw">const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">return </span>SubPathsPyramid::get_range(prof);
 	}
 
@@ -974,7 +974,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = path.start_time;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
-			<span class="kw">if </span>wait <span class="kw">as </span>usize &gt; graph.max_tick() <span class="kw">as </span>usize {
+			<span class="kw">if </span>wait &gt; graph.max_tick() {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

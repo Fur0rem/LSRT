@@ -1,5 +1,5 @@
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-use crate::graph::DijkstraState;
+use crate::graph::{DijkstraInformation, DijkstraState};
 use crate::graph::{Graph, Neighbour};
 use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
@@ -17,11 +17,11 @@ pub struct PhantomEdge {
 	pub weights: Vec<Tick>,
 }
 
-impl Index<usize> for PhantomEdge {
+impl Index<Tick> for PhantomEdge {
 	type Output = Tick;
 
-	fn index(&self, index: usize) -> &Self::Output {
-		return &self.weights[index];
+	fn index(&self, index: Tick) -> &Self::Output {
+		return &self.weights[usize::from(index)];
 	}
 }
 
@@ -44,10 +44,10 @@ pub struct PhantomEdgesMap<'a> {
 
 impl<'a> PhantomEdgesMap<'a> {
 	pub fn from_graph(time_graph: &'a TimeVaryingGraph) -> Self {
-		let mut edges_map = SquareMatrix::new(time_graph.nb_nodes() as usize, None);
+		let mut edges_map = SquareMatrix::new(time_graph.nb_nodes().into(), None);
 		for (node, neighbours) in time_graph.nodes.iter().enumerate() {
 			for neighbour in neighbours {
-				edges_map[(node, neighbour.neighbour as usize)] = Some(neighbour);
+				edges_map[(node, neighbour.neighbour.into())] = Some(neighbour);
 			}
 		}
 		return PhantomEdgesMap { edges_map };
@@ -55,7 +55,7 @@ impl<'a> PhantomEdgesMap<'a> {
 
 	/// Get the PhantomEdge from the graph from the node indexes
 	pub fn get_edge(&'a self, from: Node, to: Node) -> Option<&'a PhantomEdge> {
-		let edge = self.edges_map[(from as usize, to as usize)];
+		let edge = self.edges_map[(from.into(), to.into())];
 		return edge;
 	}
 }
@@ -79,25 +79,36 @@ impl TimeVaryingGraph {
 		let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 		return Self { max_tick, nodes: phantoms };
 	}
+
+	pub fn get_neighbours(&self, node: Node) -> &Vec<PhantomEdge> {
+		return &self.nodes[usize::from(node)];
+	}
 }
 
-/// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
+/// Writes the information from the Dijkstra's algorithm to the `DistanceMatrixArray`
 /// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
 pub fn temporal_dijkstra_write(
 	time_graph: &TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: &mut DistanceMatrixArray, edges_map: &PhantomEdgesMap,
 ) {
 	// Initialize the distance, previous node and visited arrays
-	let max_node_index = time_graph.nb_nodes() as usize;
+	/*let max_node_index = time_graph.nb_nodes() as usize;
 	let mut dist = vec![Tick::MAX; max_node_index];
 	let mut prev = vec![Node::MAX; max_node_index];
 	let mut visited = vec![false; max_node_index];
 	dist[start as usize] = 0;
 	let mut heap = BinaryHeap::new();
+	heap.push(DijkstraState { node: start, distance: 0 });*/
+
+	let mut dist = DijkstraInformation::new(Tick::MAX, time_graph.nb_nodes());
+	let mut prev = DijkstraInformation::new(Node::MAX, time_graph.nb_nodes());
+	let mut visited = DijkstraInformation::new(false, time_graph.nb_nodes());
+	let mut heap = BinaryHeap::new();
+	dist[start] = 0;
 	heap.push(DijkstraState { node: start, distance: 0 });
 
 	// Dijkstra's algorithm
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
-		if visited[node as usize] {
+		if visited[node] {
 			continue;
 		}
 		if node == end {
@@ -110,17 +121,17 @@ pub fn temporal_dijkstra_write(
 		if node != start {
 			dma[(time_start, start, node)] = distance;
 		}
-		visited[node as usize] = true;
-		for phantom_edge in &time_graph.nodes[node as usize] {
+		visited[node] = true;
+		for phantom_edge in time_graph.get_neighbours(node) {
 			let neighbour = &phantom_edge.neighbour;
-			let weight = phantom_edge[distance as usize + time_start as usize];
+			let weight = phantom_edge[distance + time_start];
 			if weight == Tick::MAX {
 				continue;
 			}
 			let new_distance = distance + weight;
-			if new_distance < dist[*neighbour as usize] {
-				dist[*neighbour as usize] = new_distance;
-				prev[*neighbour as usize] = node;
+			if new_distance < dist[*neighbour] {
+				dist[*neighbour] = new_distance;
+				prev[*neighbour] = node;
 				heap.push(DijkstraState {
 					node: *neighbour,
 					distance: new_distance,
@@ -130,7 +141,7 @@ pub fn temporal_dijkstra_write(
 	}
 
 	// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
-	if dist[end as usize] == Tick::MAX {
+	if dist[end] == Tick::MAX {
 		dma[(time_start, start, end)] = Tick::MAX;
 		return;
 	}
@@ -138,7 +149,7 @@ pub fn temporal_dijkstra_write(
 	let mut node = end;
 	let mut steps = vec![];
 	while node != start {
-		let prev_node = prev[node as usize];
+		let prev_node = prev[node];
 		if prev_node == Node::MAX {
 			break;
 		}
@@ -146,7 +157,7 @@ pub fn temporal_dijkstra_write(
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
+			weight: phantom_edge[dist[prev_node] + time_start],
 		});
 		node = prev_node;
 	}
@@ -167,6 +178,8 @@ pub fn temporal_dijkstra_write(
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
 pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
+	let max_tick = usize::from(max_tick);
+	let delta = usize::from(delta);
 
 	for (node, neighbours) in graph.edges.iter().enumerate() {
 		let mut edges = vec![];
@@ -174,14 +187,14 @@ pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<D
 		// For all the edges, we create a phantom edge
 		for neighbour in neighbours {
 			let weight = neighbour.weight;
-			let mut weights = vec![weight; max_tick as usize];
+			let mut weights = vec![weight; max_tick];
 			for deleted_edge in deleted_edges {
 				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
-						let t = *t as usize;
-						let t_with_delta = t * delta as usize;
-						for td in t_with_delta..t_with_delta + delta as usize {
-							if td < max_tick as usize {
+						let t: usize = (*t).into();
+						let t_with_delta = t * delta;
+						for td in t_with_delta..t_with_delta + delta {
+							if td < max_tick {
 								weights[td] = 0;
 							}
 						}
@@ -190,7 +203,7 @@ pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<D
 					if weights[last_elem_idx] == 0 {
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					for i in (0..max_tick as usize - 1).rev() {
+					for i in (0..max_tick - 1).rev() {
 						if weights[i] == 0 {
 							weights[i] = weights[i + 1].saturating_add(1);
 						}
@@ -221,20 +234,21 @@ pub fn create_phantom_edges_aggressive(
 		// For all the edges, we create a phantom edge
 		for neighbour in neighbours {
 			let weight = neighbour.weight;
-			let mut weights = vec![weight; max_tick as usize];
+			let mut weights = vec![weight; max_tick.into()];
 			for deleted_edge in deleted_edges {
 				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
-						let t = *t as usize;
-						let t_with_delta = t * delta as usize;
-						for td in t_with_delta..t_with_delta + delta as usize {
-							if td < max_tick as usize {
+						let t: usize = (*t).into();
+						let delta: usize = delta.into();
+						let t_with_delta = t * delta;
+						for td in t_with_delta..t_with_delta + delta {
+							if td < max_tick.into() {
 								weights[td] = 0;
 							}
 						}
 					}
 					// For all the elements in the array, see if we have time to get through (more non-zero elements in a row than weight)
-					let mut i = max_tick as usize - 1;
+					let mut i = usize::from(max_tick - 1);
 					while i > 0 {
 						if weights[i] != 0 {
 							let mut j = i;
@@ -243,13 +257,14 @@ pub fn create_phantom_edges_aggressive(
 								count += 1;
 								j -= 1;
 							}
-							if count < weight as usize {
+							if count < weight.into() {
 								for k in j..=i {
 									weights[k] = 0;
 								}
 							}
 							i = j;
-						} else {
+						}
+						else {
 							i -= 1;
 						}
 					}
@@ -259,7 +274,7 @@ pub fn create_phantom_edges_aggressive(
 					if weights[last_elem_idx] == 0 {
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					for i in (0..max_tick as usize - 1).rev() {
+					for i in (0..usize::from(max_tick - 1)).rev() {
 						if weights[i] == 0 {
 							weights[i] = weights[i + 1].saturating_add(1);
 						}
@@ -291,17 +306,20 @@ pub fn temporal_dijkstra<'a>(
 	time_graph: &'a TimeVaryingGraph, start: Node, end: Node, time_start: Tick, edges_map: &'a PhantomEdgesMap,
 ) -> TemporalPath<'a> {
 	// Initialize the distance, previous node and visited arrays
-	let max_node_index = time_graph.nb_nodes() as usize;
+	/*let max_node_index = time_graph.nb_nodes() as usize;
 	let mut dist = vec![Tick::MAX; max_node_index];
 	let mut prev = vec![Node::MAX; max_node_index];
-	let mut visited = vec![false; max_node_index];
-	dist[start as usize] = 0;
+	let mut visited = vec![false; max_node_index];*/
+	let mut dist = DijkstraInformation::new(Tick::MAX, time_graph.nb_nodes());
+	let mut prev = DijkstraInformation::new(Node::MAX, time_graph.nb_nodes());
+	let mut visited = DijkstraInformation::new(false, time_graph.nb_nodes());
+	dist[start] = 0;
 	let mut heap = BinaryHeap::new();
 	heap.push(DijkstraState { node: start, distance: 0 });
 
 	// Dijkstra's algorithm
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
-		if visited[node as usize] {
+		if visited[node] {
 			continue;
 		}
 		if node == end {
@@ -310,17 +328,17 @@ pub fn temporal_dijkstra<'a>(
 		if distance.saturating_add(time_start) >= time_graph.max_tick {
 			break;
 		}
-		visited[node as usize] = true;
-		for phantom_edge in &time_graph.nodes[node as usize] {
+		visited[node] = true;
+		for phantom_edge in &time_graph.nodes[usize::from(node)] {
 			let neighbour = &phantom_edge.neighbour;
-			let weight = phantom_edge[distance as usize + time_start as usize];
+			let weight = phantom_edge[distance + time_start];
 			if weight == Tick::MAX {
 				continue;
 			}
 			let new_distance = distance + weight;
-			if new_distance < dist[*neighbour as usize] {
-				dist[*neighbour as usize] = new_distance;
-				prev[*neighbour as usize] = node;
+			if new_distance < dist[*neighbour] {
+				dist[*neighbour] = new_distance;
+				prev[*neighbour] = node;
 				heap.push(DijkstraState {
 					node: *neighbour,
 					distance: new_distance,
@@ -333,7 +351,7 @@ pub fn temporal_dijkstra<'a>(
 	let mut node = end;
 	let mut steps = vec![];
 	while node != start {
-		let prev_node = prev[node as usize];
+		let prev_node = prev[node];
 		if prev_node == Node::MAX {
 			break;
 		}
@@ -341,7 +359,7 @@ pub fn temporal_dijkstra<'a>(
 		let neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: phantom_edge[(dist[prev_node as usize] + time_start as Tick) as usize],
+			weight: phantom_edge[dist[prev_node] + time_start],
 		});
 		node = prev_node;
 	}

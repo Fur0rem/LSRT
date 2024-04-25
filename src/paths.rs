@@ -92,7 +92,8 @@ impl<'a> SubPathsPyramid<'a> {
 				println!();
 				prof += 1;
 				idx = 0;
-			} else {
+			}
+			else {
 				idx += 1;
 			}
 		}
@@ -254,7 +255,7 @@ impl<'a> SubPathsPyramid<'a> {
 		}
 		let total = &self.subpaths[0];
 		let (from, to) = (total.start, total.end);
-		if already_done[(from as usize, to as usize)] {
+		if already_done[(from.into(), to.into())] {
 			return;
 		}
 
@@ -271,7 +272,7 @@ impl<'a> SubPathsPyramid<'a> {
 				.max_tick()
 				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - 1)
 			{
-				if phantom_edge[t as usize] != unattacked_edge.weight {
+				if phantom_edge[t] != unattacked_edge.weight {
 					invalid_times.push(t);
 				}
 			}
@@ -359,7 +360,7 @@ impl<'a> TemporalPath<'a> {
 		let mut current_time = self.start_time;
 		let mut total_weight = 0;
 		for step in &self.steps {
-			if current_time as usize >= self.time_graph.max_tick() as usize {
+			if current_time >= self.time_graph.max_tick() {
 				return Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -459,14 +460,15 @@ impl TemporalSubPathsPyramid<'_> {
 		let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
 		let mut wait = path.start_time;
 		for step in &path.steps {
-			if wait as usize > graph.max_tick() as usize {
+			if wait > graph.max_tick() {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			} else {
+			}
+			else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

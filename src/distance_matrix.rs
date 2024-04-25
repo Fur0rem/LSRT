@@ -61,13 +61,17 @@ impl Index<(Node, Node)> for DistanceMatrix {
 	type Output = Tick;
 
 	fn index(&self, index: (Node, Node)) -> &Self::Output {
-		return &self.matrix[index.0 as usize * self.dim + index.1 as usize];
+		let node_from = usize::from(index.0);
+		let node_to = usize::from(index.1);
+		return &self.matrix[node_from * self.dim + node_to];
 	}
 }
 
 impl IndexMut<(Node, Node)> for DistanceMatrix {
 	fn index_mut(&mut self, index: (Node, Node)) -> &mut Self::Output {
-		return &mut self.matrix[index.0 as usize * self.dim + index.1 as usize];
+		let node_from = usize::from(index.0);
+		let node_to = usize::from(index.1);
+		return &mut self.matrix[node_from * self.dim + node_to];
 	}
 }
 
@@ -79,13 +83,13 @@ impl DistanceMatrix {
 		}
 	}
 
-	pub fn nb_nodes(&self) -> Node {
+	pub const fn nb_nodes(&self) -> Node {
 		self.dim as Node
 	}
 
 	/// Returns the distance matrix with all distances set to the maximum value and the diagonal set to 1
 	pub fn maxed(graph: &Graph) -> Self {
-		let size = graph.nb_nodes() as usize;
+		let size = usize::from(graph.nb_nodes());
 		let distances = vec![Tick::MAX; size * size];
 		let mut dm = DistanceMatrix {
 			matrix: distances,
@@ -97,7 +101,7 @@ impl DistanceMatrix {
 
 	/// Returns the distance matrix with all distances set to 0 and the diagonal set to 1
 	pub fn zeroed(graph: &Graph) -> Self {
-		let size = graph.nb_nodes() as usize;
+		let size = usize::from(graph.nb_nodes());
 		let distances = vec![0; size * size];
 		let mut dm = DistanceMatrix {
 			matrix: distances,
@@ -118,16 +122,16 @@ impl DistanceMatrix {
 				// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
 				if distance < max_tick && distance != 0 {
 					let difference = max_tick - distance + 1;
-					sum += (difference as f64) / (distance as f64); // Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
-					reachables += difference as u64;
+					sum += f64::from(difference) / f64::from(distance); // Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
+					reachables += u64::from(difference);
 				}
 			}
 		}
 
 		// Normalise the sum
-		sum -= self.nb_nodes() as f64 * max_tick as f64;
-		sum /= max_tick as f64 * (self.nb_nodes() * (self.nb_nodes() - 1)) as f64;
-		reachables -= self.nb_nodes() as u64 * max_tick as u64;
+		sum -= f64::from(self.nb_nodes()) * f64::from(max_tick);
+		sum /= f64::from(max_tick) * f64::from(self.nb_nodes() * (self.nb_nodes() - 1));
+		reachables -= u64::from(self.nb_nodes()) * u64::from(max_tick);
 
 		return (sum, reachables);
 	}
@@ -139,10 +143,11 @@ impl DistanceMatrix {
 				let distance = self[(i, j)];
 				let distance_to_str = if distance == Tick::MAX || distance == 0 {
 					"∞".to_string()
-				} else {
+				}
+				else {
 					distance.to_string()
 				};
-				print!("{} ", distance_to_str);
+				print!("{distance_to_str} ");
 			}
 			println!();
 		}
@@ -181,16 +186,17 @@ impl std::ops::IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 
 impl DistanceMatrixArray {
 	pub fn fill_1_on_diagonals(&mut self) {
-		for t in 0..self.max_tick as Tick {
-			for i in 0..self.nb_nodes as Node {
+		for t in 0..self.max_tick {
+			for i in 0..self.nb_nodes {
 				self[(t, i, i)] = 1;
 			}
 		}
 	}
 
 	pub fn maxed(nb_nodes: Node, max_tick: Tick) -> Self {
-		let size = nb_nodes as usize;
-		let distances = vec![Tick::MAX; size * size * max_tick as usize];
+		let size = usize::from(nb_nodes);
+		let max_tick_usize = usize::from(max_tick);
+		let distances = vec![Tick::MAX; size * size * max_tick_usize];
 		let mut dma = Self {
 			distances,
 			nb_nodes,
@@ -201,8 +207,9 @@ impl DistanceMatrixArray {
 	}
 
 	pub fn zeroed(nb_nodes: Node, max_tick: Tick) -> Self {
-		let size = nb_nodes as usize;
-		let distances = vec![0; size * size * max_tick as usize];
+		let size = usize::from(nb_nodes);
+		let max_tick_usize = usize::from(max_tick);
+		let distances = vec![0; size * size * max_tick_usize];
 		let mut dma = Self {
 			distances,
 			nb_nodes,
@@ -217,7 +224,7 @@ impl DistanceMatrixArray {
 		for t in 0..max_tick {
 			for i in 0..dst_matrix.nb_nodes() {
 				for j in 0..dst_matrix.nb_nodes() {
-					new_matrix[(t, i as Node, j as Node)] = dst_matrix[(i, j)];
+					new_matrix[(t, i, j)] = dst_matrix[(i, j)];
 				}
 			}
 		}
@@ -247,33 +254,34 @@ impl DistanceMatrixArray {
 					let distance = self[(t, i, j)];
 					// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
 					if distance.saturating_add(t) <= max_tick && distance != 0 {
-						sum += 1.0 / (distance as f64);
+						sum += 1.0 / f64::from(distance);
 						reachables += 1;
 					}
 				}
 			}
 		}
 		// Normalise the sum
-		sum -= self.nb_nodes as f64 * max_tick as f64;
-		sum /= max_tick as f64 * (self.nb_nodes * (self.nb_nodes - 1)) as f64;
-		reachables -= self.nb_nodes as u64 * max_tick as u64;
+		sum -= f64::from(self.nb_nodes) * f64::from(max_tick);
+		sum /= f64::from(max_tick) * f64::from(self.nb_nodes * (self.nb_nodes - 1));
+		reachables -= u64::from(self.nb_nodes) * u64::from(max_tick);
 
 		return (sum, reachables);
 	}
 
 	pub fn print(&self) {
 		for t in 0..self.max_tick {
-			println!("Time : {}", t);
+			println!("Time : {t}");
 			for i in 0..self.nb_nodes {
 				for j in 0..self.nb_nodes {
 					let distance = self[(t, i, j)];
 					let distance_to_str = if distance == Tick::MAX {
 						"∞".to_string()
-					} else {
+					}
+					else {
 						distance.to_string()
 					};
 					// Pad the string to 4 characters
-					print!("{:4} ", distance_to_str);
+					print!("{distance_to_str:4} ");
 				}
 				println!();
 			}

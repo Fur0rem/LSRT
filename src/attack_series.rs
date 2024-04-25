@@ -48,7 +48,7 @@ impl<'a> DynamicAttackSeries<'a> {
 			.map(|budget| {
 				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
 					// Open the file
-					let file_name = format!("{}{}", directory, budget);
+					let file_name = format!("{directory}{budget}");
 					let file = std::fs::File::open(file_name).unwrap();
 					let mut reader = BufReader::new(file);
 					let mut line = String::new();
@@ -95,7 +95,7 @@ impl<'a> StaticAttackSeries<'a> {
 		let results = files
 			.par_iter()
 			.map(|budget| {
-				let attack = StaticAttack::from_file_name(format!("{}{}", directory, budget), graph);
+				let attack = StaticAttack::from_file_name(format!("{directory}{budget}"), graph);
 				let efficiency = benchmark!(format!("(Static) Efficiency for {}", budget), {
 					attack.efficiency_reachables(graph)
 				});
@@ -127,12 +127,10 @@ impl<'a> AttackSeries<'a> {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 
-		if line.starts_with('S') {
-			return StaticAttackSeries::efficiencies_reachables(directory, files, graph);
-		} else if line.starts_with('D') {
-			return DynamicAttackSeries::efficiencies_reachables(directory, files, graph);
-		} else {
-			panic!("Invalid attack file");
+		match line.chars().next().expect("Empty attack file") {
+			'S' => StaticAttackSeries::efficiencies_reachables(directory, files, graph),
+			'D' => DynamicAttackSeries::efficiencies_reachables(directory, files, graph),
+			_ => panic!("Invalid attack file"),
 		}
 	}
 }

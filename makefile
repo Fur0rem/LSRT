@@ -6,6 +6,9 @@ rust:
 	rm -f lsrt
 	cargo build --release && mv target/release/lsrt lsrt
 
+doc :
+	cargo +nightly fmt && rm -r docs/code_documentation/doc && cargo doc --target-dir docs/code_documentation/ --no-deps --open
+
 TARGET := lsrt
 DEBUG := lsrt_debug
 

@@ -357,8 +357,25 @@
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-<span class="kw">use </span><span class="kw">crate</span>::graph::DijkstraState;
+<span class="kw">use </span><span class="kw">crate</span>::graph::{DijkstraInformation, DijkstraState};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
 <span class="kw">use </span><span class="kw">crate</span>::paths::{TemporalPath, TemporalSubPathsPyramid};
 <span class="kw">use </span><span class="kw">crate</span>::DeletedLink;
@@ -376,11 +393,11 @@
 	<span class="kw">pub </span>weights: Vec&lt;Tick&gt;,
 }
 
-<span class="kw">impl </span>Index&lt;usize&gt; <span class="kw">for </span>PhantomEdge {
+<span class="kw">impl </span>Index&lt;Tick&gt; <span class="kw">for </span>PhantomEdge {
 	<span class="kw">type </span>Output = Tick;
 
-	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
-		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.weights[index];
+	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Tick) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.weights[usize::from(index)];
 	}
 }
 
@@ -403,10 +420,10 @@
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PhantomEdgesMap&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub fn </span>from_graph(time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(time_graph.nb_nodes() <span class="kw">as </span>usize, <span class="prelude-val">None</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(time_graph.nb_nodes().into(), <span class="prelude-val">None</span>);
 		<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>time_graph.nodes.iter().enumerate() {
 			<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
-				edges_map[(node, neighbour.neighbour <span class="kw">as </span>usize)] = <span class="prelude-val">Some</span>(neighbour);
+				edges_map[(node, neighbour.neighbour.into())] = <span class="prelude-val">Some</span>(neighbour);
 			}
 		}
 		<span class="kw">return </span>PhantomEdgesMap { edges_map };
@@ -414,7 +431,7 @@
 
 	<span class="doccomment">/// Get the PhantomEdge from the graph from the node indexes
 	</span><span class="kw">pub fn </span>get_edge(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, from: Node, to: Node) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdge&gt; {
-		<span class="kw">let </span>edge = <span class="self">self</span>.edges_map[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)];
+		<span class="kw">let </span>edge = <span class="self">self</span>.edges_map[(from.into(), to.into())];
 		<span class="kw">return </span>edge;
 	}
 }
@@ -425,38 +442,49 @@
 		<span class="self">self</span>.nodes.len() <span class="kw">as </span>Node
 	}
 
-	<span class="kw">pub fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
+	<span class="kw">pub const fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="self">self</span>.max_tick
 	}
 
 	<span class="kw">pub fn </span>from_kind(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;DeletedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
-		<span class="kw">return </span>TimeVaryingGraph { max_tick, nodes: phantoms };
+		<span class="kw">return </span><span class="self">Self </span>{ max_tick, nodes: phantoms };
 	}
 
 	<span class="kw">pub fn </span>from_aggressive(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;DeletedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
-		<span class="kw">return </span>TimeVaryingGraph { max_tick, nodes: phantoms };
+		<span class="kw">return </span><span class="self">Self </span>{ max_tick, nodes: phantoms };
+	}
+
+	<span class="kw">pub fn </span>get_neighbours(<span class="kw-2">&amp;</span><span class="self">self</span>, node: Node) -&gt; <span class="kw-2">&amp;</span>Vec&lt;PhantomEdge&gt; {
+		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.nodes[usize::from(node)];
 	}
 }
 
-<span class="doccomment">/// Writes the information from the Dijkstra's algorithm to the DistanceMatrixArray
+<span class="doccomment">/// Writes the information from the Dijkstra's algorithm to the `DistanceMatrixArray`
 /// This function is used to avoid recomputing paths when we already have the information from previous Dijkstra's
 </span><span class="kw">pub fn </span>temporal_dijkstra_write(
 	time_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray, edges_map: <span class="kw-2">&amp;</span>PhantomEdgesMap,
 ) {
 	<span class="comment">// Initialize the distance, previous node and visited arrays
-	</span><span class="kw">let </span>max_node_index = time_graph.nb_nodes() <span class="kw">as </span>usize;
-	<span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[Tick::MAX; max_node_index];
-	<span class="kw">let </span><span class="kw-2">mut </span>prev = <span class="macro">vec!</span>[Node::MAX; max_node_index];
-	<span class="kw">let </span><span class="kw-2">mut </span>visited = <span class="macro">vec!</span>[<span class="bool-val">false</span>; max_node_index];
-	dist[start <span class="kw">as </span>usize] = <span class="number">0</span>;
+	/*let max_node_index = time_graph.nb_nodes() as usize;
+	let mut dist = vec![Tick::MAX; max_node_index];
+	let mut prev = vec![Node::MAX; max_node_index];
+	let mut visited = vec![false; max_node_index];
+	dist[start as usize] = 0;
+	let mut heap = BinaryHeap::new();
+	heap.push(DijkstraState { node: start, distance: 0 });*/
+
+	</span><span class="kw">let </span><span class="kw-2">mut </span>dist = DijkstraInformation::new(Tick::MAX, time_graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>prev = DijkstraInformation::new(Node::MAX, time_graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>visited = DijkstraInformation::new(<span class="bool-val">false</span>, time_graph.nb_nodes());
 	<span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
+	dist[start] = <span class="number">0</span>;
 	heap.push(DijkstraState { node: start, distance: <span class="number">0 </span>});
 
 	<span class="comment">// Dijkstra's algorithm
 	</span><span class="kw">while let </span><span class="prelude-val">Some</span>(DijkstraState { node, distance }) = heap.pop() {
-		<span class="kw">if </span>visited[node <span class="kw">as </span>usize] {
+		<span class="kw">if </span>visited[node] {
 			<span class="kw">continue</span>;
 		}
 		<span class="kw">if </span>node == end {
@@ -469,17 +497,17 @@
 		<span class="kw">if </span>node != start {
 			dma[(time_start, start, node)] = distance;
 		}
-		visited[node <span class="kw">as </span>usize] = <span class="bool-val">true</span>;
-		<span class="kw">for </span>phantom_edge <span class="kw">in </span><span class="kw-2">&amp;</span>time_graph.nodes[node <span class="kw">as </span>usize] {
+		visited[node] = <span class="bool-val">true</span>;
+		<span class="kw">for </span>phantom_edge <span class="kw">in </span>time_graph.get_neighbours(node) {
 			<span class="kw">let </span>neighbour = <span class="kw-2">&amp;</span>phantom_edge.neighbour;
-			<span class="kw">let </span>weight = phantom_edge[distance <span class="kw">as </span>usize + time_start <span class="kw">as </span>usize];
+			<span class="kw">let </span>weight = phantom_edge[distance + time_start];
 			<span class="kw">if </span>weight == Tick::MAX {
 				<span class="kw">continue</span>;
 			}
 			<span class="kw">let </span>new_distance = distance + weight;
-			<span class="kw">if </span>new_distance &lt; dist[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] {
-				dist[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] = new_distance;
-				prev[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] = node;
+			<span class="kw">if </span>new_distance &lt; dist[<span class="kw-2">*</span>neighbour] {
+				dist[<span class="kw-2">*</span>neighbour] = new_distance;
+				prev[<span class="kw-2">*</span>neighbour] = node;
 				heap.push(DijkstraState {
 					node: <span class="kw-2">*</span>neighbour,
 					distance: new_distance,
@@ -489,7 +517,7 @@
 	}
 
 	<span class="comment">// Write all the information you can get from the Dijkstra's algorithm to the DistanceMatrixArray
-	</span><span class="kw">if </span>dist[end <span class="kw">as </span>usize] == Tick::MAX {
+	</span><span class="kw">if </span>dist[end] == Tick::MAX {
 		dma[(time_start, start, end)] = Tick::MAX;
 		<span class="kw">return</span>;
 	}
@@ -497,7 +525,7 @@
 	</span><span class="kw">let </span><span class="kw-2">mut </span>node = end;
 	<span class="kw">let </span><span class="kw-2">mut </span>steps = <span class="macro">vec!</span>[];
 	<span class="kw">while </span>node != start {
-		<span class="kw">let </span>prev_node = prev[node <span class="kw">as </span>usize];
+		<span class="kw">let </span>prev_node = prev[node];
 		<span class="kw">if </span>prev_node == Node::MAX {
 			<span class="kw">break</span>;
 		}
@@ -505,7 +533,7 @@
 		<span class="kw">let </span>neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: phantom_edge[(dist[prev_node <span class="kw">as </span>usize] + time_start <span class="kw">as </span>Tick) <span class="kw">as </span>usize],
+			weight: phantom_edge[dist[prev_node] + time_start],
 		});
 		node = prev_node;
 	}
@@ -526,6 +554,8 @@
 <span class="doccomment">/// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
 </span><span class="kw">pub fn </span>create_phantom_edges(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;DeletedLink&gt;, delta: u8) -&gt; Vec&lt;Vec&lt;PhantomEdge&gt;&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>phantoms = <span class="macro">vec!</span>[];
+	<span class="kw">let </span>max_tick = usize::from(max_tick);
+	<span class="kw">let </span>delta = usize::from(delta);
 
 	<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>graph.edges.iter().enumerate() {
 		<span class="kw">let </span><span class="kw-2">mut </span>edges = <span class="macro">vec!</span>[];
@@ -533,14 +563,14 @@
 		<span class="comment">// For all the edges, we create a phantom edge
 		</span><span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
 			<span class="kw">let </span>weight = neighbour.weight;
-			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick <span class="kw">as </span>usize];
+			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick];
 			<span class="kw">for </span>deleted_edge <span class="kw">in </span>deleted_edges {
 				<span class="kw">if </span>deleted_edge.from == node <span class="kw">as </span>Node &amp;&amp; deleted_edge.to == neighbour.node {
 					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>deleted_edge.times {
-						<span class="kw">let </span>t = <span class="kw-2">*</span>t <span class="kw">as </span>usize;
-						<span class="kw">let </span>t_with_delta = t * delta <span class="kw">as </span>usize;
-						<span class="kw">for </span>td <span class="kw">in </span>t_with_delta..t_with_delta + delta <span class="kw">as </span>usize {
-							<span class="kw">if </span>td &lt; max_tick <span class="kw">as </span>usize {
+						<span class="kw">let </span>t: usize = (<span class="kw-2">*</span>t).into();
+						<span class="kw">let </span>t_with_delta = t * delta;
+						<span class="kw">for </span>td <span class="kw">in </span>t_with_delta..t_with_delta + delta {
+							<span class="kw">if </span>td &lt; max_tick {
 								weights[td] = <span class="number">0</span>;
 							}
 						}
@@ -549,7 +579,7 @@
 					<span class="kw">if </span>weights[last_elem_idx] == <span class="number">0 </span>{
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					<span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..max_tick <span class="kw">as </span>usize - <span class="number">1</span>).rev() {
+					<span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..max_tick - <span class="number">1</span>).rev() {
 						<span class="kw">if </span>weights[i] == <span class="number">0 </span>{
 							weights[i] = weights[i + <span class="number">1</span>].saturating_add(<span class="number">1</span>);
 						}
@@ -580,20 +610,21 @@
 		<span class="comment">// For all the edges, we create a phantom edge
 		</span><span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
 			<span class="kw">let </span>weight = neighbour.weight;
-			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick <span class="kw">as </span>usize];
+			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick.into()];
 			<span class="kw">for </span>deleted_edge <span class="kw">in </span>deleted_edges {
 				<span class="kw">if </span>deleted_edge.from == node <span class="kw">as </span>Node &amp;&amp; deleted_edge.to == neighbour.node {
 					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>deleted_edge.times {
-						<span class="kw">let </span>t = <span class="kw-2">*</span>t <span class="kw">as </span>usize;
-						<span class="kw">let </span>t_with_delta = t * delta <span class="kw">as </span>usize;
-						<span class="kw">for </span>td <span class="kw">in </span>t_with_delta..t_with_delta + delta <span class="kw">as </span>usize {
-							<span class="kw">if </span>td &lt; max_tick <span class="kw">as </span>usize {
+						<span class="kw">let </span>t: usize = (<span class="kw-2">*</span>t).into();
+						<span class="kw">let </span>delta: usize = delta.into();
+						<span class="kw">let </span>t_with_delta = t * delta;
+						<span class="kw">for </span>td <span class="kw">in </span>t_with_delta..t_with_delta + delta {
+							<span class="kw">if </span>td &lt; max_tick.into() {
 								weights[td] = <span class="number">0</span>;
 							}
 						}
 					}
 					<span class="comment">// For all the elements in the array, see if we have time to get through (more non-zero elements in a row than weight)
-					</span><span class="kw">let </span><span class="kw-2">mut </span>i = max_tick <span class="kw">as </span>usize - <span class="number">1</span>;
+					</span><span class="kw">let </span><span class="kw-2">mut </span>i = usize::from(max_tick - <span class="number">1</span>);
 					<span class="kw">while </span>i &gt; <span class="number">0 </span>{
 						<span class="kw">if </span>weights[i] != <span class="number">0 </span>{
 							<span class="kw">let </span><span class="kw-2">mut </span>j = i;
@@ -602,7 +633,7 @@
 								count += <span class="number">1</span>;
 								j -= <span class="number">1</span>;
 							}
-							<span class="kw">if </span>count &lt; weight <span class="kw">as </span>usize {
+							<span class="kw">if </span>count &lt; weight.into() {
 								<span class="kw">for </span>k <span class="kw">in </span>j..=i {
 									weights[k] = <span class="number">0</span>;
 								}
@@ -619,7 +650,7 @@
 					<span class="kw">if </span>weights[last_elem_idx] == <span class="number">0 </span>{
 						weights[last_elem_idx] = Tick::MAX;
 					}
-					<span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..max_tick <span class="kw">as </span>usize - <span class="number">1</span>).rev() {
+					<span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..usize::from(max_tick - <span class="number">1</span>)).rev() {
 						<span class="kw">if </span>weights[i] == <span class="number">0 </span>{
 							weights[i] = weights[i + <span class="number">1</span>].saturating_add(<span class="number">1</span>);
 						}
@@ -651,17 +682,20 @@
 	time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph, start: Node, end: Node, time_start: Tick, edges_map: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>PhantomEdgesMap,
 ) -&gt; TemporalPath&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="comment">// Initialize the distance, previous node and visited arrays
-	</span><span class="kw">let </span>max_node_index = time_graph.nb_nodes() <span class="kw">as </span>usize;
-	<span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[Tick::MAX; max_node_index];
-	<span class="kw">let </span><span class="kw-2">mut </span>prev = <span class="macro">vec!</span>[Node::MAX; max_node_index];
-	<span class="kw">let </span><span class="kw-2">mut </span>visited = <span class="macro">vec!</span>[<span class="bool-val">false</span>; max_node_index];
-	dist[start <span class="kw">as </span>usize] = <span class="number">0</span>;
+	/*let max_node_index = time_graph.nb_nodes() as usize;
+	let mut dist = vec![Tick::MAX; max_node_index];
+	let mut prev = vec![Node::MAX; max_node_index];
+	let mut visited = vec![false; max_node_index];*/
+	</span><span class="kw">let </span><span class="kw-2">mut </span>dist = DijkstraInformation::new(Tick::MAX, time_graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>prev = DijkstraInformation::new(Node::MAX, time_graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>visited = DijkstraInformation::new(<span class="bool-val">false</span>, time_graph.nb_nodes());
+	dist[start] = <span class="number">0</span>;
 	<span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
 	heap.push(DijkstraState { node: start, distance: <span class="number">0 </span>});
 
 	<span class="comment">// Dijkstra's algorithm
 	</span><span class="kw">while let </span><span class="prelude-val">Some</span>(DijkstraState { node, distance }) = heap.pop() {
-		<span class="kw">if </span>visited[node <span class="kw">as </span>usize] {
+		<span class="kw">if </span>visited[node] {
 			<span class="kw">continue</span>;
 		}
 		<span class="kw">if </span>node == end {
@@ -670,17 +704,17 @@
 		<span class="kw">if </span>distance.saturating_add(time_start) &gt;= time_graph.max_tick {
 			<span class="kw">break</span>;
 		}
-		visited[node <span class="kw">as </span>usize] = <span class="bool-val">true</span>;
-		<span class="kw">for </span>phantom_edge <span class="kw">in </span><span class="kw-2">&amp;</span>time_graph.nodes[node <span class="kw">as </span>usize] {
+		visited[node] = <span class="bool-val">true</span>;
+		<span class="kw">for </span>phantom_edge <span class="kw">in </span><span class="kw-2">&amp;</span>time_graph.nodes[usize::from(node)] {
 			<span class="kw">let </span>neighbour = <span class="kw-2">&amp;</span>phantom_edge.neighbour;
-			<span class="kw">let </span>weight = phantom_edge[distance <span class="kw">as </span>usize + time_start <span class="kw">as </span>usize];
+			<span class="kw">let </span>weight = phantom_edge[distance + time_start];
 			<span class="kw">if </span>weight == Tick::MAX {
 				<span class="kw">continue</span>;
 			}
 			<span class="kw">let </span>new_distance = distance + weight;
-			<span class="kw">if </span>new_distance &lt; dist[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] {
-				dist[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] = new_distance;
-				prev[<span class="kw-2">*</span>neighbour <span class="kw">as </span>usize] = node;
+			<span class="kw">if </span>new_distance &lt; dist[<span class="kw-2">*</span>neighbour] {
+				dist[<span class="kw-2">*</span>neighbour] = new_distance;
+				prev[<span class="kw-2">*</span>neighbour] = node;
 				heap.push(DijkstraState {
 					node: <span class="kw-2">*</span>neighbour,
 					distance: new_distance,
@@ -693,7 +727,7 @@
 	</span><span class="kw">let </span><span class="kw-2">mut </span>node = end;
 	<span class="kw">let </span><span class="kw-2">mut </span>steps = <span class="macro">vec!</span>[];
 	<span class="kw">while </span>node != start {
-		<span class="kw">let </span>prev_node = prev[node <span class="kw">as </span>usize];
+		<span class="kw">let </span>prev_node = prev[node];
 		<span class="kw">if </span>prev_node == Node::MAX {
 			<span class="kw">break</span>;
 		}
@@ -701,7 +735,7 @@
 		<span class="kw">let </span>neighbour_node = phantom_edge.neighbour;
 		steps.push(Neighbour {
 			node: neighbour_node,
-			weight: phantom_edge[(dist[prev_node <span class="kw">as </span>usize] + time_start <span class="kw">as </span>Tick) <span class="kw">as </span>usize],
+			weight: phantom_edge[dist[prev_node] + time_start],
 		});
 		node = prev_node;
 	}

@@ -476,7 +476,7 @@
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">1</span>].neighbour, <span class="number">2</span>);
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">1</span>][<span class="number">0</span>], <span class="number">2</span>);
 		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">0</span>][<span class="number">1</span>][<span class="number">1</span>], <span class="number">2</span>);
-		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">3</span>][<span class="number">0</span>][max_tick <span class="kw">as </span>usize - <span class="number">1</span>], Tick::MAX);
+		<span class="macro">assert_eq!</span>(phantom_edges[<span class="number">3</span>][<span class="number">0</span>][max_tick - <span class="number">1</span>], Tick::MAX);
 	}
 
 	<span class="attr">#[test]
@@ -681,7 +681,7 @@
 		};
 
 		dm_static.print();
-		dm_dynamic.print(max_tick);
+		dm_dynamic.print();
 
 		<span class="macro">println!</span>(<span class="string">"Efficiency dynamic: {}"</span>, efficiency_dynamic);
 		<span class="macro">println!</span>(<span class="string">"Efficiency static: {}"</span>, efficiency_static);
@@ -787,7 +787,7 @@
 		<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>tvg);
 		<span class="kw">let </span>dst_mat = graph.all_pairs_distances();
 		<span class="comment">//dst_mat.print();
-		</span><span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated_and_infinitied(<span class="kw-2">&amp;</span>dst_mat, max_tick);
+		</span><span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated(<span class="kw-2">&amp;</span>dst_mat, max_tick);
 		<span class="comment">//dma.print(tvg.max_tick());
 		</span><span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(graph.nb_nodes().into(), <span class="bool-val">false</span>);
 		path.invalidate_path(<span class="kw-2">&amp;</span>tvg, <span class="kw-2">&amp;mut </span>already_done, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>dst_mat, <span class="kw-2">&amp;</span>edges_map);

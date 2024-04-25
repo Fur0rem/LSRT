@@ -289,11 +289,6 @@
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
 <a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices and distance matrix arrays to compute distances in graphs.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::graph::Graph;
@@ -311,28 +306,28 @@
 
 <span class="kw">impl</span>&lt;T&gt; SquareMatrix&lt;T&gt; {
 	<span class="doccomment">/// Returns the dimension of the square matrix
-	</span><span class="kw">pub fn </span>dim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+	</span><span class="kw">pub const fn </span>dim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
 		<span class="self">self</span>.dim
 	}
 
 	<span class="doccomment">/// Returns a new square matrix with the default value of the type
-	</span><span class="kw">pub fn </span>default(dim: usize) -&gt; SquareMatrix&lt;T&gt;
-	<span class="kw">where
+	</span><span class="kw">pub fn </span>default(dim: usize) -&gt; <span class="self">Self
+	</span><span class="kw">where
 		</span>T: Default + Clone,
 	{
 		<span class="kw">let </span>size = dim * dim;
 		<span class="kw">let </span>matrix = <span class="macro">vec!</span>[T::default(); size];
-		<span class="kw">return </span>SquareMatrix { matrix, dim };
+		<span class="kw">return </span><span class="self">Self </span>{ matrix, dim };
 	}
 
 	<span class="doccomment">/// Returns a new square matrix a value specified by the user
-	</span><span class="kw">pub fn </span>new(dim: usize, default_value: T) -&gt; SquareMatrix&lt;T&gt;
-	<span class="kw">where
+	</span><span class="kw">pub fn </span>new(dim: usize, default_value: T) -&gt; <span class="self">Self
+	</span><span class="kw">where
 		</span>T: Clone,
 	{
 		<span class="kw">let </span>size = dim * dim;
 		<span class="kw">let </span>matrix = <span class="macro">vec!</span>[default_value; size];
-		<span class="kw">return </span>SquareMatrix { matrix, dim };
+		<span class="kw">return </span><span class="self">Self </span>{ matrix, dim };
 	}
 }
 
@@ -357,13 +352,17 @@
 	<span class="kw">type </span>Output = Tick;
 
 	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: (Node, Node)) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
-		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.matrix[index.<span class="number">0 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim + index.<span class="number">1 </span><span class="kw">as </span>usize];
+		<span class="kw">let </span>node_from = usize::from(index.<span class="number">0</span>);
+		<span class="kw">let </span>node_to = usize::from(index.<span class="number">1</span>);
+		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.matrix[node_from * <span class="self">self</span>.dim + node_to];
 	}
 }
 
 <span class="kw">impl </span>IndexMut&lt;(Node, Node)&gt; <span class="kw">for </span>DistanceMatrix {
 	<span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: (Node, Node)) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Output {
-		<span class="kw">return </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.matrix[index.<span class="number">0 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim + index.<span class="number">1 </span><span class="kw">as </span>usize];
+		<span class="kw">let </span>node_from = usize::from(index.<span class="number">0</span>);
+		<span class="kw">let </span>node_to = usize::from(index.<span class="number">1</span>);
+		<span class="kw">return </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.matrix[node_from * <span class="self">self</span>.dim + node_to];
 	}
 }
 
@@ -375,9 +374,13 @@
 		}
 	}
 
+	<span class="kw">pub const fn </span>nb_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Node {
+		<span class="self">self</span>.dim <span class="kw">as </span>Node
+	}
+
 	<span class="doccomment">/// Returns the distance matrix with all distances set to the maximum value and the diagonal set to 1
-	</span><span class="kw">pub fn </span>maxed(graph: <span class="kw-2">&amp;</span>Graph) -&gt; DistanceMatrix {
-		<span class="kw">let </span>size = graph.nb_nodes() <span class="kw">as </span>usize;
+	</span><span class="kw">pub fn </span>maxed(graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>size = usize::from(graph.nb_nodes());
 		<span class="kw">let </span>distances = <span class="macro">vec!</span>[Tick::MAX; size * size];
 		<span class="kw">let </span><span class="kw-2">mut </span>dm = DistanceMatrix {
 			matrix: distances,
@@ -388,8 +391,8 @@
 	}
 
 	<span class="doccomment">/// Returns the distance matrix with all distances set to 0 and the diagonal set to 1
-	</span><span class="kw">pub fn </span>zeroed(graph: <span class="kw-2">&amp;</span>Graph) -&gt; DistanceMatrix {
-		<span class="kw">let </span>size = graph.nb_nodes() <span class="kw">as </span>usize;
+	</span><span class="kw">pub fn </span>zeroed(graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span>size = usize::from(graph.nb_nodes());
 		<span class="kw">let </span>distances = <span class="macro">vec!</span>[<span class="number">0</span>; size * size];
 		<span class="kw">let </span><span class="kw-2">mut </span>dm = DistanceMatrix {
 			matrix: distances,
@@ -404,38 +407,38 @@
 	</span><span class="kw">pub fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, max_tick: Tick) -&gt; (f64, u64) {
 		<span class="kw">let </span><span class="kw-2">mut </span>sum = <span class="number">0.0</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>reachables = <span class="number">0</span>;
-		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim {
-			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim {
-				<span class="kw">let </span>distance = <span class="self">self</span>[(i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
+		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes() {
+			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes() {
+				<span class="kw">let </span>distance = <span class="self">self</span>[(i, j)];
 				<span class="comment">// If the distance is 0 or the distance is greater than the max time -&gt; 1/infinity = 0
 				</span><span class="kw">if </span>distance &lt; max_tick &amp;&amp; distance != <span class="number">0 </span>{
 					<span class="kw">let </span>difference = max_tick - distance + <span class="number">1</span>;
-					sum += (difference <span class="kw">as </span>f64) / (distance <span class="kw">as </span>f64); <span class="comment">// Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
-					</span>reachables += difference <span class="kw">as </span>u64;
+					sum += f64::from(difference) / f64::from(distance); <span class="comment">// Sum from 1 to max_tick of 1/distance = (max_tick - distance)/distance
+					</span>reachables += u64::from(difference);
 				}
 			}
 		}
 
 		<span class="comment">// Normalise the sum
-		</span>sum -= <span class="self">self</span>.dim <span class="kw">as </span>f64 * max_tick <span class="kw">as </span>f64;
-		sum /= max_tick <span class="kw">as </span>f64 * (<span class="self">self</span>.dim * (<span class="self">self</span>.dim - <span class="number">1</span>)) <span class="kw">as </span>f64;
-		reachables -= <span class="self">self</span>.dim <span class="kw">as </span>u64 * max_tick <span class="kw">as </span>u64;
+		</span>sum -= f64::from(<span class="self">self</span>.nb_nodes()) * f64::from(max_tick);
+		sum /= f64::from(max_tick) * f64::from(<span class="self">self</span>.nb_nodes() * (<span class="self">self</span>.nb_nodes() - <span class="number">1</span>));
+		reachables -= u64::from(<span class="self">self</span>.nb_nodes()) * u64::from(max_tick);
 
 		<span class="kw">return </span>(sum, reachables);
 	}
 
 	<span class="doccomment">/// Prints the distance matrix
 	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim {
-			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim {
-				<span class="kw">let </span>distance = <span class="self">self</span>[(i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
+		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes() {
+			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes() {
+				<span class="kw">let </span>distance = <span class="self">self</span>[(i, j)];
 				<span class="kw">let </span>distance_to_str = <span class="kw">if </span>distance == Tick::MAX || distance == <span class="number">0 </span>{
 					<span class="string">"∞"</span>.to_string()
 				}
 				<span class="kw">else </span>{
 					distance.to_string()
 				};
-				<span class="macro">print!</span>(<span class="string">"{} "</span>, distance_to_str);
+				<span class="macro">print!</span>(<span class="string">"{distance_to_str} "</span>);
 			}
 			<span class="macro">println!</span>();
 		}
@@ -446,7 +449,7 @@
 </span><span class="kw">pub struct </span>DistanceMatrixArray {
 	<span class="comment">// 3D array of distance matrices flattened
 	</span><span class="kw">pub </span>distances: Vec&lt;Tick&gt;,
-	dim: usize,
+	nb_nodes: Node,
 	<span class="kw">pub </span>max_tick: Tick,
 }
 
@@ -454,31 +457,40 @@
 	<span class="kw">type </span>Output = Tick;
 
 	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: (Tick, Node, Node)) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
-		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.distances[index.<span class="number">0 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim * <span class="self">self</span>.dim + index.<span class="number">1 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim + index.<span class="number">2 </span><span class="kw">as </span>usize];
+		<span class="kw">let </span>dim = usize::from(<span class="self">self</span>.nb_nodes);
+		<span class="kw">let </span>time = usize::from(index.<span class="number">0</span>);
+		<span class="kw">let </span>node_from = usize::from(index.<span class="number">1</span>);
+		<span class="kw">let </span>node_to = usize::from(index.<span class="number">2</span>);
+		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.distances[time * dim * dim + node_from * dim + node_to];
 	}
 }
 
 <span class="kw">impl </span>std::ops::IndexMut&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
 	<span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: (Tick, Node, Node)) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Output {
-		<span class="kw">return </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.distances[index.<span class="number">0 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim * <span class="self">self</span>.dim + index.<span class="number">1 </span><span class="kw">as </span>usize * <span class="self">self</span>.dim + index.<span class="number">2 </span><span class="kw">as </span>usize];
+		<span class="kw">let </span>dim = usize::from(<span class="self">self</span>.nb_nodes);
+		<span class="kw">let </span>time = usize::from(index.<span class="number">0</span>);
+		<span class="kw">let </span>node_from = usize::from(index.<span class="number">1</span>);
+		<span class="kw">let </span>node_to = usize::from(index.<span class="number">2</span>);
+		<span class="kw">return </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.distances[time * dim * dim + node_from * dim + node_to];
 	}
 }
 
 <span class="kw">impl </span>DistanceMatrixArray {
 	<span class="kw">pub fn </span>fill_1_on_diagonals(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick <span class="kw">as </span>Tick {
-			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.dim <span class="kw">as </span>Node {
+		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
+			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
 				<span class="self">self</span>[(t, i, i)] = <span class="number">1</span>;
 			}
 		}
 	}
 
 	<span class="kw">pub fn </span>maxed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span>size = nb_nodes <span class="kw">as </span>usize;
-		<span class="kw">let </span>distances = <span class="macro">vec!</span>[Tick::MAX; size * size * max_tick <span class="kw">as </span>usize];
-		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray {
+		<span class="kw">let </span>size = usize::from(nb_nodes);
+		<span class="kw">let </span>max_tick_usize = usize::from(max_tick);
+		<span class="kw">let </span>distances = <span class="macro">vec!</span>[Tick::MAX; size * size * max_tick_usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>dma = <span class="self">Self </span>{
 			distances,
-			dim: size,
+			nb_nodes,
 			max_tick,
 		};
 		dma.fill_1_on_diagonals();
@@ -486,11 +498,12 @@
 	}
 
 	<span class="kw">pub fn </span>zeroed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span>size = nb_nodes <span class="kw">as </span>usize;
-		<span class="kw">let </span>distances = <span class="macro">vec!</span>[<span class="number">0</span>; size * size * max_tick <span class="kw">as </span>usize];
-		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray {
+		<span class="kw">let </span>size = usize::from(nb_nodes);
+		<span class="kw">let </span>max_tick_usize = usize::from(max_tick);
+		<span class="kw">let </span>distances = <span class="macro">vec!</span>[<span class="number">0</span>; size * size * max_tick_usize];
+		<span class="kw">let </span><span class="kw-2">mut </span>dma = <span class="self">Self </span>{
 			distances,
-			dim: size,
+			nb_nodes,
 			max_tick,
 		};
 		dma.fill_1_on_diagonals();
@@ -498,42 +511,21 @@
 	}
 
 	<span class="kw">pub fn </span>propagated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span><span class="kw-2">mut </span>new_matrix = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
+		<span class="kw">let </span><span class="kw-2">mut </span>new_matrix = <span class="self">Self</span>::zeroed(dst_matrix.nb_nodes(), max_tick);
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
-			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() {
-				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() {
-					new_matrix[(t, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)] = dst_matrix[(i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
+			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
+				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
+					new_matrix[(t, i, j)] = dst_matrix[(i, j)];
 				}
 			}
 		}
 		<span class="kw">return </span>new_matrix;
 	}
 
-	<span class="kw">pub fn </span>propagated_and_infinitied(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
-		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
-			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
-				<span class="comment">/*let weight = dst_matrix[(i, j)];
-				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(1);
-				for t in 0..max_tick_reachable {
-					dma[(t, i, j)] = weight;
-				}
-				for t in max_tick_reachable..max_tick {
-					dma[(t, i, j)] = Tick::MAX;
-				}*/
-				</span><span class="kw">let </span>weight = dst_matrix[(i, j)];
-				<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
-					dma[(t, i, j)] = weight;
-				}
-			}
-		}
-		<span class="kw">return </span>dma;
-	}
-
 	<span class="kw">pub fn </span>propagated_and_unvalidated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::zeroed(dst_matrix.dim() <span class="kw">as </span>Node, max_tick);
-		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
-			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.dim() <span class="kw">as </span>Node {
+		<span class="kw">let </span><span class="kw-2">mut </span>dma = <span class="self">Self</span>::zeroed(dst_matrix.nb_nodes(), max_tick);
+		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
+			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
 				<span class="kw">let </span>weight = dst_matrix[(i, j)];
 				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(<span class="number">2</span>);
 				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
@@ -547,34 +539,32 @@
 	<span class="kw">pub fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, max_tick: Tick) -&gt; (f64, u64) {
 		<span class="kw">let </span><span class="kw-2">mut </span>sum = <span class="number">0.0</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>reachables = <span class="number">0</span>;
-		<span class="kw">let </span>distances_len = (<span class="self">self</span>.distances.len() <span class="kw">as </span>f64 / max_tick <span class="kw">as </span>f64).sqrt() <span class="kw">as </span>usize;
-		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
-			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..distances_len {
-				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..distances_len {
-					<span class="kw">let </span>distance = <span class="self">self</span>[(t, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
+		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
+			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
+				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
+					<span class="kw">let </span>distance = <span class="self">self</span>[(t, i, j)];
 					<span class="comment">// If the distance is 0 or the distance is greater than the max time -&gt; 1/infinity = 0
 					</span><span class="kw">if </span>distance.saturating_add(t) &lt;= max_tick &amp;&amp; distance != <span class="number">0 </span>{
-						sum += <span class="number">1.0 </span>/ (distance <span class="kw">as </span>f64);
+						sum += <span class="number">1.0 </span>/ f64::from(distance);
 						reachables += <span class="number">1</span>;
 					}
 				}
 			}
 		}
 		<span class="comment">// Normalise the sum
-		</span>sum -= distances_len <span class="kw">as </span>f64 * max_tick <span class="kw">as </span>f64;
-		sum /= max_tick <span class="kw">as </span>f64 * (distances_len * (distances_len - <span class="number">1</span>)) <span class="kw">as </span>f64;
-		reachables -= distances_len <span class="kw">as </span>u64 * max_tick <span class="kw">as </span>u64;
+		</span>sum -= f64::from(<span class="self">self</span>.nb_nodes) * f64::from(max_tick);
+		sum /= f64::from(max_tick) * f64::from(<span class="self">self</span>.nb_nodes * (<span class="self">self</span>.nb_nodes - <span class="number">1</span>));
+		reachables -= u64::from(<span class="self">self</span>.nb_nodes) * u64::from(max_tick);
 
 		<span class="kw">return </span>(sum, reachables);
 	}
 
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>, max_tick: Tick) {
-		<span class="kw">let </span>distances_len = (<span class="self">self</span>.distances.len() <span class="kw">as </span>f64 / max_tick <span class="kw">as </span>f64).sqrt() <span class="kw">as </span>usize;
-		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
-			<span class="macro">println!</span>(<span class="string">"Time : {}"</span>, t);
-			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..distances_len {
-				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..distances_len {
-					<span class="kw">let </span>distance = <span class="self">self</span>[(t, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node)];
+	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
+			<span class="macro">println!</span>(<span class="string">"Time : {t}"</span>);
+			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
+				<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
+					<span class="kw">let </span>distance = <span class="self">self</span>[(t, i, j)];
 					<span class="kw">let </span>distance_to_str = <span class="kw">if </span>distance == Tick::MAX {
 						<span class="string">"∞"</span>.to_string()
 					}
@@ -582,7 +572,7 @@
 						distance.to_string()
 					};
 					<span class="comment">// Pad the string to 4 characters
-					</span><span class="macro">print!</span>(<span class="string">"{:4} "</span>, distance_to_str);
+					</span><span class="macro">print!</span>(<span class="string">"{distance_to_str:4} "</span>);
 				}
 				<span class="macro">println!</span>();
 			}

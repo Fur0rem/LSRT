@@ -135,19 +135,13 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Optimised implementation of computing the efficiency of multiple attacks.
 
-</span><span class="kw">use </span>std::io::BufRead;
+</span><span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::io::{BufRead, BufReader};
 
 <span class="kw">use </span><span class="kw">crate</span>::benchmark;
 <span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::PhantomEdgesMap;
-<span class="kw">use </span><span class="kw">crate</span>::Node;
 <span class="kw">use crate</span>::{
 	distance_matrix::DistanceMatrixArray,
 	graph::Graph,
@@ -170,8 +164,8 @@
 	</span><span class="kw">pub fn </span>efficiencies_reachables(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="comment">// Read the first file to get the max time
 		</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, files[<span class="number">0</span>]);
-		<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-		<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+		<span class="kw">let </span>file = File::open(file_name).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 		line.clear();
@@ -186,14 +180,14 @@
 		// We invalidate all the paths except those who took more than max_tick to reach the destination
 		</span><span class="kw">let </span>dma = DistanceMatrixArray::propagated_and_unvalidated(<span class="kw-2">&amp;</span>dst_mat, max_tick);
 
-		files
+		<span class="kw">let </span>results = files
 			.par_iter()
 			.map(|budget| {
 				<span class="macro">benchmark!</span>(<span class="macro">format!</span>(<span class="string">"(Dynamic) Recomputing distances for {}"</span>, budget), {
 					<span class="comment">// Open the file
-					</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, budget);
+					</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{directory}{budget}"</span>);
 					<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-					<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+					<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 					<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 					reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 
@@ -203,7 +197,7 @@
 					<span class="kw">let </span>time_graph = graph_to_temporal(graph, max_tick, <span class="kw-2">&amp;</span>attack.blocked_links(), attack.delta());
 					<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>time_graph);
 					<span class="comment">// Early drop of the attack to free memory
-					</span>std::mem::drop(attack);
+					</span>core::mem::drop(attack);
 					<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_graph.max_tick() {
 						<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..time_graph.nb_nodes() {
 							<span class="comment">// Doing the j in reverse seems to improve slightly the performance
@@ -211,18 +205,20 @@
 							</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
 								<span class="comment">// Not 0 -&gt; already computed
 								</span><span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
-									temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
+									temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i, j, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
 								}
 							}
 						}
 					}
 					<span class="kw">let </span>(efficiency, reachables) = dma.efficiency_reachables(max_tick);
-
 					std::mem::drop(dma);
+
 					(<span class="kw-2">*</span>budget, (efficiency, reachables))
 				})
 			})
-			.collect()
+			.collect();
+
+		<span class="kw">return </span>results;
 	}
 }
 
@@ -233,23 +229,19 @@
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; StaticAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub fn </span>efficiencies_reachables(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
-		files
+		<span class="kw">let </span>results = files
 			.par_iter()
 			.map(|budget| {
-				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, budget);
-				<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-				<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
-				<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
-				reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
-				<span class="kw">let </span>attack = StaticAttack::from_file(<span class="kw-2">&amp;mut </span>reader, graph);
-				(
-					<span class="kw-2">*</span>budget,
-					<span class="macro">benchmark!</span>(<span class="macro">format!</span>(<span class="string">"(Static) Efficiency for {}"</span>, budget), {
-						attack.efficiency_reachables(graph)
-					}),
-				)
+				<span class="kw">let </span>attack = StaticAttack::from_file_name(<span class="macro">format!</span>(<span class="string">"{directory}{budget}"</span>), graph);
+				<span class="kw">let </span>efficiency = <span class="macro">benchmark!</span>(<span class="macro">format!</span>(<span class="string">"(Static) Efficiency for {}"</span>, budget), {
+					attack.efficiency_reachables(graph)
+				});
+
+				(<span class="kw-2">*</span>budget, efficiency)
 			})
-			.collect()
+			.collect();
+
+		<span class="kw">return </span>results;
 	}
 }
 
@@ -267,19 +259,15 @@
 		}
 		<span class="comment">// Open the first file to check if it is a static or dynamic attack
 		</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, files[<span class="number">0</span>]);
-		<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-		<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+		<span class="kw">let </span>file = File::open(file_name).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 
-		<span class="kw">if </span>line.starts_with(<span class="string">'S'</span>) {
-			StaticAttackSeries::efficiencies_reachables(directory, files, graph)
-		}
-		<span class="kw">else if </span>line.starts_with(<span class="string">'D'</span>) {
-			DynamicAttackSeries::efficiencies_reachables(directory, files, graph)
-		}
-		<span class="kw">else </span>{
-			<span class="macro">panic!</span>(<span class="string">"Invalid attack file"</span>);
+		<span class="kw">match </span>line.chars().next().expect(<span class="string">"Empty attack file"</span>) {
+			<span class="string">'S' </span>=&gt; StaticAttackSeries::efficiencies_reachables(directory, files, graph),
+			<span class="string">'D' </span>=&gt; DynamicAttackSeries::efficiencies_reachables(directory, files, graph),
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid attack file"</span>),
 		}
 	}
 }

@@ -72,7 +72,7 @@ mod tests {
 		assert_eq!(phantom_edges[0][1].neighbour, 2);
 		assert_eq!(phantom_edges[0][1][0], 2);
 		assert_eq!(phantom_edges[0][1][1], 2);
-		assert_eq!(phantom_edges[3][0][max_tick as usize - 1], Tick::MAX);
+		assert_eq!(phantom_edges[3][0][max_tick - 1], Tick::MAX);
 	}
 
 	#[test]

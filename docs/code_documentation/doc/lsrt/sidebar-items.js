@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"macro":["benchmark"],"mod":["attack","attack_series","distance_matrix","graph","paths","tests","time_varying_graph"],"type":["Node","Tick","Time"]};
+window.SIDEBAR_ITEMS = {"constant":["FILES_DIR_NAME"],"fn":["main"],"macro":["benchmark"],"mod":["attack","attack_series","distance_matrix","graph","paths","tests","time_varying_graph"],"type":["Node","Tick","Time"]};
