@@ -141,23 +141,21 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Optimised implementation of computing the efficiency of multiple attacks.
 
-</span><span class="kw">use </span>std::{collections::HashSet, io::BufRead};
+</span><span class="kw">use </span>std::io::BufRead;
 
 <span class="kw">use </span><span class="kw">crate</span>::benchmark;
 <span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::PhantomEdgesMap;
+<span class="kw">use </span><span class="kw">crate</span>::Node;
 <span class="kw">use crate</span>::{
-	distance_matrix::{DistanceMatrixArray, SquareMatrix},
-	graph::{dijkstra, Graph},
-	paths::{Path, TemporalSubPathsPyramid},
-	time_varying_graph::{graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write},
+	distance_matrix::DistanceMatrixArray,
+	graph::Graph,
+	time_varying_graph::{graph_to_temporal, temporal_dijkstra_write},
 	Attack, DynamicAttack, StaticAttack,
 };
-<span class="kw">use crate</span>::{Node, Tick};
 
-<span class="kw">use </span>rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
+<span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 <span class="doccomment">/// A series of [`DynamicAttack`]s.
 </span><span class="kw">pub struct </span>DynamicAttackSeries&lt;<span class="lifetime">'a</span>&gt; {

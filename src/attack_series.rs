@@ -1,19 +1,18 @@
 //! Optimised implementation of computing the efficiency of multiple attacks.
 
-use std::{collections::HashSet, io::BufRead};
+use std::io::BufRead;
 
 use crate::benchmark;
 use crate::time_varying_graph::PhantomEdgesMap;
+use crate::Node;
 use crate::{
-	distance_matrix::{DistanceMatrixArray, SquareMatrix},
-	graph::{dijkstra, Graph},
-	paths::{Path, TemporalSubPathsPyramid},
-	time_varying_graph::{graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write},
+	distance_matrix::DistanceMatrixArray,
+	graph::Graph,
+	time_varying_graph::{graph_to_temporal, temporal_dijkstra_write},
 	Attack, DynamicAttack, StaticAttack,
 };
-use crate::{Node, Tick};
 
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 /// A series of [`DynamicAttack`]s.
 pub struct DynamicAttackSeries<'a> {

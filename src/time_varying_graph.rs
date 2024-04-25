@@ -5,9 +5,8 @@ use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
 use crate::DeletedLink;
 use crate::{Node, Tick};
 
-use core::time;
 use std::collections::BinaryHeap;
-use std::ops::{Index, IndexMut};
+use std::ops::Index;
 
 /// A phantom edge is used to replace a blocked edge with an edge with an equivalent weight + waiting time
 /// This allows us to remove the time dimension from the graph, and use classical algorithms on it
@@ -250,7 +249,8 @@ pub fn create_phantom_edges_aggressive(
 								}
 							}
 							i = j;
-						} else {
+						}
+						else {
 							i -= 1;
 						}
 					}

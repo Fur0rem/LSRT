@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-use crate::distance_matrix::{DistanceMatrix, SquareMatrix};
+use crate::distance_matrix::DistanceMatrix;
 use crate::paths::{Path, SubPathsPyramid};
 
 use std::collections::BinaryHeap;

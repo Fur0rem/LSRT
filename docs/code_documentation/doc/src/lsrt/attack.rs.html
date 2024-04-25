@@ -248,11 +248,11 @@
 
 <span class="kw">use </span>sscanf::scanf;
 
+<span class="kw">use </span><span class="kw">crate</span>::graph::Graph;
 <span class="kw">use crate</span>::{
 	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
 	time_varying_graph::{temporal_dijkstra_write, PhantomEdgesMap},
 };
-<span class="kw">use crate</span>::{graph::Graph, paths::TemporalSubPathsPyramid};
 <span class="kw">use crate</span>::{time_varying_graph::graph_to_temporal, Time};
 <span class="kw">use crate</span>::{Node, Tick};
 

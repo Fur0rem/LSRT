@@ -124,13 +124,8 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
-<a href="#127" id="127">127</a>
-<a href="#128" id="128">128</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
 
 </span><span class="doccomment">//! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -164,7 +159,6 @@
 <span class="kw">pub mod </span>attack_series;
 <span class="kw">use </span>attack_series::AttackSeries;
 
-<span class="kw">use </span>rayon::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>std::io::Write;
 
 <span class="kw">mod </span>tests;

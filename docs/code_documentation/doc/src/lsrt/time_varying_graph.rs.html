@@ -357,7 +357,6 @@
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::DijkstraState;
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
@@ -365,9 +364,8 @@
 <span class="kw">use </span><span class="kw">crate</span>::DeletedLink;
 <span class="kw">use crate</span>::{Node, Tick};
 
-<span class="kw">use </span>core::time;
 <span class="kw">use </span>std::collections::BinaryHeap;
-<span class="kw">use </span>std::ops::{Index, IndexMut};
+<span class="kw">use </span>std::ops::Index;
 
 <span class="doccomment">/// A phantom edge is used to replace a blocked edge with an edge with an equivalent weight + waiting time
 /// This allows us to remove the time dimension from the graph, and use classical algorithms on it

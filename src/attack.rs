@@ -13,11 +13,11 @@ use std::{
 
 use sscanf::scanf;
 
+use crate::graph::Graph;
 use crate::{
 	distance_matrix::{DistanceMatrix, DistanceMatrixArray},
 	time_varying_graph::{temporal_dijkstra_write, PhantomEdgesMap},
 };
-use crate::{graph::Graph, paths::TemporalSubPathsPyramid};
 use crate::{time_varying_graph::graph_to_temporal, Time};
 use crate::{Node, Tick};
 

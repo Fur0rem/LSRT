@@ -1,7 +1,5 @@
 #![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
-#![allow(dead_code)]
-#![allow(unused_imports)]
 
 //! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -35,7 +33,6 @@ pub mod distance_matrix;
 pub mod attack_series;
 use attack_series::AttackSeries;
 
-use rayon::prelude::*;
 use std::io::Write;
 
 mod tests;
