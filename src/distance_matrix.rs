@@ -217,13 +217,17 @@ impl DistanceMatrixArray {
 		let mut dma = DistanceMatrixArray::zeroed(dst_matrix.dim() as Node, max_tick);
 		for i in 0..dst_matrix.dim() as Node {
 			for j in 0..dst_matrix.dim() as Node {
-				let weight = dst_matrix[(i, j)];
-				let max_tick_reachable = max_tick.saturating_sub(weight);
+				/*let weight = dst_matrix[(i, j)];
+				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(1);
 				for t in 0..max_tick_reachable {
 					dma[(t, i, j)] = weight;
 				}
 				for t in max_tick_reachable..max_tick {
 					dma[(t, i, j)] = Tick::MAX;
+				}*/
+				let weight = dst_matrix[(i, j)];
+				for t in 0..max_tick {
+					dma[(t, i, j)] = weight;
 				}
 			}
 		}
@@ -235,7 +239,7 @@ impl DistanceMatrixArray {
 		for i in 0..dst_matrix.dim() as Node {
 			for j in 0..dst_matrix.dim() as Node {
 				let weight = dst_matrix[(i, j)];
-				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(1);
+				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(2);
 				for t in max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}
@@ -253,7 +257,7 @@ impl DistanceMatrixArray {
 				for j in 0..distances_len {
 					let distance = self[(t, i as Node, j as Node)];
 					// If the distance is 0 or the distance is greater than the max time -> 1/infinity = 0
-					if distance.saturating_add(t) <= max_tick && distance != 0 {
+					if distance.saturating_add(t) < max_tick && distance != 0 {
 						sum += 1.0 / (distance as f64);
 						reachables += 1;
 					}
