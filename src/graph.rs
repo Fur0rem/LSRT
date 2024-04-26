@@ -88,7 +88,8 @@ impl Graph {
 			let row_start = row_indices[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			} else {
+			}
+			else {
 				row_indices[i + 1]
 			};
 			for j in row_start..row_end {

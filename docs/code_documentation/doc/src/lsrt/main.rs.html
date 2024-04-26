@@ -140,35 +140,17 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-</pre></div><pre class="rust"><code><span class="attr">#![warn(
-	clippy::all,
-	<span class="comment">// clippy::implicit_return,
-	// clippy::restriction,
-	// clippy::pedantic,
-	// clippy::nursery,
-	// clippy::cargo,
-	// clippy::cognitive_complexity,
-	// clippy::complexity,
-</span>)]
-#![allow(clippy::needless_return)]
+</pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
-#![warn(clippy::uninlined_format_args)]
-</span><span class="comment">//#![warn(clippy::as_conversions)]
-</span><span class="attr">#![warn(clippy::cast_lossless)]
-#![warn(clippy::unnecessary_cast)]
-#![warn(clippy::self_assignment)]
-#![warn(clippy::self_named_constructors)]
-#![warn(clippy::cast_possible_wrap)]
-#![warn(clippy::unwrap_used)]
-</span><span class="comment">//#![warn(clippy::cast_precision_loss)]
+</span><span class="comment">// #![warn(clippy::uninlined_format_args)]
+//#![warn(clippy::as_conversions)]
+// #![warn(clippy::cast_lossless)]
+// #![warn(clippy::unnecessary_cast)]
+// #![warn(clippy::self_assignment)]
+// #![warn(clippy::self_named_constructors)]
+// #![warn(clippy::cast_possible_wrap)]
+// #![warn(clippy::unwrap_used)]
+//#![warn(clippy::cast_precision_loss)]
 //#![warn(clippy::as_conversions)]
 //#![warn(clippy::cast_possible_truncation)]
 //#![warn(clippy::min_ident_chars)]
@@ -291,7 +273,9 @@
 	<span class="comment">// Run all the attacks
 	</span><span class="macro">benchmark!</span>(<span class="string">"Series of attack"</span>, {
 		<span class="kw">let </span>graph = Graph::from_sparse_row_format(<span class="kw-2">&amp;</span>graph_filename).unwrap();
-		<span class="kw">let </span>results = AttackSeries::efficiencies_reachables(<span class="kw-2">&amp;</span>attack_directory, <span class="kw-2">&amp;</span>attack_files, <span class="kw-2">&amp;</span>graph);
+		<span class="comment">//let results = AttackSeries::efficiencies_reachables(&amp;attack_directory, &amp;attack_files, &amp;graph);
+		</span><span class="kw">let </span>attack_series = AttackSeries::read_attacks(<span class="kw-2">&amp;</span>attack_directory, <span class="kw-2">&amp;</span>attack_files, <span class="kw-2">&amp;</span>graph);
+		<span class="kw">let </span>results = attack_series.efficiencies_reachables();
 		<span class="kw">for </span>(budget, (efficiency, reachables)) <span class="kw">in </span>results {
 			<span class="macro">writeln!</span>(result_file, <span class="string">"{budget} {efficiency} {reachables}"</span>).unwrap();
 		}

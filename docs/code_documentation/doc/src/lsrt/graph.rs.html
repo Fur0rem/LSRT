@@ -375,6 +375,21 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::fs::File;
@@ -565,12 +580,19 @@
 
 <span class="doccomment">/// [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) to find the shortest [`Path`] between two [`Node`]s
 </span><span class="kw">pub fn </span>dijkstra(graph: <span class="kw-2">&amp;</span>Graph, start: Node, end: Node) -&gt; Path {
+	<span class="kw">if </span>start == end {
+		<span class="kw">return </span>Path {
+			graph,
+			start,
+			steps: <span class="macro">vec!</span>[Neighbour { node: start, weight: <span class="number">1 </span>}],
+		};
+	}
 	<span class="comment">// Initialize the heap with the start node, and the distances and previous vectors
 	</span><span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
 	<span class="kw">let </span><span class="kw-2">mut </span>previous = DijkstraInformation::new(<span class="prelude-val">None</span>, graph.nb_nodes());
 	<span class="kw">let </span><span class="kw-2">mut </span>distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
-	heap.push(DijkstraState { node: start, distance: <span class="number">1 </span>});
-	distances[start] = <span class="number">1</span>;
+	heap.push(DijkstraState { node: start, distance: <span class="number">0 </span>});
+	distances[start] = <span class="number">0</span>;
 
 	<span class="comment">// While there are nodes to visit, pop the node with the smallest distance
 	</span><span class="kw">while let </span><span class="prelude-val">Some</span>(DijkstraState { node, distance }) = heap.pop() {
@@ -613,10 +635,15 @@
 /// This is useful to avoid recomputing paths included in one another when computing all pairs distances
 /// This is meant to be called for every node in the graph, since it does extra calculations to avoid recomputing paths
 </span><span class="kw">pub fn </span>dijkstra_write(graph: <span class="kw-2">&amp;</span>Graph, start: Node, end: Node, dst_mat: <span class="kw-2">&amp;mut </span>DistanceMatrix) {
+	<span class="kw">if </span>start == end {
+		dst_mat[(start, end)] = <span class="number">1</span>;
+		<span class="kw">return</span>;
+	}
 	<span class="comment">// Initialize the heap with the start node, and the distances and previous vectors
 	</span><span class="kw">let </span><span class="kw-2">mut </span>heap = BinaryHeap::new();
 	<span class="kw">let </span><span class="kw-2">mut </span>previous = DijkstraInformation::new(<span class="prelude-val">None</span>, graph.nb_nodes());
 	<span class="kw">let </span><span class="kw-2">mut </span>distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
+	<span class="kw">let </span><span class="kw-2">mut </span>visited = DijkstraInformation::new(<span class="bool-val">false</span>, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: <span class="number">0 </span>});
 	distances[start] = <span class="number">0</span>;
 
@@ -625,19 +652,22 @@
 		<span class="kw">if </span>node == end {
 			<span class="kw">break</span>;
 		}
+		<span class="kw">if </span>visited[node] {
+			<span class="kw">continue</span>;
+		}
 		<span class="kw">if </span>distance &gt; distances[node] {
 			<span class="kw">continue</span>;
 		}
+		visited[node] = <span class="bool-val">true</span>;
 
-		<span class="comment">// A distance of a node to itself is 1
-		</span><span class="kw">if </span>node == start {
-			dst_mat[(start, node)] = <span class="number">1</span>;
-		}
 		<span class="comment">// We write the distance from the start to the node visited, since we know it is the shortest path, and avoids recomputing it
-		</span><span class="kw">else </span>{
+		</span><span class="kw">if </span>start != node {
 			dst_mat[(start, node)] = distance;
 		}
 		<span class="kw">for </span>neighbour <span class="kw">in </span><span class="kw-2">&amp;</span>graph.edges[usize::from(node)] {
+			<span class="kw">if </span>visited[neighbour.node] {
+				<span class="kw">continue</span>;
+			}
 			<span class="kw">let </span>new_distance = distance + neighbour.weight;
 			<span class="kw">if </span>new_distance &lt; distances[neighbour.node] {
 				distances[neighbour.node] = new_distance;

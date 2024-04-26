@@ -512,6 +512,13 @@
 <a href="#511" id="511">511</a>
 <a href="#512" id="512">512</a>
 <a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
 <span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{PhantomEdgesMap, TimeVaryingGraph};
@@ -525,12 +532,16 @@
 
 <span class="kw">impl </span>Path&lt;<span class="lifetime">'_</span>&gt; {
 	<span class="kw">pub fn </span>cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
+		<span class="kw">if </span><span class="self">self</span>.steps.is_empty() {
+			<span class="kw">return </span>Tick::MAX;
+		}
 		<span class="self">self</span>.steps.iter().map(|x| x.weight).sum()
 	}
 
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-		<span class="comment">//print the start, then each step, then the end
-		</span><span class="macro">print!</span>(<span class="string">"P {} "</span>, <span class="self">self</span>.start);
+	<span class="doccomment">/// Print the path
+	/// Print the start, then each step, then the end
+	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+		<span class="macro">print!</span>(<span class="string">"P {} "</span>, <span class="self">self</span>.start);
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
 			<span class="macro">print!</span>(<span class="string">"--{}--&gt;{} "</span>, step.weight, step.node);
 		}
@@ -538,13 +549,19 @@
 	}
 }
 
-<span class="kw">pub fn </span>merge_sorted(vec1: <span class="kw-2">&amp;</span>[Tick], vec2: <span class="kw-2">&amp;</span>[Tick], offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
+<span class="doccomment">/// Assuming the two vectors are sorted, merges them into a single sorted vector, with the offset substracted from the first vector
+</span><span class="kw">fn </span>merge_sorted(vec1: <span class="kw-2">&amp;</span>[Tick], vec2: <span class="kw-2">&amp;</span>[Tick], offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
-	<span class="comment">// assume both vecs are sorted, merge them in a sorted way
-	</span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+	<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
 	<span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
-	<span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
-		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
+
+	<span class="comment">// Merge the two vectors
+	</span><span class="kw">while </span>i &lt; vec1.len() &amp;&amp; j &lt; vec2.len() {
+		<span class="kw">if </span>vec1[i] &lt; offset_vec_1 {
+			i += <span class="number">1</span>;
+			<span class="kw">continue</span>;
+		}
+		<span class="kw">let </span>val1 = vec1[i] - offset_vec_1;
 		<span class="kw">let </span>val2 = vec2[j];
 		<span class="kw">match </span>val1.cmp(<span class="kw-2">&amp;</span>val2) {
 			std::cmp::Ordering::Less =&gt; {
@@ -561,12 +578,13 @@
 				j += <span class="number">1</span>;
 			}
 		}
-
 		<span class="kw">if </span><span class="kw-2">*</span>res.last().unwrap() &gt; max_time {
 			<span class="kw">return </span>res;
 		}
 	}
-	<span class="kw">while </span>i &lt; vec1.len() {
+
+	<span class="comment">// Add the remaining elements
+	</span><span class="kw">while </span>i &lt; vec1.len() {
 		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
 		res.push(val1);
 		i += <span class="number">1</span>;
@@ -617,7 +635,7 @@
 			<span class="kw">return </span>idx;
 		}
 		<span class="comment">//stack exchange get inverse of formula for sum of intergers from 1 to n?
-		</span><span class="kw">return </span>(((<span class="number">2 </span>* idx) <span class="kw">as </span>f64 + <span class="number">0.25</span>).sqrt() - <span class="number">0.5</span>).floor() <span class="kw">as </span>usize;
+		</span><span class="kw">return </span>(((<span class="number">2 </span>* idx) <span class="kw">as </span>f64 + <span class="number">0.25</span>).sqrt() - <span class="number">0.5</span>) <span class="kw">as </span>usize;
 	}
 
 	<span class="kw">pub fn </span>get_idx_left_son(idx: usize) -&gt; usize {
@@ -668,8 +686,8 @@
 		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[minr..=maxr];
 	}
 
-	<span class="doccomment">/// Inclusive range
-	</span><span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	<span class="doccomment">/// Returns the inclusive range of the indices of the elements of the pyramid at a given level
+	</span><span class="kw">pub fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">if </span>prof == <span class="number">0 </span>{
 			<span class="kw">return </span>(<span class="number">0</span>, <span class="number">0</span>);
 		}
@@ -758,8 +776,7 @@
 	/// }
 	/// ```
 	///
-	/// Note: This approach is far slower than just recomputing everything, the method used in [the actual algorithm][`crate::attack_series::AttackSeries::efficiencies_reachables`]
-	/// for computing the distances and reachables.
+	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
 	</span><span class="kw">pub fn </span>invalidate_path(
 		<span class="kw-2">&amp;</span><span class="self">self</span>, time_varying_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, already_done: <span class="kw-2">&amp;mut </span>SquareMatrix&lt;bool&gt;, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray,
 		original_dst_mat: <span class="kw-2">&amp;</span>DistanceMatrix, edges_map: <span class="kw-2">&amp;</span>PhantomEdgesMap,
@@ -769,7 +786,7 @@
 		}
 		<span class="kw">let </span>total = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[<span class="number">0</span>];
 		<span class="kw">let </span>(from, to) = (total.start, total.end);
-		<span class="kw">if </span>already_done[(from.into(), to.into())] {
+		<span class="kw">if </span>already_done[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)] {
 			<span class="kw">return</span>;
 		}
 
@@ -804,20 +821,17 @@
 				<span class="kw">if let </span><span class="prelude-val">Some</span>((right_child, left_child)) = <span class="self">self</span>.get_idx_children(i) {
 					<span class="comment">// gather all the invalid times from your children
 					</span><span class="kw">let </span>right_children_offset = <span class="self">self</span>.subpaths[right_child].time_taken - <span class="self">self</span>.subpaths[i].time_taken;
-					<span class="kw">let </span><span class="kw-2">mut </span>invalid_times_right = Vec::with_capacity(times_to_invalidate[right_child].len());
-					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>times_to_invalidate[right_child] {
-						<span class="kw">if </span><span class="kw-2">*</span>t &gt;= right_children_offset {
-							invalid_times_right.push(t - right_children_offset);
-						}
-					}
+					<span class="kw">let </span>invalid_times_right = <span class="kw-2">&amp;</span>times_to_invalidate[right_child];
 					<span class="kw">let </span>invalid_times_left = <span class="kw-2">&amp;</span>times_to_invalidate[left_child];
 					<span class="kw">let </span>invalid_times = merge_sorted(
-						<span class="kw-2">&amp;</span>invalid_times_right,
+						invalid_times_right,
 						invalid_times_left,
 						right_children_offset,
 						time_varying_graph.max_tick(),
 					);
-
+					<span class="kw">if </span>invalid_times.is_empty() {
+						<span class="kw">continue</span>;
+					}
 					times_to_invalidate[i] = invalid_times;
 				}
 
@@ -874,7 +888,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>current_time = <span class="self">self</span>.start_time;
 		<span class="kw">let </span><span class="kw-2">mut </span>total_weight = <span class="number">0</span>;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
-			<span class="kw">if </span>current_time &gt;= <span class="self">self</span>.time_graph.max_tick() {
+			<span class="kw">if </span>current_time <span class="kw">as </span>usize &gt;= <span class="self">self</span>.time_graph.max_tick() <span class="kw">as </span>usize {
 				<span class="kw">return </span>Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -948,7 +962,7 @@
 		<span class="kw">return </span>SubPathsPyramid::get_idx_parents(idx);
 	}
 
-	<span class="kw">const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	<span class="kw">fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">return </span>SubPathsPyramid::get_range(prof);
 	}
 
@@ -974,7 +988,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = path.start_time;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
-			<span class="kw">if </span>wait &gt; graph.max_tick() {
+			<span class="kw">if </span>wait <span class="kw">as </span>usize &gt; graph.max_tick() <span class="kw">as </span>usize {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

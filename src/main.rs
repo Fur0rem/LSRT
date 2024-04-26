@@ -1,13 +1,3 @@
-/*#![warn(
-	// clippy::all,
-	// clippy::implicit_return,
-	// clippy::restriction,
-	// clippy::pedantic,
-	// clippy::nursery,
-	// clippy::cargo,
-	// clippy::cognitive_complexity,
-	// clippy::complexity,
-)]*/
 #![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
 // #![warn(clippy::uninlined_format_args)]
@@ -141,7 +131,9 @@ pub fn main() {
 	// Run all the attacks
 	benchmark!("Series of attack", {
 		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
-		let results = AttackSeries::efficiencies_reachables(&attack_directory, &attack_files, &graph);
+		//let results = AttackSeries::efficiencies_reachables(&attack_directory, &attack_files, &graph);
+		let attack_series = AttackSeries::read_attacks(&attack_directory, &attack_files, &graph);
+		let results = attack_series.efficiencies_reachables();
 		for (budget, (efficiency, reachables)) in results {
 			writeln!(result_file, "{budget} {efficiency} {reachables}").unwrap();
 		}

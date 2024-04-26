@@ -1,13 +1,6 @@
-use std::borrow::Cow;
-use std::collections::{BinaryHeap, HashSet};
-use std::hash::Hash;
-
-use rayon::vec;
-
 use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour};
-use crate::time_varying_graph::{self, PhantomEdgesMap, TimeVaryingGraph};
-use crate::{attack, Attack};
+use crate::time_varying_graph::{PhantomEdgesMap, TimeVaryingGraph};
 use crate::{Node, Tick};
 
 pub struct Path<'a> {
@@ -24,8 +17,9 @@ impl Path<'_> {
 		self.steps.iter().map(|x| x.weight).sum()
 	}
 
+	/// Print the path
+	/// Print the start, then each step, then the end
 	pub fn print(&self) {
-		//print the start, then each step, then the end
 		print!("P {} ", self.start);
 		for step in &self.steps {
 			print!("--{}-->{} ", step.weight, step.node);
@@ -34,93 +28,41 @@ impl Path<'_> {
 	}
 }
 
-fn merge_sorted(vec1: Vec<Tick>, vec2: Vec<Tick>) -> Vec<Tick> {
+/// Assuming the two vectors are sorted, merges them into a single sorted vector, with the offset substracted from the first vector
+fn merge_sorted(vec1: &[Tick], vec2: &[Tick], offset_vec_1: Tick, max_time: Tick) -> Vec<Tick> {
 	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
 	let mut i = 0;
 	let mut j = 0;
-	while i < vec1.len() && j < vec2.len() {
-		if vec1[i] == vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-			j += 1;
-		} else if vec1[i] < vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-		} else {
-			res.push(vec2[j]);
-			j += 1;
-		}
-	}
-	while i < vec1.len() {
-		res.push(vec1[i]);
-		i += 1;
-	}
-	while j < vec2.len() {
-		res.push(vec2[j]);
-		j += 1;
-	}
-	//println!("{:?}", res);
-	return res;
-}
 
-fn merge_sorted_ref(vec1: &Vec<Tick>, vec2: &Vec<Tick>) -> Vec<Tick> {
-	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	let mut i = 0;
-	let mut j = 0;
+	// Merge the two vectors
 	while i < vec1.len() && j < vec2.len() {
-		if vec1[i] == vec2[j] {
-			res.push(vec1[i]);
+		if vec1[i] < offset_vec_1 {
 			i += 1;
-			j += 1;
-		} else if vec1[i] < vec2[j] {
-			res.push(vec1[i]);
-			i += 1;
-		} else {
-			res.push(vec2[j]);
-			j += 1;
+			continue;
 		}
-	}
-	while i < vec1.len() {
-		res.push(vec1[i]);
-		i += 1;
-	}
-	while j < vec2.len() {
-		res.push(vec2[j]);
-		j += 1;
-	}
-	//println!("{:?}", res);
-	return res;
-}
-
-fn merge_sorted_3(vec1: &Vec<Tick>, vec2: &Vec<Tick>, offset_vec_1: Tick, max_time: Tick) -> Vec<Tick> {
-	let mut res = Vec::with_capacity(vec1.len() + vec2.len());
-	//print!("Merging {:?} and {:?} : ", vec1, vec2);
-	// assume both vecs are sorted, merge them in a sorted way
-	let mut i = 0;
-	let mut j = 0;
-	while i < vec1.len() && j < vec2.len() {
-		let val1 = vec1[i].saturating_sub(offset_vec_1);
+		let val1 = vec1[i] - offset_vec_1;
 		let val2 = vec2[j];
-		if val1 == val2 {
-			res.push(val1);
-			i += 1;
-			j += 1;
-		} else if val1 < val2 {
-			res.push(val1);
-			i += 1;
-		} else {
-			res.push(val2);
-			j += 1;
+		match val1.cmp(&val2) {
+			std::cmp::Ordering::Less => {
+				res.push(val1);
+				i += 1;
+			}
+			std::cmp::Ordering::Equal => {
+				res.push(val1);
+				i += 1;
+				j += 1;
+			}
+			std::cmp::Ordering::Greater => {
+				res.push(val2);
+				j += 1;
+			}
 		}
-
 		if *res.last().unwrap() > max_time {
 			return res;
 		}
 	}
+
+	// Add the remaining elements
 	while i < vec1.len() {
 		let val1 = vec1[i].saturating_sub(offset_vec_1);
 		res.push(val1);
@@ -130,7 +72,6 @@ fn merge_sorted_3(vec1: &Vec<Tick>, vec2: &Vec<Tick>, offset_vec_1: Tick, max_ti
 		res.push(vec2[j]);
 		j += 1;
 	}
-	//println!("{:?}", res);
 	return res;
 }
 
@@ -162,7 +103,8 @@ impl<'a> SubPathsPyramid<'a> {
 				println!();
 				prof += 1;
 				idx = 0;
-			} else {
+			}
+			else {
 				idx += 1;
 			}
 		}
@@ -223,7 +165,7 @@ impl<'a> SubPathsPyramid<'a> {
 		return &self.subpaths[minr..=maxr];
 	}
 
-	/// Inclusive range
+	/// Returns the inclusive range of the indices of the elements of the pyramid at a given level
 	pub fn get_range(prof: usize) -> (usize, usize) {
 		if prof == 0 {
 			return (0, 0);
@@ -307,9 +249,9 @@ impl<'a> SubPathsPyramid<'a> {
 	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
 	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&dst_mat, max_tick);
 	/// let time_graph = graph_to_temporal(graph, max_tick, &attack.blocked_links(), attack.delta());
-	///	let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+	/// let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
 	/// for path in &paths {
-	/// 	path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
+	///     path.invalidate_path(&time_graph, &mut already_done, &mut dma, &dst_mat);
 	/// }
 	/// ```
 	///
@@ -358,17 +300,17 @@ impl<'a> SubPathsPyramid<'a> {
 				if let Some((right_child, left_child)) = self.get_idx_children(i) {
 					// gather all the invalid times from your children
 					let right_children_offset = self.subpaths[right_child].time_taken - self.subpaths[i].time_taken;
-					let mut invalid_times_right = Vec::with_capacity(times_to_invalidate[right_child].len());
-					for t in &times_to_invalidate[right_child] {
-						if *t >= right_children_offset {
-							invalid_times_right.push(t - right_children_offset);
-						}
-					}
+					let invalid_times_right = &times_to_invalidate[right_child];
 					let invalid_times_left = &times_to_invalidate[left_child];
-					let invalid_times = merge_sorted_ref(&invalid_times_right, &invalid_times_left);
-
-					#[allow(mutable_transmutes)]
-					let times_to_invalidate = unsafe { std::mem::transmute::<&Vec<Vec<Tick>>, &mut Vec<Vec<Tick>>>(&times_to_invalidate) };
+					let invalid_times = merge_sorted(
+						invalid_times_right,
+						invalid_times_left,
+						right_children_offset,
+						time_varying_graph.max_tick(),
+					);
+					if invalid_times.is_empty() {
+						continue;
+					}
 					times_to_invalidate[i] = invalid_times;
 				}
 
@@ -532,7 +474,8 @@ impl TemporalSubPathsPyramid<'_> {
 					total_weight: Tick::MAX,
 					start_time: wait,
 				};
-			} else {
+			}
+			else {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
