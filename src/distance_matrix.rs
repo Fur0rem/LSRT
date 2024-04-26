@@ -185,6 +185,24 @@ impl std::ops::IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 }
 
 impl DistanceMatrixArray {
+	pub fn total_size(&self) -> usize {
+		usize::from(self.nb_nodes) * usize::from(self.nb_nodes) * usize::from(self.max_tick)
+	}
+
+	pub fn count_zeros(&self) -> usize {
+		let mut nb_zeros = 0;
+		for t in 0..self.max_tick {
+			for i in 0..self.nb_nodes {
+				for j in 0..self.nb_nodes {
+					if self[(t, i, j)] == 0 {
+						nb_zeros += 1;
+					}
+				}
+			}
+		}
+		return nb_zeros;
+	}
+
 	pub fn fill_1_on_diagonals(&mut self) {
 		for t in 0..self.max_tick {
 			for i in 0..self.nb_nodes {

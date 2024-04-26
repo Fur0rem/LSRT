@@ -120,23 +120,9 @@ impl<'a> DynamicAttackSeries<'a> {
 						}
 					});
 
-					let mut nb_zeros = 0;
-					for t in 0..self.max_tick() {
-						for i in 0..time_graph.nb_nodes() {
-							for j in 0..time_graph.nb_nodes() {
-								if dma[(t, i, j)] == 0 {
-									nb_zeros += 1;
-								}
-							}
-						}
-					}
-
-					println!(
-						"Nb zeros: {} / {} for budget {}",
-						nb_zeros,
-						time_graph.max_tick() as usize * time_graph.nb_nodes() as usize * time_graph.nb_nodes() as usize,
-						budget
-					);
+					let nb_zeros = dma.count_zeros();
+					let total_size = dma.total_size();
+					println!("Nb zeros: {} / {} for budget {}", nb_zeros, total_size, budget);
 
 					benchmark!("Recomputing everything", {
 						for t in 0..time_graph.max_tick() {
@@ -163,27 +149,40 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
-	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
+	pub fn efficiencies_reachables_test(&self) -> Vec<(&'a str, (f64, u64))> {
 		println!("Computing dynamic attack series bourrin");
 		let results_bourrin = self.efficiencies_bourrin();
 		println!("Computing dynamic attack series write");
 		let results_write = self.efficiencies_write();
 		println!("Computing dynamic attack series invalidation");
 		let results_invalidation = self.efficiencies_invalidation();
+		println!("Computing without series");
+		let results_no_series: Vec<_> = self
+			.series
+			.iter()
+			.map(|(_, attack)| attack.efficiency_reachables(self.graph))
+			.collect();
 		for i in 0..results_bourrin.len() {
 			let (budget, (efficiency_bourrin, reachables_bourrin)) = results_bourrin[i];
 			let (_, (efficiency_write, reachables_write)) = results_write[i];
 			let (_, (efficiency_invalidation, reachables_invalidation)) = results_invalidation[i];
+			let (efficiency_no_series, reachables_no_series) = results_no_series[i];
 			assert_eq!(efficiency_bourrin, efficiency_write);
 			assert_eq!(efficiency_bourrin, efficiency_invalidation);
 			assert_eq!(reachables_bourrin, reachables_write);
 			assert_eq!(reachables_bourrin, reachables_invalidation);
+			assert_eq!(efficiency_bourrin, efficiency_no_series);
+			assert_eq!(reachables_bourrin, reachables_no_series);
 			println!(
 				"{}: Efficiency: {} / Reachables: {}",
 				budget, efficiency_bourrin, reachables_bourrin
 			);
 		}
 		return results_bourrin;
+	}
+
+	fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
+		self.efficiencies_write()
 	}
 }
 

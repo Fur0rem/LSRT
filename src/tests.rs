@@ -351,6 +351,66 @@ mod tests {
 	}
 
 	#[test]
+	fn efficiency_of_one() {
+		let neighbours_of_0 = vec![
+			Neighbour { node: 1, weight: 1 },
+			Neighbour { node: 2, weight: 1 },
+			Neighbour { node: 3, weight: 1 },
+		];
+		let neighbours_of_1 = vec![
+			Neighbour { node: 0, weight: 1 },
+			Neighbour { node: 2, weight: 1 },
+			Neighbour { node: 3, weight: 1 },
+		];
+		let neighbours_of_2 = vec![
+			Neighbour { node: 0, weight: 1 },
+			Neighbour { node: 1, weight: 1 },
+			Neighbour { node: 3, weight: 1 },
+		];
+		let neighbours_of_3 = vec![
+			Neighbour { node: 0, weight: 1 },
+			Neighbour { node: 1, weight: 1 },
+			Neighbour { node: 2, weight: 1 },
+		];
+
+		let graph = Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3]);
+		let max_tick = 10;
+		let delta = 1;
+
+		let none_attack = DynamicAttack {
+			blocked_links: vec![],
+			delta,
+			max_tick,
+		};
+
+		let none_attack_static = StaticAttack {
+			blocked_links: vec![vec![]; graph.edges.len()],
+			delta,
+			max_tick,
+		};
+
+		let dm_static = match none_attack_static.all_pairs_distances(&graph) {
+			AttackResult::Static(dms) => dms,
+			_ => panic!("Expected a static matrix"),
+		};
+		let dm_dynamic = match none_attack.all_pairs_distances(&graph) {
+			AttackResult::Dynamic(dma) => dma,
+			_ => panic!("Expected a dynamic matrix"),
+		};
+
+		let (efficiency_static, reach_static) = dm_static.efficiency_reachables(max_tick);
+		let (efficiency_dynamic, reach_dynamic) = dm_dynamic.efficiency_reachables(max_tick);
+
+		assert_eq!(efficiency_static, 1.0);
+		assert_eq!(efficiency_dynamic, 1.0);
+		assert_eq!(
+			reach_static,
+			((graph.edges.len() - 1) * graph.edges.len() * usize::from(max_tick)) as u64
+		);
+		assert_eq!(reach_dynamic, reach_static);
+	}
+
+	#[test]
 	pub fn test_range_pyramid() {
 		for i in 0..10 {
 			println!("{} : {:?}", i, SubPathsPyramid::get_range(i));

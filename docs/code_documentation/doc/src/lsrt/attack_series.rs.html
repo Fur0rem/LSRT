@@ -260,7 +260,6 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::BufRead;
 
 <span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -383,23 +382,9 @@
 						}
 					});
 
-					<span class="kw">let </span><span class="kw-2">mut </span>nb_zeros = <span class="number">0</span>;
-					<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick() {
-						<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..time_graph.nb_nodes() {
-							<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..time_graph.nb_nodes() {
-								<span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
-									nb_zeros += <span class="number">1</span>;
-								}
-							}
-						}
-					}
-
-					<span class="macro">println!</span>(
-						<span class="string">"Nb zeros: {} / {} for budget {}"</span>,
-						nb_zeros,
-						time_graph.max_tick() <span class="kw">as </span>usize * time_graph.nb_nodes() <span class="kw">as </span>usize * time_graph.nb_nodes() <span class="kw">as </span>usize,
-						budget
-					);
+					<span class="kw">let </span>nb_zeros = dma.count_zeros();
+					<span class="kw">let </span>total_size = dma.total_size();
+					<span class="macro">println!</span>(<span class="string">"Nb zeros: {} / {} for budget {}"</span>, nb_zeros, total_size, budget);
 
 					<span class="macro">benchmark!</span>(<span class="string">"Recomputing everything"</span>, {
 						<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_graph.max_tick() {
@@ -426,27 +411,40 @@
 			.collect()
 	}
 
-	<span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="kw">pub fn </span>efficiencies_reachables_test(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series bourrin"</span>);
 		<span class="kw">let </span>results_bourrin = <span class="self">self</span>.efficiencies_bourrin();
 		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series write"</span>);
 		<span class="kw">let </span>results_write = <span class="self">self</span>.efficiencies_write();
 		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series invalidation"</span>);
 		<span class="kw">let </span>results_invalidation = <span class="self">self</span>.efficiencies_invalidation();
+		<span class="macro">println!</span>(<span class="string">"Computing without series"</span>);
+		<span class="kw">let </span>results_no_series: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+			</span>.series
+			.iter()
+			.map(|(<span class="kw">_</span>, attack)| attack.efficiency_reachables(<span class="self">self</span>.graph))
+			.collect();
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..results_bourrin.len() {
 			<span class="kw">let </span>(budget, (efficiency_bourrin, reachables_bourrin)) = results_bourrin[i];
 			<span class="kw">let </span>(<span class="kw">_</span>, (efficiency_write, reachables_write)) = results_write[i];
 			<span class="kw">let </span>(<span class="kw">_</span>, (efficiency_invalidation, reachables_invalidation)) = results_invalidation[i];
+			<span class="kw">let </span>(efficiency_no_series, reachables_no_series) = results_no_series[i];
 			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_write);
 			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_invalidation);
 			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_write);
 			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_invalidation);
+			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_no_series);
+			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_no_series);
 			<span class="macro">println!</span>(
 				<span class="string">"{}: Efficiency: {} / Reachables: {}"</span>,
 				budget, efficiency_bourrin, reachables_bourrin
 			);
 		}
 		<span class="kw">return </span>results_bourrin;
+	}
+
+	<span class="kw">fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+		<span class="self">self</span>.efficiencies_write()
 	}
 }
 
