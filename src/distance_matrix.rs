@@ -30,7 +30,7 @@ impl<T> SquareMatrix<T> {
 	}
 
 	/// Returns a new square matrix a value specified by the user
-	pub fn new(dim: usize, default_value: T) -> Self
+	pub fn new(default_value: T, dim: usize) -> Self
 	where
 		T: Clone,
 	{
@@ -162,7 +162,7 @@ pub struct DistanceMatrixArray {
 	pub max_tick: Tick,
 }
 
-impl std::ops::Index<(Tick, Node, Node)> for DistanceMatrixArray {
+impl Index<(Tick, Node, Node)> for DistanceMatrixArray {
 	type Output = Tick;
 
 	fn index(&self, index: (Tick, Node, Node)) -> &Self::Output {
@@ -174,7 +174,7 @@ impl std::ops::Index<(Tick, Node, Node)> for DistanceMatrixArray {
 	}
 }
 
-impl std::ops::IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
+impl IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 	fn index_mut(&mut self, index: (Tick, Node, Node)) -> &mut Self::Output {
 		let dim = usize::from(self.nb_nodes);
 		let time = usize::from(index.0);

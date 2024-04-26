@@ -1,17 +1,31 @@
-#![allow(clippy::needless_return)]
-#![allow(clippy::needless_range_loop)]
-// #![warn(clippy::uninlined_format_args)]
-//#![warn(clippy::as_conversions)]
-// #![warn(clippy::cast_lossless)]
-// #![warn(clippy::unnecessary_cast)]
-// #![warn(clippy::self_assignment)]
-// #![warn(clippy::self_named_constructors)]
-// #![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::uninlined_format_args)]
+// #![warn(clippy::as_conversions)]
+#![warn(clippy::cast_lossless)]
+#![warn(clippy::unnecessary_cast)]
+#![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::cast_possible_truncation)]
+#![warn(clippy::cast_precision_loss)]
+#![warn(clippy::self_assignment)]
+#![warn(clippy::self_named_constructors)]
 // #![warn(clippy::unwrap_used)]
-//#![warn(clippy::cast_precision_loss)]
-//#![warn(clippy::as_conversions)]
-//#![warn(clippy::cast_possible_truncation)]
-//#![warn(clippy::min_ident_chars)]
+// #![warn(clippy::min_ident_chars)]
+#![warn(
+	clippy::all,
+	//clippy::pedantic,
+	clippy::nursery,
+	//clippy::restriction,
+	clippy::complexity,
+	clippy::cognitive_complexity,
+	clippy::style,
+	clippy::perf,
+	//clippy::cargo
+)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::implicit_return)]
+#![allow(clippy::needless_range_loop)]
+#![warn(clippy::absolute_paths)]
+#![warn(explicit_outlives_requirements)]
+#![warn(clippy::use_debug)]
 
 //! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -31,10 +45,15 @@
 //! 2. Aggressive : The link needs to not be blocked from tick t to t + N to be crossed.
 
 pub mod graph;
+use std::{
+	fs::File,
+	io::{BufWriter, Write},
+};
+
 use graph::Graph;
 
 pub mod attack;
-use attack::*;
+use attack::{Attack, DeletedLink, DynamicAttack, StaticAttack};
 
 pub mod paths;
 
@@ -44,8 +63,6 @@ pub mod distance_matrix;
 
 pub mod attack_series;
 use attack_series::AttackSeries;
-
-use std::io::Write;
 
 mod tests;
 
@@ -125,17 +142,17 @@ pub fn main() {
 
 	// Create the result file
 	let result_file = format!("{FILES_DIR_NAME}/{}/{}/result", &args[1], &args[2]);
-	let result_file = std::fs::File::create(result_file).unwrap();
-	let mut result_file = std::io::BufWriter::new(result_file);
+	let result_file = File::create(result_file).expect("Failed to create result file");
+	let mut result_file = BufWriter::new(result_file);
 
 	// Run all the attacks
 	benchmark!("Series of attack", {
-		let graph = Graph::from_sparse_row_format(&graph_filename).unwrap();
+		let graph = Graph::from_sparse_row_format(&graph_filename).expect("Failed to load graph");
 		//let results = AttackSeries::efficiencies_reachables(&attack_directory, &attack_files, &graph);
 		let attack_series = AttackSeries::read_attacks(&attack_directory, &attack_files, &graph);
 		let results = attack_series.efficiencies_reachables();
 		for (budget, (efficiency, reachables)) in results {
-			writeln!(result_file, "{budget} {efficiency} {reachables}").unwrap();
+			writeln!(result_file, "{budget} {efficiency} {reachables}").expect("Failed to write to result file");
 		}
 	});
 }

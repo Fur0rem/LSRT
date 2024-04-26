@@ -3,6 +3,9 @@ use crate::graph::{Graph, Neighbour};
 use crate::time_varying_graph::{PhantomEdgesMap, TimeVaryingGraph};
 use crate::{Node, Tick};
 
+use std::cmp::Ordering;
+use std::ops::Range;
+
 pub struct Path<'a> {
 	pub graph: &'a Graph,
 	pub start: Node,
@@ -43,16 +46,16 @@ fn merge_sorted(vec1: &[Tick], vec2: &[Tick], offset_vec_1: Tick, max_time: Tick
 		let val1 = vec1[i] - offset_vec_1;
 		let val2 = vec2[j];
 		match val1.cmp(&val2) {
-			std::cmp::Ordering::Less => {
+			Ordering::Less => {
 				res.push(val1);
 				i += 1;
 			}
-			std::cmp::Ordering::Equal => {
+			Ordering::Equal => {
 				res.push(val1);
 				i += 1;
 				j += 1;
 			}
-			std::cmp::Ordering::Greater => {
+			Ordering::Greater => {
 				res.push(val2);
 				j += 1;
 			}
@@ -144,7 +147,7 @@ impl<'a> SubPathsPyramid<'a> {
 		return Some((right_child, left_child));
 	}
 
-	pub fn leaves_range(&self) -> std::ops::Range<usize> {
+	pub fn leaves_range(&self) -> Range<usize> {
 		// The leaves are the last elements of the pyramid
 		if self.subpaths.is_empty() {
 			return 0..0;
@@ -166,7 +169,7 @@ impl<'a> SubPathsPyramid<'a> {
 	}
 
 	/// Returns the inclusive range of the indices of the elements of the pyramid at a given level
-	pub fn get_range(prof: usize) -> (usize, usize) {
+	pub const fn get_range(prof: usize) -> (usize, usize) {
 		if prof == 0 {
 			return (0, 0);
 		}
@@ -265,7 +268,7 @@ impl<'a> SubPathsPyramid<'a> {
 		}
 		let total = &self.subpaths[0];
 		let (from, to) = (total.start, total.end);
-		if already_done[(from as usize, to as usize)] {
+		if already_done[(from.into(), to.into())] {
 			return;
 		}
 
@@ -367,7 +370,7 @@ impl<'a> TemporalPath<'a> {
 		let mut current_time = self.start_time;
 		let mut total_weight = 0;
 		for step in &self.steps {
-			if current_time as usize >= self.time_graph.max_tick() as usize {
+			if current_time >= self.time_graph.max_tick() {
 				return Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -381,9 +384,6 @@ impl<'a> TemporalPath<'a> {
 	}
 
 	pub fn to_str(&self) -> String {
-		if self.steps.is_empty() {
-			return "No path".to_string();
-		}
 		if self.cost() == Tick::MAX {
 			return "No path".to_string();
 		}
@@ -441,7 +441,7 @@ impl TemporalSubPathsPyramid<'_> {
 		return SubPathsPyramid::get_idx_parents(idx);
 	}
 
-	fn get_range(prof: usize) -> (usize, usize) {
+	pub const fn get_range(prof: usize) -> (usize, usize) {
 		return SubPathsPyramid::get_range(prof);
 	}
 
@@ -467,7 +467,7 @@ impl TemporalSubPathsPyramid<'_> {
 		let mut leaf_index = ((path.steps.len() - 1) * (path.steps.len())) / 2;
 		let mut wait = path.start_time;
 		for step in &path.steps {
-			if wait as usize > graph.max_tick() as usize {
+			if wait > graph.max_tick() {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

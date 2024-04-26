@@ -1,14 +1,12 @@
-use std::io::BufRead;
-
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+use crate::Tick;
 use crate::{
 	distance_matrix::{DistanceMatrixArray, SquareMatrix},
 	graph::Graph,
 	time_varying_graph::{graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap},
 	Attack, DynamicAttack, StaticAttack,
 };
-use crate::{Node, Tick};
 
 use crate::benchmark;
 
@@ -26,9 +24,9 @@ impl<'a> DynamicAttackSeries<'a> {
 		let series = files
 			.iter()
 			.map(|budget| {
-				let file_name = format!("{}{}", directory, budget);
-				let file = std::fs::File::open(file_name).unwrap();
-				let mut reader = std::io::BufReader::new(file);
+				let file_name = format!("{directory}{budget}");
+				let file = File::open(file_name).unwrap();
+				let mut reader = BufReader::new(file);
 				let mut line = String::new();
 				reader.read_line(&mut line).unwrap();
 				(*budget, DynamicAttack::from_file(&mut reader))
@@ -55,8 +53,8 @@ impl<'a> DynamicAttackSeries<'a> {
 								if dma[(t, i, j)] != 0 {
 									continue;
 								}
-								let path = temporal_dijkstra(&time_graph, i as Node, j as Node, t, &edges_map);
-								dma[(t, i, j)] = path.cost() as Tick;
+								let path = temporal_dijkstra(&time_graph, i, j, t, &edges_map);
+								dma[(t, i, j)] = path.cost();
 							}
 						}
 					}
@@ -90,7 +88,7 @@ impl<'a> DynamicAttackSeries<'a> {
 								if dma[(t, i, j)] != 0 {
 									continue;
 								}
-								temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma, &edges_map);
+								temporal_dijkstra_write(&time_graph, i, j, t, &mut dma, &edges_map);
 							}
 						}
 					}
@@ -111,7 +109,7 @@ impl<'a> DynamicAttackSeries<'a> {
 				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
 					let time_graph = graph_to_temporal(self.graph, self.max_tick(), &attack.blocked_links(), attack.delta());
 					let edges_map = PhantomEdgesMap::from_graph(&time_graph);
-					let mut already_done = SquareMatrix::new(self.graph.nb_nodes().into(), false);
+					let mut already_done = SquareMatrix::new(false, self.graph.nb_nodes().into());
 					let mut dma = DistanceMatrixArray::propagated(&dst_mat, time_graph.max_tick());
 
 					benchmark!("Invalidate paths", {
@@ -122,7 +120,7 @@ impl<'a> DynamicAttackSeries<'a> {
 
 					let nb_zeros = dma.count_zeros();
 					let total_size = dma.total_size();
-					println!("Nb zeros: {} / {} for budget {}", nb_zeros, total_size, budget);
+					println!("Nb zeros: {nb_zeros} / {total_size} for budget {budget}");
 
 					benchmark!("Recomputing everything", {
 						for t in 0..time_graph.max_tick() {
@@ -133,7 +131,7 @@ impl<'a> DynamicAttackSeries<'a> {
 								for j in (0..time_graph.nb_nodes()).rev() {
 									// Not 0 -> already computed
 									if dma[(t, i, j)] == 0 {
-										temporal_dijkstra_write(&time_graph, i as Node, j as Node, t, &mut dma, &edges_map);
+										temporal_dijkstra_write(&time_graph, i, j, t, &mut dma, &edges_map);
 									}
 								}
 							}
@@ -173,16 +171,13 @@ impl<'a> DynamicAttackSeries<'a> {
 			assert_eq!(reachables_bourrin, reachables_invalidation);
 			assert_eq!(efficiency_bourrin, efficiency_no_series);
 			assert_eq!(reachables_bourrin, reachables_no_series);
-			println!(
-				"{}: Efficiency: {} / Reachables: {}",
-				budget, efficiency_bourrin, reachables_bourrin
-			);
+			println!("{budget}: Efficiency: {efficiency_bourrin} / Reachables: {reachables_bourrin}");
 		}
 		return results_bourrin;
 	}
 
 	fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
-		self.efficiencies_write()
+		self.efficiencies_reachables_test()
 	}
 }
 
@@ -196,9 +191,9 @@ impl<'a> StaticAttackSeries<'a> {
 		let series = files
 			.iter()
 			.map(|budget| {
-				let file_name = format!("{}{}", directory, budget);
-				let file = std::fs::File::open(file_name).unwrap();
-				let mut reader = std::io::BufReader::new(file);
+				let file_name = format!("{directory}{budget}");
+				let file = File::open(file_name).unwrap();
+				let mut reader = BufReader::new(file);
 				let mut line = String::new();
 				reader.read_line(&mut line).unwrap();
 				(*budget, StaticAttack::from_file(&mut reader, graph))
@@ -231,8 +226,8 @@ impl<'a> AttackSeries<'a> {
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
-		let file = std::fs::File::open(file_name).unwrap();
-		let mut reader = std::io::BufReader::new(file);
+		let file = File::open(file_name).unwrap();
+		let mut reader = BufReader::new(file);
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 

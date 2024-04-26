@@ -140,20 +140,51 @@
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
-</pre></div><pre class="rust"><code><span class="attr">#![allow(clippy::needless_return)]
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+</pre></div><pre class="rust"><code><span class="attr">#![warn(clippy::uninlined_format_args)]
+</span><span class="comment">// #![warn(clippy::as_conversions)]
+</span><span class="attr">#![warn(clippy::cast_lossless)]
+#![warn(clippy::unnecessary_cast)]
+#![warn(clippy::cast_possible_wrap)]
+#![warn(clippy::cast_possible_truncation)]
+#![warn(clippy::cast_precision_loss)]
+#![warn(clippy::self_assignment)]
+#![warn(clippy::self_named_constructors)]
+</span><span class="comment">// #![warn(clippy::unwrap_used)]
+// #![warn(clippy::min_ident_chars)]
+</span><span class="attr">#![warn(
+	clippy::all,
+	<span class="comment">//clippy::pedantic,
+	</span>clippy::nursery,
+	<span class="comment">//clippy::restriction,
+	</span>clippy::complexity,
+	clippy::cognitive_complexity,
+	clippy::style,
+	clippy::perf,
+	<span class="comment">//clippy::cargo
+</span>)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::implicit_return)]
 #![allow(clippy::needless_range_loop)]
-</span><span class="comment">// #![warn(clippy::uninlined_format_args)]
-//#![warn(clippy::as_conversions)]
-// #![warn(clippy::cast_lossless)]
-// #![warn(clippy::unnecessary_cast)]
-// #![warn(clippy::self_assignment)]
-// #![warn(clippy::self_named_constructors)]
-// #![warn(clippy::cast_possible_wrap)]
-// #![warn(clippy::unwrap_used)]
-//#![warn(clippy::cast_precision_loss)]
-//#![warn(clippy::as_conversions)]
-//#![warn(clippy::cast_possible_truncation)]
-//#![warn(clippy::min_ident_chars)]
+#![warn(clippy::absolute_paths)]
+#![warn(explicit_outlives_requirements)]
+#![warn(clippy::use_debug)]
 
 </span><span class="doccomment">//! # Link Stream Robustness Tool
 //! This is a tool to calculate the robustness of a network to a series of attacks.
@@ -173,10 +204,15 @@
 //! 2. Aggressive : The link needs to not be blocked from tick t to t + N to be crossed.
 
 </span><span class="kw">pub mod </span>graph;
+<span class="kw">use </span>std::{
+	fs::File,
+	io::{BufWriter, Write},
+};
+
 <span class="kw">use </span>graph::Graph;
 
 <span class="kw">pub mod </span>attack;
-<span class="kw">use </span>attack::<span class="kw-2">*</span>;
+<span class="kw">use </span>attack::{Attack, DeletedLink, DynamicAttack, StaticAttack};
 
 <span class="kw">pub mod </span>paths;
 
@@ -186,8 +222,6 @@
 
 <span class="kw">pub mod </span>attack_series;
 <span class="kw">use </span>attack_series::AttackSeries;
-
-<span class="kw">use </span>std::io::Write;
 
 <span class="kw">mod </span>tests;
 
@@ -267,17 +301,17 @@
 
 	<span class="comment">// Create the result file
 	</span><span class="kw">let </span>result_file = <span class="macro">format!</span>(<span class="string">"{FILES_DIR_NAME}/{}/{}/result"</span>, <span class="kw-2">&amp;</span>args[<span class="number">1</span>], <span class="kw-2">&amp;</span>args[<span class="number">2</span>]);
-	<span class="kw">let </span>result_file = std::fs::File::create(result_file).unwrap();
-	<span class="kw">let </span><span class="kw-2">mut </span>result_file = std::io::BufWriter::new(result_file);
+	<span class="kw">let </span>result_file = File::create(result_file).expect(<span class="string">"Failed to create result file"</span>);
+	<span class="kw">let </span><span class="kw-2">mut </span>result_file = BufWriter::new(result_file);
 
 	<span class="comment">// Run all the attacks
 	</span><span class="macro">benchmark!</span>(<span class="string">"Series of attack"</span>, {
-		<span class="kw">let </span>graph = Graph::from_sparse_row_format(<span class="kw-2">&amp;</span>graph_filename).unwrap();
+		<span class="kw">let </span>graph = Graph::from_sparse_row_format(<span class="kw-2">&amp;</span>graph_filename).expect(<span class="string">"Failed to load graph"</span>);
 		<span class="comment">//let results = AttackSeries::efficiencies_reachables(&amp;attack_directory, &amp;attack_files, &amp;graph);
 		</span><span class="kw">let </span>attack_series = AttackSeries::read_attacks(<span class="kw-2">&amp;</span>attack_directory, <span class="kw-2">&amp;</span>attack_files, <span class="kw-2">&amp;</span>graph);
 		<span class="kw">let </span>results = attack_series.efficiencies_reachables();
 		<span class="kw">for </span>(budget, (efficiency, reachables)) <span class="kw">in </span>results {
-			<span class="macro">writeln!</span>(result_file, <span class="string">"{budget} {efficiency} {reachables}"</span>).unwrap();
+			<span class="macro">writeln!</span>(result_file, <span class="string">"{budget} {efficiency} {reachables}"</span>).expect(<span class="string">"Failed to write to result file"</span>);
 		}
 	});
 }

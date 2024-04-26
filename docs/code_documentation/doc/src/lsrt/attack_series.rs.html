@@ -255,22 +255,15 @@
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::io::BufRead;
+</pre></div><pre class="rust"><code><span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-<span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-
+<span class="kw">use </span><span class="kw">crate</span>::Tick;
 <span class="kw">use crate</span>::{
 	distance_matrix::{DistanceMatrixArray, SquareMatrix},
 	graph::Graph,
 	time_varying_graph::{graph_to_temporal, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap},
 	Attack, DynamicAttack, StaticAttack,
 };
-<span class="kw">use crate</span>::{Node, Tick};
 
 <span class="kw">use </span><span class="kw">crate</span>::benchmark;
 
@@ -288,9 +281,9 @@
 		<span class="kw">let </span>series = files
 			.iter()
 			.map(|budget| {
-				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, budget);
-				<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-				<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{directory}{budget}"</span>);
+				<span class="kw">let </span>file = File::open(file_name).unwrap();
+				<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 				<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 				reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 				(<span class="kw-2">*</span>budget, DynamicAttack::from_file(<span class="kw-2">&amp;mut </span>reader))
@@ -317,8 +310,8 @@
 								</span><span class="kw">if </span>dma[(t, i, j)] != <span class="number">0 </span>{
 									<span class="kw">continue</span>;
 								}
-								<span class="kw">let </span>path = temporal_dijkstra(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;</span>edges_map);
-								dma[(t, i, j)] = path.cost() <span class="kw">as </span>Tick;
+								<span class="kw">let </span>path = temporal_dijkstra(<span class="kw-2">&amp;</span>time_graph, i, j, t, <span class="kw-2">&amp;</span>edges_map);
+								dma[(t, i, j)] = path.cost();
 							}
 						}
 					}
@@ -352,7 +345,7 @@
 								</span><span class="kw">if </span>dma[(t, i, j)] != <span class="number">0 </span>{
 									<span class="kw">continue</span>;
 								}
-								temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
+								temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i, j, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
 							}
 						}
 					}
@@ -373,7 +366,7 @@
 				<span class="macro">benchmark!</span>(<span class="macro">format!</span>(<span class="string">"(Dynamic) Recomputing distances for {}"</span>, budget), {
 					<span class="kw">let </span>time_graph = graph_to_temporal(<span class="self">self</span>.graph, <span class="self">self</span>.max_tick(), <span class="kw-2">&amp;</span>attack.blocked_links(), attack.delta());
 					<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>time_graph);
-					<span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(<span class="self">self</span>.graph.nb_nodes().into(), <span class="bool-val">false</span>);
+					<span class="kw">let </span><span class="kw-2">mut </span>already_done = SquareMatrix::new(<span class="bool-val">false</span>, <span class="self">self</span>.graph.nb_nodes().into());
 					<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated(<span class="kw-2">&amp;</span>dst_mat, time_graph.max_tick());
 
 					<span class="macro">benchmark!</span>(<span class="string">"Invalidate paths"</span>, {
@@ -384,7 +377,7 @@
 
 					<span class="kw">let </span>nb_zeros = dma.count_zeros();
 					<span class="kw">let </span>total_size = dma.total_size();
-					<span class="macro">println!</span>(<span class="string">"Nb zeros: {} / {} for budget {}"</span>, nb_zeros, total_size, budget);
+					<span class="macro">println!</span>(<span class="string">"Nb zeros: {nb_zeros} / {total_size} for budget {budget}"</span>);
 
 					<span class="macro">benchmark!</span>(<span class="string">"Recomputing everything"</span>, {
 						<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_graph.max_tick() {
@@ -395,7 +388,7 @@
 								</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
 									<span class="comment">// Not 0 -&gt; already computed
 									</span><span class="kw">if </span>dma[(t, i, j)] == <span class="number">0 </span>{
-										temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i <span class="kw">as </span>Node, j <span class="kw">as </span>Node, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
+										temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i, j, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
 									}
 								}
 							}
@@ -435,16 +428,13 @@
 			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_invalidation);
 			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_no_series);
 			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_no_series);
-			<span class="macro">println!</span>(
-				<span class="string">"{}: Efficiency: {} / Reachables: {}"</span>,
-				budget, efficiency_bourrin, reachables_bourrin
-			);
+			<span class="macro">println!</span>(<span class="string">"{budget}: Efficiency: {efficiency_bourrin} / Reachables: {reachables_bourrin}"</span>);
 		}
 		<span class="kw">return </span>results_bourrin;
 	}
 
 	<span class="kw">fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
-		<span class="self">self</span>.efficiencies_write()
+		<span class="self">self</span>.efficiencies_reachables_test()
 	}
 }
 
@@ -458,9 +448,9 @@
 		<span class="kw">let </span>series = files
 			.iter()
 			.map(|budget| {
-				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, budget);
-				<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-				<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{directory}{budget}"</span>);
+				<span class="kw">let </span>file = File::open(file_name).unwrap();
+				<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 				<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 				reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 				(<span class="kw-2">*</span>budget, StaticAttack::from_file(<span class="kw-2">&amp;mut </span>reader, graph))
@@ -493,8 +483,8 @@
 	<span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="comment">// Open the first file to check if it is a static or dynamic attack
 		</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, files[<span class="number">0</span>]);
-		<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
-		<span class="kw">let </span><span class="kw-2">mut </span>reader = std::io::BufReader::new(file);
+		<span class="kw">let </span>file = File::open(file_name).unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 

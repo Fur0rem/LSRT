@@ -374,6 +374,8 @@
 <a href="#373" id="373">373</a>
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{DijkstraInformation, DijkstraState};
 <span class="kw">use </span><span class="kw">crate</span>::graph::{Graph, Neighbour};
@@ -420,7 +422,7 @@
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; PhantomEdgesMap&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub fn </span>from_graph(time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(time_graph.nb_nodes().into(), <span class="prelude-val">None</span>);
+		<span class="kw">let </span><span class="kw-2">mut </span>edges_map = SquareMatrix::new(<span class="prelude-val">None</span>, time_graph.nb_nodes().into());
 		<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>time_graph.nodes.iter().enumerate() {
 			<span class="kw">for </span>neighbour <span class="kw">in </span>neighbours {
 				edges_map[(node, neighbour.neighbour.into())] = <span class="prelude-val">Some</span>(neighbour);
@@ -558,6 +560,7 @@
 	<span class="kw">let </span>delta = usize::from(delta);
 
 	<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>graph.edges.iter().enumerate() {
+		<span class="kw">let </span>node = node <span class="kw">as </span>Node;
 		<span class="kw">let </span><span class="kw-2">mut </span>edges = <span class="macro">vec!</span>[];
 
 		<span class="comment">// For all the edges, we create a phantom edge
@@ -565,7 +568,7 @@
 			<span class="kw">let </span>weight = neighbour.weight;
 			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick];
 			<span class="kw">for </span>deleted_edge <span class="kw">in </span>deleted_edges {
-				<span class="kw">if </span>deleted_edge.from == node <span class="kw">as </span>Node &amp;&amp; deleted_edge.to == neighbour.node {
+				<span class="kw">if </span>deleted_edge.from == node &amp;&amp; deleted_edge.to == neighbour.node {
 					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>deleted_edge.times {
 						<span class="kw">let </span>t: usize = (<span class="kw-2">*</span>t).into();
 						<span class="kw">let </span>t_with_delta = t * delta;
@@ -605,6 +608,7 @@
 	<span class="kw">let </span><span class="kw-2">mut </span>phantoms = <span class="macro">vec!</span>[];
 
 	<span class="kw">for </span>(node, neighbours) <span class="kw">in </span>graph.edges.iter().enumerate() {
+		<span class="kw">let </span>node = node <span class="kw">as </span>Node;
 		<span class="kw">let </span><span class="kw-2">mut </span>edges = <span class="macro">vec!</span>[];
 
 		<span class="comment">// For all the edges, we create a phantom edge
@@ -612,7 +616,7 @@
 			<span class="kw">let </span>weight = neighbour.weight;
 			<span class="kw">let </span><span class="kw-2">mut </span>weights = <span class="macro">vec!</span>[weight; max_tick.into()];
 			<span class="kw">for </span>deleted_edge <span class="kw">in </span>deleted_edges {
-				<span class="kw">if </span>deleted_edge.from == node <span class="kw">as </span>Node &amp;&amp; deleted_edge.to == neighbour.node {
+				<span class="kw">if </span>deleted_edge.from == node &amp;&amp; deleted_edge.to == neighbour.node {
 					<span class="kw">for </span>t <span class="kw">in </span><span class="kw-2">&amp;</span>deleted_edge.times {
 						<span class="kw">let </span>t: usize = (<span class="kw-2">*</span>t).into();
 						<span class="kw">let </span>delta: usize = delta.into();

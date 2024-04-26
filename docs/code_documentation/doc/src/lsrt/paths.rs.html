@@ -524,6 +524,9 @@
 <span class="kw">use </span><span class="kw">crate</span>::time_varying_graph::{PhantomEdgesMap, TimeVaryingGraph};
 <span class="kw">use crate</span>::{Node, Tick};
 
+<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>std::ops::Range;
+
 <span class="kw">pub struct </span>Path&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
 	<span class="kw">pub </span>start: Node,
@@ -564,16 +567,16 @@
 		<span class="kw">let </span>val1 = vec1[i] - offset_vec_1;
 		<span class="kw">let </span>val2 = vec2[j];
 		<span class="kw">match </span>val1.cmp(<span class="kw-2">&amp;</span>val2) {
-			std::cmp::Ordering::Less =&gt; {
+			Ordering::Less =&gt; {
 				res.push(val1);
 				i += <span class="number">1</span>;
 			}
-			std::cmp::Ordering::Equal =&gt; {
+			Ordering::Equal =&gt; {
 				res.push(val1);
 				i += <span class="number">1</span>;
 				j += <span class="number">1</span>;
 			}
-			std::cmp::Ordering::Greater =&gt; {
+			Ordering::Greater =&gt; {
 				res.push(val2);
 				j += <span class="number">1</span>;
 			}
@@ -665,7 +668,7 @@
 		<span class="kw">return </span><span class="prelude-val">Some</span>((right_child, left_child));
 	}
 
-	<span class="kw">pub fn </span>leaves_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::ops::Range&lt;usize&gt; {
+	<span class="kw">pub fn </span>leaves_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range&lt;usize&gt; {
 		<span class="comment">// The leaves are the last elements of the pyramid
 		</span><span class="kw">if </span><span class="self">self</span>.subpaths.is_empty() {
 			<span class="kw">return </span><span class="number">0</span>..<span class="number">0</span>;
@@ -687,7 +690,7 @@
 	}
 
 	<span class="doccomment">/// Returns the inclusive range of the indices of the elements of the pyramid at a given level
-	</span><span class="kw">pub fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	</span><span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">if </span>prof == <span class="number">0 </span>{
 			<span class="kw">return </span>(<span class="number">0</span>, <span class="number">0</span>);
 		}
@@ -786,7 +789,7 @@
 		}
 		<span class="kw">let </span>total = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[<span class="number">0</span>];
 		<span class="kw">let </span>(from, to) = (total.start, total.end);
-		<span class="kw">if </span>already_done[(from <span class="kw">as </span>usize, to <span class="kw">as </span>usize)] {
+		<span class="kw">if </span>already_done[(from.into(), to.into())] {
 			<span class="kw">return</span>;
 		}
 
@@ -888,7 +891,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>current_time = <span class="self">self</span>.start_time;
 		<span class="kw">let </span><span class="kw-2">mut </span>total_weight = <span class="number">0</span>;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
-			<span class="kw">if </span>current_time <span class="kw">as </span>usize &gt;= <span class="self">self</span>.time_graph.max_tick() <span class="kw">as </span>usize {
+			<span class="kw">if </span>current_time &gt;= <span class="self">self</span>.time_graph.max_tick() {
 				<span class="kw">return </span>Tick::MAX;
 			}
 			total_weight += step.weight;
@@ -902,9 +905,6 @@
 	}
 
 	<span class="kw">pub fn </span>to_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-		<span class="kw">if </span><span class="self">self</span>.steps.is_empty() {
-			<span class="kw">return </span><span class="string">"No path"</span>.to_string();
-		}
 		<span class="kw">if </span><span class="self">self</span>.cost() == Tick::MAX {
 			<span class="kw">return </span><span class="string">"No path"</span>.to_string();
 		}
@@ -962,7 +962,7 @@
 		<span class="kw">return </span>SubPathsPyramid::get_idx_parents(idx);
 	}
 
-	<span class="kw">fn </span>get_range(prof: usize) -&gt; (usize, usize) {
+	<span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
 		<span class="kw">return </span>SubPathsPyramid::get_range(prof);
 	}
 
@@ -988,7 +988,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = path.start_time;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
-			<span class="kw">if </span>wait <span class="kw">as </span>usize &gt; graph.max_tick() <span class="kw">as </span>usize {
+			<span class="kw">if </span>wait &gt; graph.max_tick() {
 				elems[leaf_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,

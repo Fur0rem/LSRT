@@ -5,6 +5,7 @@
 //! 2. Dynamic attacks : the blocked links change over time
 //! We did this to optimise the computation time for static attacks, as the distance matrix is the same for all times.
 
+use std::fmt::Debug;
 use std::{
 	borrow::Cow,
 	fs::File,
@@ -33,7 +34,7 @@ pub enum AttackResult {
 /// Trait for an attack.
 /// An attack is a set of blocked links, and contains its delta and max time.
 /// Any attack must implement this trait to have its efficiency computed.
-pub trait Attack: std::fmt::Debug {
+pub trait Attack: Debug {
 	// efficiency + reachables
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult;
 	fn efficiency_reachables(&self, graph: &Graph) -> (f64, u64) {
@@ -73,7 +74,7 @@ pub struct StaticAttack {
 impl dyn Attack {
 	pub fn from_file(file: &str, graph: &Graph) -> Box<dyn Attack> {
 		// Format : D for dynamic, S for static
-		let file = File::open(file).unwrap();
+		let file = File::open(file).expect("Failed to open attack file");
 		let mut reader = BufReader::new(file);
 		let mut line = String::new();
 		reader.read_line(&mut line).expect("Empty attack file");
@@ -91,21 +92,27 @@ impl StaticAttack {
 		// Format : first line contains max_tick and delta
 		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
-		reader.read_line(&mut line).unwrap();
-		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, u8).unwrap();
+		reader.read_line(&mut line).expect("Empty attack file");
+		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, u8).expect("Invalid attack format : Expected <max tick> <delta>");
 
 		// while there is new line, read it and append to the result
 		let mut blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		for _ in 0..graph.nb_nodes() {
 			let mut line = String::new();
 			reader.read_line(&mut line).unwrap();
-			let blocks = line.split_whitespace().map(|x| x.parse().unwrap()).collect();
+			let blocks = line
+				.split_whitespace()
+				.map(|x| x.parse())
+				.collect::<Result<Vec<Node>, _>>()
+				.expect("Invalid attack format : Expected a list of nodes");
 			blocked_links.push(blocks);
 		}
 
-		if blocked_links.len() > Node::MAX.into() {
-			panic!("Too many nodes");
-		}
+		assert!(
+			blocked_links.len() < Node::MAX.into(),
+			"Too many nodes, the maximum is {}",
+			Node::MAX
+		);
 
 		return Self {
 			blocked_links,
@@ -115,7 +122,7 @@ impl StaticAttack {
 	}
 
 	pub fn from_file_name(file_name: String, graph: &Graph) -> Self {
-		let file = std::fs::File::open(file_name).unwrap();
+		let file = File::open(file_name).unwrap();
 		let mut reader = BufReader::new(file);
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
@@ -166,29 +173,32 @@ impl DynamicAttack {
 	pub fn from_file(reader: &mut BufReader<File>) -> Self {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
-		let (nb_edges, delta, max_tick) = scanf!(line.trim(), "{} {} {}", usize, u8, Tick).unwrap();
+		let (nb_edges, delta, max_tick) =
+			scanf!(line.trim(), "{} {} {}", usize, u8, Tick).expect("Invalid attack file : Expected <nb_edges> <delta> <max_tick>");
 
 		// Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
 		// For example : 4 (0,2) 5 9 17 18
 		let mut blocked_links = vec![];
 		for _ in 0..nb_edges {
 			let mut line = String::new();
-			reader.read_line(&mut line).unwrap();
-			let mut iter = line.split_whitespace();
-			let nb_blocked = iter.next().unwrap();
-			let from = iter.next().unwrap();
-			let to = iter.next().unwrap();
 
-			let nb_blocked = nb_blocked.parse().unwrap();
-			// remove the paranthesis and comma
-			let from: Node = from[1..from.len() - 1].parse().unwrap();
-			let to: Node = to[0..to.len() - 1].parse().unwrap();
+			reader
+				.read_line(&mut line)
+				.expect("Invalid attack file : The number of lines doesn't match the number of edges");
 
-			let mut times = vec![];
-			for _ in 0..nb_blocked {
-				let time = iter.next().unwrap().parse().unwrap();
-				times.push(time);
-			}
+			let (information, times) = line.split_at(
+				line.find(')')
+					.expect("Invalid attack file : Expected format <Length of times> (<from>, <to>) <times>")
+					+ 1,
+			);
+
+			let (_nb_blocked, from, to) = scanf!(information, "{} ({}, {})", usize, Node, Node)
+				.expect("Invalid attack file : Expected <Length of times> (<from>, <to>) <times>");
+
+			let times = times
+				.split_whitespace()
+				.map(|x| x.parse().expect("Invalid time : Expected a number lower than Tick::MAX"))
+				.collect();
 
 			blocked_links.push(DeletedLink { from, to, times });
 		}

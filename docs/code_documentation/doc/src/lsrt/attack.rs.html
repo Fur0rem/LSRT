@@ -237,6 +237,16 @@
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -244,7 +254,8 @@
 //! 2. Dynamic attacks : the blocked links change over time
 //! We did this to optimise the computation time for static attacks, as the distance matrix is the same for all times.
 
-</span><span class="kw">use </span>std::{
+</span><span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::{
 	borrow::Cow,
 	fs::File,
 	io::{BufRead, BufReader},
@@ -272,7 +283,7 @@
 <span class="doccomment">/// Trait for an attack.
 /// An attack is a set of blocked links, and contains its delta and max time.
 /// Any attack must implement this trait to have its efficiency computed.
-</span><span class="kw">pub trait </span>Attack: std::fmt::Debug {
+</span><span class="kw">pub trait </span>Attack: Debug {
 	<span class="comment">// efficiency + reachables
 	</span><span class="kw">fn </span>all_pairs_distances(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; AttackResult;
 	<span class="kw">fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; (f64, u64) {
@@ -312,7 +323,7 @@
 <span class="kw">impl dyn </span>Attack {
 	<span class="kw">pub fn </span>from_file(file: <span class="kw-2">&amp;</span>str, graph: <span class="kw-2">&amp;</span>Graph) -&gt; Box&lt;<span class="kw">dyn </span>Attack&gt; {
 		<span class="comment">// Format : D for dynamic, S for static
-		</span><span class="kw">let </span>file = File::open(file).unwrap();
+		</span><span class="kw">let </span>file = File::open(file).expect(<span class="string">"Failed to open attack file"</span>);
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).expect(<span class="string">"Empty attack file"</span>);
@@ -330,21 +341,27 @@
 		<span class="comment">// Format : first line contains max_tick and delta
 		// Then, the list of blocked links separated by a space
 		</span><span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
-		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
-		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, u8).unwrap();
+		reader.read_line(<span class="kw-2">&amp;mut </span>line).expect(<span class="string">"Empty attack file"</span>);
+		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, u8).expect(<span class="string">"Invalid attack format : Expected &lt;max tick&gt; &lt;delta&gt;"</span>);
 
 		<span class="comment">// while there is new line, read it and append to the result
 		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		<span class="kw">for _ in </span><span class="number">0</span>..graph.nb_nodes() {
 			<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 			reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
-			<span class="kw">let </span>blocks = line.split_whitespace().map(|x| x.parse().unwrap()).collect();
+			<span class="kw">let </span>blocks = line
+				.split_whitespace()
+				.map(|x| x.parse())
+				.collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;Node&gt;, <span class="kw">_</span>&gt;&gt;()
+				.expect(<span class="string">"Invalid attack format : Expected a list of nodes"</span>);
 			blocked_links.push(blocks);
 		}
 
-		<span class="kw">if </span>blocked_links.len() &gt; Node::MAX.into() {
-			<span class="macro">panic!</span>(<span class="string">"Too many nodes"</span>);
-		}
+		<span class="macro">assert!</span>(
+			blocked_links.len() &lt; Node::MAX.into(),
+			<span class="string">"Too many nodes, the maximum is {}"</span>,
+			Node::MAX
+		);
 
 		<span class="kw">return </span><span class="self">Self </span>{
 			blocked_links,
@@ -354,7 +371,7 @@
 	}
 
 	<span class="kw">pub fn </span>from_file_name(file_name: String, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
-		<span class="kw">let </span>file = std::fs::File::open(file_name).unwrap();
+		<span class="kw">let </span>file = File::open(file_name).unwrap();
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
@@ -405,29 +422,32 @@
 	<span class="kw">pub fn </span>from_file(reader: <span class="kw-2">&amp;mut </span>BufReader&lt;File&gt;) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
-		<span class="kw">let </span>(nb_edges, delta, max_tick) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {} {}"</span>, usize, u8, Tick).unwrap();
+		<span class="kw">let </span>(nb_edges, delta, max_tick) =
+			<span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {} {}"</span>, usize, u8, Tick).expect(<span class="string">"Invalid attack file : Expected &lt;nb_edges&gt; &lt;delta&gt; &lt;max_tick&gt;"</span>);
 
 		<span class="comment">// Then for each line, nb_blocked (node1,node2) &lt;the times at which it is blocked&gt;
 		// For example : 4 (0,2) 5 9 17 18
 		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = <span class="macro">vec!</span>[];
 		<span class="kw">for _ in </span><span class="number">0</span>..nb_edges {
 			<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
-			reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
-			<span class="kw">let </span><span class="kw-2">mut </span>iter = line.split_whitespace();
-			<span class="kw">let </span>nb_blocked = iter.next().unwrap();
-			<span class="kw">let </span>from = iter.next().unwrap();
-			<span class="kw">let </span>to = iter.next().unwrap();
 
-			<span class="kw">let </span>nb_blocked = nb_blocked.parse().unwrap();
-			<span class="comment">// remove the paranthesis and comma
-			</span><span class="kw">let </span>from: Node = from[<span class="number">1</span>..from.len() - <span class="number">1</span>].parse().unwrap();
-			<span class="kw">let </span>to: Node = to[<span class="number">0</span>..to.len() - <span class="number">1</span>].parse().unwrap();
+			reader
+				.read_line(<span class="kw-2">&amp;mut </span>line)
+				.expect(<span class="string">"Invalid attack file : The number of lines doesn't match the number of edges"</span>);
 
-			<span class="kw">let </span><span class="kw-2">mut </span>times = <span class="macro">vec!</span>[];
-			<span class="kw">for _ in </span><span class="number">0</span>..nb_blocked {
-				<span class="kw">let </span>time = iter.next().unwrap().parse().unwrap();
-				times.push(time);
-			}
+			<span class="kw">let </span>(information, times) = line.split_at(
+				line.find(<span class="string">')'</span>)
+					.expect(<span class="string">"Invalid attack file : Expected format &lt;Length of times&gt; (&lt;from&gt;, &lt;to&gt;) &lt;times&gt;"</span>)
+					+ <span class="number">1</span>,
+			);
+
+			<span class="kw">let </span>(_nb_blocked, from, to) = <span class="macro">scanf!</span>(information, <span class="string">"{} ({}, {})"</span>, usize, Node, Node)
+				.expect(<span class="string">"Invalid attack file : Expected &lt;Length of times&gt; (&lt;from&gt;, &lt;to&gt;) &lt;times&gt;"</span>);
+
+			<span class="kw">let </span>times = times
+				.split_whitespace()
+				.map(|x| x.parse().expect(<span class="string">"Invalid time : Expected a number lower than Tick::MAX"</span>))
+				.collect();
 
 			blocked_links.push(DeletedLink { from, to, times });
 		}

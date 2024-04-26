@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
 
+	use crate::attack::{Attack, AttackResult, DynamicAttack, StaticAttack};
 	use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 	use crate::graph::{dijkstra, dijkstra_write, Graph, Neighbour};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
@@ -8,8 +9,7 @@ mod tests {
 		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap,
 		TimeVaryingGraph,
 	};
-	use crate::{Attack, DynamicAttack, StaticAttack};
-	use crate::{AttackResult, DeletedLink};
+	use crate::DeletedLink;
 	use crate::{Node, Tick};
 
 	fn make_test_graph() -> Graph {
@@ -478,7 +478,7 @@ mod tests {
 		//dst_mat.print();
 		let mut dma = DistanceMatrixArray::propagated(&dst_mat, max_tick);
 		//dma.print(tvg.max_tick());
-		let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
+		let mut already_done = SquareMatrix::new(false, graph.nb_nodes().into());
 		path.invalidate_path(&tvg, &mut already_done, &mut dma, &dst_mat, &edges_map);
 		//dma.print(tvg.max_tick());
 

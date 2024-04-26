@@ -339,7 +339,7 @@
 	}
 
 	<span class="doccomment">/// Returns a new square matrix a value specified by the user
-	</span><span class="kw">pub fn </span>new(dim: usize, default_value: T) -&gt; <span class="self">Self
+	</span><span class="kw">pub fn </span>new(default_value: T, dim: usize) -&gt; <span class="self">Self
 	</span><span class="kw">where
 		</span>T: Clone,
 	{
@@ -471,7 +471,7 @@
 	<span class="kw">pub </span>max_tick: Tick,
 }
 
-<span class="kw">impl </span>std::ops::Index&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
+<span class="kw">impl </span>Index&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
 	<span class="kw">type </span>Output = Tick;
 
 	<span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: (Tick, Node, Node)) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
@@ -483,7 +483,7 @@
 	}
 }
 
-<span class="kw">impl </span>std::ops::IndexMut&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
+<span class="kw">impl </span>IndexMut&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
 	<span class="kw">fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: (Tick, Node, Node)) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Output {
 		<span class="kw">let </span>dim = usize::from(<span class="self">self</span>.nb_nodes);
 		<span class="kw">let </span>time = usize::from(index.<span class="number">0</span>);

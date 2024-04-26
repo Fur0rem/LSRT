@@ -44,7 +44,7 @@ pub struct PhantomEdgesMap<'a> {
 
 impl<'a> PhantomEdgesMap<'a> {
 	pub fn from_graph(time_graph: &'a TimeVaryingGraph) -> Self {
-		let mut edges_map = SquareMatrix::new(time_graph.nb_nodes().into(), None);
+		let mut edges_map = SquareMatrix::new(None, time_graph.nb_nodes().into());
 		for (node, neighbours) in time_graph.nodes.iter().enumerate() {
 			for neighbour in neighbours {
 				edges_map[(node, neighbour.neighbour.into())] = Some(neighbour);
@@ -182,6 +182,7 @@ pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<D
 	let delta = usize::from(delta);
 
 	for (node, neighbours) in graph.edges.iter().enumerate() {
+		let node = node as Node;
 		let mut edges = vec![];
 
 		// For all the edges, we create a phantom edge
@@ -189,7 +190,7 @@ pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<D
 			let weight = neighbour.weight;
 			let mut weights = vec![weight; max_tick];
 			for deleted_edge in deleted_edges {
-				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
+				if deleted_edge.from == node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
 						let t: usize = (*t).into();
 						let t_with_delta = t * delta;
@@ -229,6 +230,7 @@ pub fn create_phantom_edges_aggressive(
 	let mut phantoms = vec![];
 
 	for (node, neighbours) in graph.edges.iter().enumerate() {
+		let node = node as Node;
 		let mut edges = vec![];
 
 		// For all the edges, we create a phantom edge
@@ -236,7 +238,7 @@ pub fn create_phantom_edges_aggressive(
 			let weight = neighbour.weight;
 			let mut weights = vec![weight; max_tick.into()];
 			for deleted_edge in deleted_edges {
-				if deleted_edge.from == node as Node && deleted_edge.to == neighbour.node {
+				if deleted_edge.from == node && deleted_edge.to == neighbour.node {
 					for t in &deleted_edge.times {
 						let t: usize = (*t).into();
 						let delta: usize = delta.into();
