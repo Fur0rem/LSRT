@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
 
-	use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
-	use crate::graph::{dijkstra, Graph, Neighbour};
+	use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
+	use crate::graph::{dijkstra, dijkstra_write, Graph, Neighbour};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
 	use crate::time_varying_graph::{
 		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap,
@@ -227,6 +227,39 @@ mod tests {
 		let end = 0;
 		let path = dijkstra(&graph, start, end);
 		assert_eq!(path.steps, vec![Neighbour { node: 0, weight: 1 },]);
+	}
+
+	#[test]
+	fn test_dijkstra_write() {
+		let graph = make_test_graph();
+
+		let mut dm1 = DistanceMatrix::zeroed(&graph);
+		let mut dm2 = DistanceMatrix::zeroed(&graph);
+		let mut dm3 = DistanceMatrix::zeroed(&graph);
+		let mut dm4 = DistanceMatrix::zeroed(&graph);
+
+		for i in 0..graph.nb_nodes() {
+			for j in 0..graph.nb_nodes() {
+				if dm1[(i, j)] == 0 {
+					let path = dijkstra(&graph, i, j);
+					dm1[(i, j)] = path.cost();
+				}
+				if dm2[(i, j)] == 0 {
+					dijkstra_write(&graph, i, j, &mut dm2);
+				}
+				let path = dijkstra(&graph, i, j);
+				dm3[(i, j)] = path.cost();
+				dijkstra_write(&graph, i, j, &mut dm4);
+			}
+		}
+
+		for i in 0..graph.nb_nodes() {
+			for j in 0..graph.nb_nodes() {
+				assert_eq!(dm1[(i, j)], dm2[(i, j)]);
+				assert_eq!(dm1[(i, j)], dm3[(i, j)]);
+				assert_eq!(dm1[(i, j)], dm4[(i, j)]);
+			}
+		}
 	}
 
 	#[test]

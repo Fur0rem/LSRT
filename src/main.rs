@@ -1,5 +1,5 @@
-#![warn(
-	clippy::all,
+/*#![warn(
+	// clippy::all,
 	// clippy::implicit_return,
 	// clippy::restriction,
 	// clippy::pedantic,
@@ -7,17 +7,17 @@
 	// clippy::cargo,
 	// clippy::cognitive_complexity,
 	// clippy::complexity,
-)]
+)]*/
 #![allow(clippy::needless_return)]
 #![allow(clippy::needless_range_loop)]
-#![warn(clippy::uninlined_format_args)]
+// #![warn(clippy::uninlined_format_args)]
 //#![warn(clippy::as_conversions)]
-#![warn(clippy::cast_lossless)]
-#![warn(clippy::unnecessary_cast)]
-#![warn(clippy::self_assignment)]
-#![warn(clippy::self_named_constructors)]
-#![warn(clippy::cast_possible_wrap)]
-#![warn(clippy::unwrap_used)]
+// #![warn(clippy::cast_lossless)]
+// #![warn(clippy::unnecessary_cast)]
+// #![warn(clippy::self_assignment)]
+// #![warn(clippy::self_named_constructors)]
+// #![warn(clippy::cast_possible_wrap)]
+// #![warn(clippy::unwrap_used)]
 //#![warn(clippy::cast_precision_loss)]
 //#![warn(clippy::as_conversions)]
 //#![warn(clippy::cast_possible_truncation)]

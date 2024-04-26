@@ -88,8 +88,7 @@ impl Graph {
 			let row_start = row_indices[i];
 			let row_end = if size_row_array - 1 == i {
 				size_elem_array
-			}
-			else {
+			} else {
 				row_indices[i + 1]
 			};
 			for j in row_start..row_end {
@@ -188,12 +187,19 @@ impl<T> DijkstraInformation<T> {
 
 /// [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) to find the shortest [`Path`] between two [`Node`]s
 pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
+	if start == end {
+		return Path {
+			graph,
+			start,
+			steps: vec![Neighbour { node: start, weight: 1 }],
+		};
+	}
 	// Initialize the heap with the start node, and the distances and previous vectors
 	let mut heap = BinaryHeap::new();
 	let mut previous = DijkstraInformation::new(None, graph.nb_nodes());
 	let mut distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
-	heap.push(DijkstraState { node: start, distance: 1 });
-	distances[start] = 1;
+	heap.push(DijkstraState { node: start, distance: 0 });
+	distances[start] = 0;
 
 	// While there are nodes to visit, pop the node with the smallest distance
 	while let Some(DijkstraState { node, distance }) = heap.pop() {
@@ -236,10 +242,15 @@ pub fn dijkstra(graph: &Graph, start: Node, end: Node) -> Path {
 /// This is useful to avoid recomputing paths included in one another when computing all pairs distances
 /// This is meant to be called for every node in the graph, since it does extra calculations to avoid recomputing paths
 pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut DistanceMatrix) {
+	if start == end {
+		dst_mat[(start, end)] = 1;
+		return;
+	}
 	// Initialize the heap with the start node, and the distances and previous vectors
 	let mut heap = BinaryHeap::new();
 	let mut previous = DijkstraInformation::new(None, graph.nb_nodes());
 	let mut distances = DijkstraInformation::new(Tick::MAX, graph.nb_nodes());
+	let mut visited = DijkstraInformation::new(false, graph.nb_nodes());
 	heap.push(DijkstraState { node: start, distance: 0 });
 	distances[start] = 0;
 
@@ -248,19 +259,22 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 		if node == end {
 			break;
 		}
+		if visited[node] {
+			continue;
+		}
 		if distance > distances[node] {
 			continue;
 		}
+		visited[node] = true;
 
-		// A distance of a node to itself is 1
-		if node == start {
-			dst_mat[(start, node)] = 1;
-		}
 		// We write the distance from the start to the node visited, since we know it is the shortest path, and avoids recomputing it
-		else {
+		if start != node {
 			dst_mat[(start, node)] = distance;
 		}
 		for neighbour in &graph.edges[usize::from(node)] {
+			if visited[neighbour.node] {
+				continue;
+			}
 			let new_distance = distance + neighbour.weight;
 			if new_distance < distances[neighbour.node] {
 				distances[neighbour.node] = new_distance;
