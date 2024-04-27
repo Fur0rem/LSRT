@@ -53,7 +53,7 @@ use std::{
 use graph::Graph;
 
 pub mod attack;
-use attack::{Attack, DeletedLink, DynamicAttack, StaticAttack};
+use attack::{Attack, DynamicAttack, StaticAttack};
 
 pub mod paths;
 

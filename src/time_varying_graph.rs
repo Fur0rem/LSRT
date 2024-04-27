@@ -1,10 +1,10 @@
 //! Time varying graphs and algorithms to work on them.
 
+use crate::attack::BlockedLink;
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 use crate::graph::{DijkstraInformation, DijkstraState};
 use crate::graph::{Graph, Neighbour};
 use crate::paths::{TemporalPath, TemporalSubPathsPyramid};
-use crate::DeletedLink;
 use crate::{Node, Tick};
 
 use std::collections::BinaryHeap;
@@ -72,12 +72,12 @@ impl TimeVaryingGraph {
 		self.max_tick
 	}
 
-	pub fn from_kind(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
+	pub fn from_kind(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<BlockedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
 		return Self { max_tick, nodes: phantoms };
 	}
 
-	pub fn from_aggressive(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Self {
+	pub fn from_aggressive(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<BlockedLink>, delta: u8) -> Self {
 		let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 		return Self { max_tick, nodes: phantoms };
 	}
@@ -178,7 +178,7 @@ pub fn temporal_dijkstra_write(
 }
 
 /// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
-pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
+pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<BlockedLink>, delta: u8) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
 	let max_tick = usize::from(max_tick);
 	let delta = usize::from(delta);
@@ -227,7 +227,7 @@ pub fn create_phantom_edges(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<D
 }
 
 pub fn create_phantom_edges_aggressive(
-	graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8,
+	graph: &Graph, max_tick: Tick, deleted_edges: &Vec<BlockedLink>, delta: u8,
 ) -> Vec<Vec<PhantomEdge>> {
 	let mut phantoms = vec![];
 
@@ -298,7 +298,7 @@ pub fn create_phantom_edges_aggressive(
 	return phantoms;
 }
 
-pub fn graph_to_temporal(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<DeletedLink>, delta: u8) -> TimeVaryingGraph {
+pub fn graph_to_temporal(graph: &Graph, max_tick: Tick, deleted_edges: &Vec<BlockedLink>, delta: u8) -> TimeVaryingGraph {
 	#[cfg(feature = "aggressive")]
 	let phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 	#[cfg(not(feature = "aggressive"))]

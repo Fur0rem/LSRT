@@ -494,11 +494,10 @@
 <a href="#493" id="493">493</a>
 <a href="#494" id="494">494</a>
 <a href="#495" id="495">495</a>
-<a href="#496" id="496">496</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
-	<span class="kw">use </span><span class="kw">crate</span>::attack::{Attack, AttackResult, DynamicAttack, StaticAttack};
+	<span class="kw">use </span><span class="kw">crate</span>::attack::{Attack, AttackResult, BlockedLink, DynamicAttack, StaticAttack};
 	<span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 	<span class="kw">use </span><span class="kw">crate</span>::graph::{dijkstra, dijkstra_write, Graph, Neighbour};
 	<span class="kw">use </span><span class="kw">crate</span>::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
@@ -506,7 +505,6 @@
 		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap,
 		TimeVaryingGraph,
 	};
-	<span class="kw">use </span><span class="kw">crate</span>::DeletedLink;
 	<span class="kw">use crate</span>::{Node, Tick};
 
 	<span class="kw">fn </span>make_test_graph() -&gt; Graph {
@@ -526,19 +524,19 @@
 		Graph::from_neighbours(<span class="macro">vec!</span>[neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3])
 	}
 
-	<span class="kw">fn </span>make_test_deleted_links() -&gt; Vec&lt;DeletedLink&gt; {
+	<span class="kw">fn </span>make_test_deleted_links() -&gt; Vec&lt;BlockedLink&gt; {
 		<span class="macro">vec!</span>[
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">0</span>,
 				to: <span class="number">1</span>,
 				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">1</span>,
 				to: <span class="number">2</span>,
 				times: <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">3</span>,
 				to: <span class="number">1</span>,
 				times: <span class="macro">vec!</span>[<span class="number">3</span>, <span class="number">4</span>],
@@ -588,12 +586,12 @@
 			edges: <span class="macro">vec!</span>[<span class="macro">vec!</span>[Neighbour { node: <span class="number">1</span>, weight: <span class="number">3 </span>}], <span class="macro">vec!</span>[Neighbour { node: <span class="number">2</span>, weight: <span class="number">2 </span>}]],
 		};
 		<span class="kw">let </span>links = <span class="macro">vec!</span>[
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">0</span>,
 				to: <span class="number">1</span>,
 				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">1</span>,
 				to: <span class="number">2</span>,
 				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],
@@ -769,7 +767,7 @@
 		<span class="comment">// Build up a dynamic attack with the same deleted links
 		</span><span class="kw">let </span>deleted_links_dynamic = deleted_links
 			.iter()
-			.map(|(from, to)| DeletedLink {
+			.map(|(from, to)| BlockedLink {
 				from: <span class="kw-2">*</span>from,
 				to: <span class="kw-2">*</span>to,
 				times: (<span class="number">0</span>..max_tick).collect(),
@@ -824,7 +822,7 @@
 		<span class="macro">println!</span>(<span class="string">"Nb nodes: {}"</span>, nb_nodes);
 
 		<span class="kw">let </span>deleted_links = graph.edges.iter().enumerate().flat_map(|(from, neighbours)| {
-			neighbours.iter().map(<span class="kw">move </span>|neighbour| DeletedLink {
+			neighbours.iter().map(<span class="kw">move </span>|neighbour| BlockedLink {
 				from: from <span class="kw">as </span>Node,
 				to: neighbour.node,
 				times: (<span class="number">0</span>..max_tick).collect(),
@@ -954,12 +952,12 @@
 		<span class="kw">let </span>path = dijkstra(<span class="kw-2">&amp;</span>graph, <span class="number">0</span>, <span class="number">5</span>);
 		<span class="kw">let </span>path = SubPathsPyramid::from_path(<span class="kw-2">&amp;</span>graph, <span class="kw-2">&amp;</span>path);
 		<span class="kw">let </span>deleted_links = <span class="macro">vec!</span>[
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">1</span>,
 				to: <span class="number">2</span>,
 				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: <span class="number">3</span>,
 				to: <span class="number">4</span>,
 				times: <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>],

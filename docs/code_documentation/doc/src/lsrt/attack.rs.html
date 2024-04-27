@@ -258,9 +258,9 @@
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
-//! 1. Static attacks : the blocked links are fixed over the whole time
-//! 2. Dynamic attacks : the blocked links change over time
-//! We did this to optimise the computation time for static attacks, as the distance matrix is the same for all times.
+//! 1. Static attacks : the [`BlockedLink`]s are fixed over the whole time
+//! 2. Dynamic attacks : the [`BlockedLink`]s change over time
+//! We did this to optimise the computation time for static attacks, as the [`DistanceMatrix`] is the same for all ticks.
 
 </span><span class="kw">use </span>std::fmt::Debug;
 <span class="kw">use </span>std::{
@@ -305,14 +305,14 @@
 	<span class="doccomment">/// Returns the max tick of the attack.
 	</span><span class="kw">fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick;
 	<span class="doccomment">/// Returns the blocked links of the attack.
-	</span><span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;DeletedLink&gt;&gt;;
+	</span><span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;BlockedLink&gt;&gt;;
 	<span class="doccomment">/// Returns the delta of the attack.
 	</span><span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8;
 }
 
-<span class="doccomment">/// A deleted link from an attack.
+<span class="doccomment">/// A blocked link from an attack.
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>DeletedLink {
+</span><span class="kw">pub struct </span>BlockedLink {
 	<span class="doccomment">/// The node from which the link is deleted.
 	</span><span class="kw">pub </span>from: Node,
 	<span class="doccomment">/// The node to which the link is deleted.
@@ -324,7 +324,7 @@
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>DynamicAttack {
-	<span class="kw">pub </span>blocked_links: Vec&lt;DeletedLink&gt;,
+	<span class="kw">pub </span>blocked_links: Vec&lt;BlockedLink&gt;,
 	<span class="kw">pub </span>delta: u8,
 	<span class="kw">pub </span>max_tick: Tick,
 }
@@ -404,11 +404,11 @@
 		<span class="kw">return </span><span class="self">self</span>.delta;
 	}
 
-	<span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;DeletedLink&gt;&gt; {
+	<span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;BlockedLink&gt;&gt; {
 		<span class="kw">let </span><span class="kw-2">mut </span>blocked_links = <span class="macro">vec!</span>[];
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.blocked_links.len() {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.blocked_links[i].len() {
-				blocked_links.push(DeletedLink {
+				blocked_links.push(BlockedLink {
 					from: i <span class="kw">as </span>Node,
 					to: <span class="self">self</span>.blocked_links[i][j],
 					times: (<span class="number">0</span>..<span class="self">self</span>.max_tick).collect(),
@@ -465,7 +465,7 @@
 				.map(|x| x.parse().expect(<span class="string">"Invalid time : Expected a number lower than Tick::MAX"</span>))
 				.collect();
 
-			blocked_links.push(DeletedLink { from, to, times });
+			blocked_links.push(BlockedLink { from, to, times });
 		}
 
 		<span class="kw">return </span><span class="self">Self </span>{
@@ -485,7 +485,7 @@
 		<span class="kw">return </span><span class="self">self</span>.delta;
 	}
 
-	<span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;DeletedLink&gt;&gt; {
+	<span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;BlockedLink&gt;&gt; {
 		<span class="kw">return </span>Cow::Borrowed(<span class="kw-2">&amp;</span><span class="self">self</span>.blocked_links);
 	}
 

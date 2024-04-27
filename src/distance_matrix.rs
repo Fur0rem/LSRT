@@ -1,4 +1,8 @@
 //! Distance matrices, distance matrix arrays, and square matrices to compute distances and store informations from graphs.
+//!
+//! A distance matrix is a matrix that stores the distances between nodes in a graph.
+//! A value of 0 means that the value still needs to be computed.
+//! A value of `Tick::MAX` means that the nodes are unreachable, or that the distance is greater than the maximum tick, or that the distance is by random chance equal to `Tick::MAX`.
 
 use crate::graph::Graph;
 use crate::{Node, Tick};

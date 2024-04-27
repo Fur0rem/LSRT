@@ -1,9 +1,9 @@
 //! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
-//! 1. Static attacks : the blocked links are fixed over the whole time
-//! 2. Dynamic attacks : the blocked links change over time
-//! We did this to optimise the computation time for static attacks, as the distance matrix is the same for all times.
+//! 1. Static attacks : the [`BlockedLink`]s are fixed over the whole time
+//! 2. Dynamic attacks : the [`BlockedLink`]s change over time
+//! We did this to optimise the computation time for static attacks, as the [`DistanceMatrix`] is the same for all ticks.
 
 use std::fmt::Debug;
 use std::{
@@ -48,14 +48,14 @@ pub trait Attack: Debug {
 	/// Returns the max tick of the attack.
 	fn max_tick(&self) -> Tick;
 	/// Returns the blocked links of the attack.
-	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
+	fn blocked_links(&self) -> Cow<Vec<BlockedLink>>;
 	/// Returns the delta of the attack.
 	fn delta(&self) -> u8;
 }
 
-/// A deleted link from an attack.
+/// A blocked link from an attack.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DeletedLink {
+pub struct BlockedLink {
 	/// The node from which the link is deleted.
 	pub from: Node,
 	/// The node to which the link is deleted.
@@ -67,7 +67,7 @@ pub struct DeletedLink {
 
 #[derive(Debug)]
 pub struct DynamicAttack {
-	pub blocked_links: Vec<DeletedLink>,
+	pub blocked_links: Vec<BlockedLink>,
 	pub delta: u8,
 	pub max_tick: Tick,
 }
@@ -147,11 +147,11 @@ impl Attack for StaticAttack {
 		return self.delta;
 	}
 
-	fn blocked_links(&self) -> Cow<Vec<DeletedLink>> {
+	fn blocked_links(&self) -> Cow<Vec<BlockedLink>> {
 		let mut blocked_links = vec![];
 		for i in 0..self.blocked_links.len() {
 			for j in 0..self.blocked_links[i].len() {
-				blocked_links.push(DeletedLink {
+				blocked_links.push(BlockedLink {
 					from: i as Node,
 					to: self.blocked_links[i][j],
 					times: (0..self.max_tick).collect(),
@@ -208,7 +208,7 @@ impl DynamicAttack {
 				.map(|x| x.parse().expect("Invalid time : Expected a number lower than Tick::MAX"))
 				.collect();
 
-			blocked_links.push(DeletedLink { from, to, times });
+			blocked_links.push(BlockedLink { from, to, times });
 		}
 
 		return Self {
@@ -228,7 +228,7 @@ impl Attack for DynamicAttack {
 		return self.delta;
 	}
 
-	fn blocked_links(&self) -> Cow<Vec<DeletedLink>> {
+	fn blocked_links(&self) -> Cow<Vec<BlockedLink>> {
 		return Cow::Borrowed(&self.blocked_links);
 	}
 

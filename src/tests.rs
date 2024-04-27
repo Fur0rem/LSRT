@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
 
-	use crate::attack::{Attack, AttackResult, DynamicAttack, StaticAttack};
+	use crate::attack::{Attack, AttackResult, BlockedLink, DynamicAttack, StaticAttack};
 	use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 	use crate::graph::{dijkstra, dijkstra_write, Graph, Neighbour};
 	use crate::paths::{SubPathsPyramid, TemporalSubPathsPyramid};
@@ -9,7 +9,6 @@ mod tests {
 		create_phantom_edges, create_phantom_edges_aggressive, temporal_dijkstra, temporal_dijkstra_write, PhantomEdgesMap,
 		TimeVaryingGraph,
 	};
-	use crate::DeletedLink;
 	use crate::{Node, Tick};
 
 	fn make_test_graph() -> Graph {
@@ -29,19 +28,19 @@ mod tests {
 		Graph::from_neighbours(vec![neighbours_of_0, neighbours_of_1, neighbours_of_2, neighbours_of_3])
 	}
 
-	fn make_test_deleted_links() -> Vec<DeletedLink> {
+	fn make_test_deleted_links() -> Vec<BlockedLink> {
 		vec![
-			DeletedLink {
+			BlockedLink {
 				from: 0,
 				to: 1,
 				times: vec![0, 1],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: 1,
 				to: 2,
 				times: vec![1, 2],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: 3,
 				to: 1,
 				times: vec![3, 4],
@@ -91,12 +90,12 @@ mod tests {
 			edges: vec![vec![Neighbour { node: 1, weight: 3 }], vec![Neighbour { node: 2, weight: 2 }]],
 		};
 		let links = vec![
-			DeletedLink {
+			BlockedLink {
 				from: 0,
 				to: 1,
 				times: vec![0, 2, 4, 6, 8],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: 1,
 				to: 2,
 				times: vec![0, 2],
@@ -272,7 +271,7 @@ mod tests {
 		// Build up a dynamic attack with the same deleted links
 		let deleted_links_dynamic = deleted_links
 			.iter()
-			.map(|(from, to)| DeletedLink {
+			.map(|(from, to)| BlockedLink {
 				from: *from,
 				to: *to,
 				times: (0..max_tick).collect(),
@@ -327,7 +326,7 @@ mod tests {
 		println!("Nb nodes: {}", nb_nodes);
 
 		let deleted_links = graph.edges.iter().enumerate().flat_map(|(from, neighbours)| {
-			neighbours.iter().map(move |neighbour| DeletedLink {
+			neighbours.iter().map(move |neighbour| BlockedLink {
 				from: from as Node,
 				to: neighbour.node,
 				times: (0..max_tick).collect(),
@@ -457,12 +456,12 @@ mod tests {
 		let path = dijkstra(&graph, 0, 5);
 		let path = SubPathsPyramid::from_path(&graph, &path);
 		let deleted_links = vec![
-			DeletedLink {
+			BlockedLink {
 				from: 1,
 				to: 2,
 				times: vec![0, 2],
 			},
-			DeletedLink {
+			BlockedLink {
 				from: 3,
 				to: 4,
 				times: vec![0, 2],
