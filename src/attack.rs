@@ -35,8 +35,9 @@ pub enum AttackResult {
 /// An attack is a set of blocked links, and contains its delta and max time.
 /// Any attack must implement this trait to have its efficiency computed.
 pub trait Attack: Debug {
-	// efficiency + reachables
+	/// Computes the distance matrix for the attack.
 	fn all_pairs_distances(&self, graph: &Graph) -> AttackResult;
+	/// Computes the efficiency and reachables for the attack.
 	fn efficiency_reachables(&self, graph: &Graph) -> (f64, u64) {
 		let distance_matrix = self.all_pairs_distances(graph);
 		match distance_matrix {
@@ -44,16 +45,23 @@ pub trait Attack: Debug {
 			AttackResult::Dynamic(dma) => dma.efficiency_reachables(self.max_tick()),
 		}
 	}
-
+	/// Returns the max tick of the attack.
 	fn max_tick(&self) -> Tick;
+	/// Returns the blocked links of the attack.
 	fn blocked_links(&self) -> Cow<Vec<DeletedLink>>;
+	/// Returns the delta of the attack.
 	fn delta(&self) -> u8;
 }
 
+/// A deleted link from an attack.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DeletedLink {
+	/// The node from which the link is deleted.
 	pub from: Node,
+	/// The node to which the link is deleted.
 	pub to: Node,
+	/// The times at which the link is deleted, they are sorted and unique.
+	/// Note : A [`Time`] is different from a [`Tick`]
 	pub times: Vec<Time>,
 }
 

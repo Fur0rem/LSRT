@@ -1,3 +1,5 @@
+//! Regular graphs and algorithms to work on it
+
 use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;

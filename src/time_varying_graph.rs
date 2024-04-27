@@ -1,3 +1,5 @@
+//! Time varying graphs and algorithms to work on them.
+
 use crate::distance_matrix::{DistanceMatrixArray, SquareMatrix};
 use crate::graph::{DijkstraInformation, DijkstraState};
 use crate::graph::{Graph, Neighbour};

@@ -307,7 +307,23 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices and distance matrix arrays to compute distances in graphs.
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices, distance matrix arrays, and square matrices to compute distances and store informations from graphs.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::graph::Graph;
 <span class="kw">use crate</span>::{Node, Tick};
@@ -392,7 +408,8 @@
 		}
 	}
 
-	<span class="kw">pub const fn </span>nb_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Node {
+	<span class="doccomment">/// Returns the number of nodes in the distance matrix
+	</span><span class="kw">pub const fn </span>nb_nodes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Node {
 		<span class="self">self</span>.dim <span class="kw">as </span>Node
 	}
 
@@ -456,19 +473,24 @@
 				<span class="kw">else </span>{
 					distance.to_string()
 				};
-				<span class="macro">print!</span>(<span class="string">"{distance_to_str} "</span>);
+				<span class="comment">// Pad the string to 4 characters
+				</span><span class="macro">print!</span>(<span class="string">"{distance_to_str:4} "</span>);
 			}
 			<span class="macro">println!</span>();
 		}
 	}
 }
 
-<span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+<span class="doccomment">/// A distance matrix array to stock the distance matrices for each time in a graph.
+/// It is used for dynamic attacks.
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>DistanceMatrixArray {
-	<span class="comment">// 3D array of distance matrices flattened
-	</span><span class="kw">pub </span>distances: Vec&lt;Tick&gt;,
-	nb_nodes: Node,
-	<span class="kw">pub </span>max_tick: Tick,
+	<span class="doccomment">/// 3D (Time, From, To) array of distances flattened
+	</span>distances: Vec&lt;Tick&gt;,
+	<span class="doccomment">/// Number of nodes in the graph
+	</span>nb_nodes: Node,
+	<span class="doccomment">/// Maximum tick in the simulation
+	</span>max_tick: Tick,
 }
 
 <span class="kw">impl </span>Index&lt;(Tick, Node, Node)&gt; <span class="kw">for </span>DistanceMatrixArray {
@@ -494,11 +516,13 @@
 }
 
 <span class="kw">impl </span>DistanceMatrixArray {
-	<span class="kw">pub fn </span>total_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+	<span class="doccomment">/// Returns the number of elements in the distance matrix array
+	</span><span class="kw">pub fn </span>total_size(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
 		usize::from(<span class="self">self</span>.nb_nodes) * usize::from(<span class="self">self</span>.nb_nodes) * usize::from(<span class="self">self</span>.max_tick)
 	}
 
-	<span class="kw">pub fn </span>count_zeros(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+	<span class="doccomment">/// Counts the number of zeros in the distance matrix array
+	</span><span class="kw">pub fn </span>count_zeros(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
 		<span class="kw">let </span><span class="kw-2">mut </span>nb_zeros = <span class="number">0</span>;
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
 			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
@@ -512,7 +536,8 @@
 		<span class="kw">return </span>nb_zeros;
 	}
 
-	<span class="kw">pub fn </span>fill_1_on_diagonals(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+	<span class="doccomment">/// Fills the diagonal every matrix with 1
+	</span><span class="kw">pub fn </span>fill_1_on_diagonals(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
 			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {
 				<span class="self">self</span>[(t, i, i)] = <span class="number">1</span>;
@@ -520,7 +545,8 @@
 		}
 	}
 
-	<span class="kw">pub fn </span>maxed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Returns a new distance matrix array with all distances set to the maximum value and the diagonal set to 1
+	</span><span class="kw">pub fn </span>maxed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>size = usize::from(nb_nodes);
 		<span class="kw">let </span>max_tick_usize = usize::from(max_tick);
 		<span class="kw">let </span>distances = <span class="macro">vec!</span>[Tick::MAX; size * size * max_tick_usize];
@@ -533,7 +559,8 @@
 		<span class="kw">return </span>dma;
 	}
 
-	<span class="kw">pub fn </span>zeroed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Returns a new distance matrix array with all distances set to 0 and the diagonal set to 1
+	</span><span class="kw">pub fn </span>zeroed(nb_nodes: Node, max_tick: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>size = usize::from(nb_nodes);
 		<span class="kw">let </span>max_tick_usize = usize::from(max_tick);
 		<span class="kw">let </span>distances = <span class="macro">vec!</span>[<span class="number">0</span>; size * size * max_tick_usize];
@@ -546,7 +573,8 @@
 		<span class="kw">return </span>dma;
 	}
 
-	<span class="kw">pub fn </span>propagated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Returns a new distance matrix array with all distances set to the distances of the distance matrix
+	</span><span class="kw">pub fn </span>propagated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span><span class="kw-2">mut </span>new_matrix = <span class="self">Self</span>::zeroed(dst_matrix.nb_nodes(), max_tick);
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_tick {
 			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
@@ -558,7 +586,9 @@
 		<span class="kw">return </span>new_matrix;
 	}
 
-	<span class="kw">pub fn </span>propagated_and_unvalidated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Returns a new distance matrix array with all zeros,
+	/// except for the distances of the distance matrix which would be unreachable at the max tick
+	</span><span class="kw">pub fn </span>propagated_and_unvalidated(dst_matrix: <span class="kw-2">&amp;</span>DistanceMatrix, max_tick: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span><span class="kw-2">mut </span>dma = <span class="self">Self</span>::zeroed(dst_matrix.nb_nodes(), max_tick);
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
@@ -572,7 +602,8 @@
 		<span class="kw">return </span>dma;
 	}
 
-	<span class="kw">pub fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, max_tick: Tick) -&gt; (f64, u64) {
+	<span class="doccomment">/// Computes the efficiency and reachables of the distance matrix array
+	</span><span class="kw">pub fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, max_tick: Tick) -&gt; (f64, u64) {
 		<span class="kw">let </span><span class="kw-2">mut </span>sum = <span class="number">0.0</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>reachables = <span class="number">0</span>;
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
@@ -595,7 +626,8 @@
 		<span class="kw">return </span>(sum, reachables);
 	}
 
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+	<span class="doccomment">/// Prints the distance matrix array
+	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.max_tick {
 			<span class="macro">println!</span>(<span class="string">"Time : {t}"</span>);
 			<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nb_nodes {

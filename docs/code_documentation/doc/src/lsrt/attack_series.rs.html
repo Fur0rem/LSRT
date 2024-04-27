@@ -255,7 +255,45 @@
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Optimised computation for multiple attacks on a single graph.
+
+</span><span class="kw">use </span>std::fs::File;
+<span class="kw">use </span>std::io::{BufRead, BufReader};
+
+<span class="kw">use </span>rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 <span class="kw">use </span><span class="kw">crate</span>::Tick;
 <span class="kw">use crate</span>::{
@@ -267,17 +305,21 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::benchmark;
 
-<span class="kw">pub struct </span>DynamicAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
+<span class="doccomment">/// A series of dynamic attacks on a graph.
+</span><span class="kw">pub struct </span>DynamicAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub </span>series: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, DynamicAttack)&gt;,
 	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; DynamicAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
+	<span class="doccomment">/// Returns the maximum tick of the series.
+	/// It assumes that all the attacks have the same maximum tick.
+	</span><span class="kw">pub fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="self">self</span>.series[<span class="number">0</span>].<span class="number">1</span>.max_tick()
 	}
 
-	<span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Reads a series of dynamic attacks from a directory and a list of files.
+	</span><span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>series = files
 			.iter()
 			.map(|budget| {
@@ -292,7 +334,10 @@
 		<span class="kw">return </span><span class="self">Self </span>{ series, graph };
 	}
 
-	<span class="kw">pub fn </span>efficiencies_bourrin(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	/// This function uses a naive approach to compute the distances, it calls the [`temporal_dijkstra`] function for each pair of nodes and each tick.
+	/// It is not recommended to use as it is slower than [`efficiencies_write`][DynamicAttackSeries::efficiencies_write]
+	</span><span class="kw">pub fn </span>efficiencies_bourrin(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="self">self</span>.series
 			.par_iter()
 			.map(|(budget, attack)| {
@@ -324,7 +369,11 @@
 			.collect()
 	}
 
-	<span class="kw">pub fn </span>efficiencies_write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	/// This function uses a more efficient approach to compute the distances, it calls the [`temporal_dijkstra_write`] function for each pair of nodes and each tick.
+	/// However, it is faster than [`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin] since it writes more informations in the distance matrix per call.
+	/// Therefore, for most iterations, the function will not even be called.
+	</span><span class="kw">pub fn </span>efficiencies_write(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="comment">// First, compute the paths for the unattacked graph
 		</span><span class="kw">let </span>dst_mat = <span class="self">self</span>.graph.all_pairs_distances();
 
@@ -358,7 +407,12 @@
 			.collect()
 	}
 
-	<span class="kw">pub fn </span>efficiencies_invalidation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	/// This function first computes the paths for the unattacked graph, then for each path, it calculates whether it was impacted by the attack.
+	/// If it was, it invalidates the path and recomputes it.
+	/// This function is slower than [`efficiencies_write`][DynamicAttackSeries::efficiencies_write] since despite having to compute 3 times less paths originally for small attacks,
+	/// [`temporal_dijkstra_write`] writes so much information per call that it doesn't make a difference.
+	</span><span class="kw">pub fn </span>efficiencies_invalidation(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="kw">let </span>(dst_mat, paths) = <span class="self">self</span>.graph.all_pairs_distances_and_paths(<span class="self">self</span>.max_tick());
 		<span class="self">self</span>.series
 			.par_iter()
@@ -404,7 +458,10 @@
 			.collect()
 	}
 
-	<span class="kw">pub fn </span>efficiencies_reachables_test(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Just a test function to check that the 3 methods
+	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation])
+	/// give the same results.
+	</span><span class="kw">pub fn </span>efficiencies_reachables_test(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series bourrin"</span>);
 		<span class="kw">let </span>results_bourrin = <span class="self">self</span>.efficiencies_bourrin();
 		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series write"</span>);
@@ -433,18 +490,25 @@
 		<span class="kw">return </span>results_bourrin;
 	}
 
-	<span class="kw">fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	/// It uses the most efficient method to compute the distances.
+	/// It is recommended to use this function.
+	</span><span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="self">self</span>.efficiencies_reachables_test()
 	}
 }
 
-<span class="kw">pub struct </span>StaticAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub </span>series: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, StaticAttack)&gt;,
-	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
+<span class="doccomment">/// A series of static attacks on a graph.
+</span><span class="kw">pub struct </span>StaticAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
+	<span class="doccomment">/// The series of attacks.
+	</span><span class="kw">pub </span>series: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, StaticAttack)&gt;,
+	<span class="doccomment">/// The graph on which the attacks are performed.
+	</span><span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; StaticAttackSeries&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Reads a series of static attacks from a directory and a list of files.
+	</span><span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>series = files
 			.iter()
 			.map(|budget| {
@@ -459,7 +523,8 @@
 		<span class="kw">return </span><span class="self">Self </span>{ series, graph };
 	}
 
-	<span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	</span><span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="self">self</span>.series
 			.par_iter()
 			.map(|(budget, attack)| {
@@ -474,13 +539,17 @@
 	}
 }
 
-<span class="kw">pub enum </span>AttackSeries&lt;<span class="lifetime">'a</span>&gt; {
+<span class="doccomment">/// A series of attacks on a graph.
+/// The attacks can either be static or dynamic, but not both.
+</span><span class="kw">pub enum </span>AttackSeries&lt;<span class="lifetime">'a</span>&gt; {
 	Static(StaticAttackSeries&lt;<span class="lifetime">'a</span>&gt;),
 	Dynamic(DynamicAttackSeries&lt;<span class="lifetime">'a</span>&gt;),
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; AttackSeries&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Reads a series of attacks from a directory and a list of files.
+	/// It assumes that all the files are of the same type (either static or dynamic).
+	</span><span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="comment">// Open the first file to check if it is a static or dynamic attack
 		</span><span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, directory, files[<span class="number">0</span>]);
 		<span class="kw">let </span>file = File::open(file_name).unwrap();
@@ -488,18 +557,15 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 
-		<span class="kw">if </span>line.starts_with(<span class="string">'S'</span>) {
-			AttackSeries::Static(StaticAttackSeries::read_attacks(directory, files, graph))
-		}
-		<span class="kw">else if </span>line.starts_with(<span class="string">'D'</span>) {
-			AttackSeries::Dynamic(DynamicAttackSeries::read_attacks(directory, files, graph))
-		}
-		<span class="kw">else </span>{
-			<span class="macro">panic!</span>(<span class="string">"Invalid attack file"</span>);
-		}
+		<span class="kw">return match </span>line.trim() {
+			<span class="string">"S" </span>=&gt; AttackSeries::Static(StaticAttackSeries::read_attacks(directory, files, graph)),
+			<span class="string">"D" </span>=&gt; AttackSeries::Dynamic(DynamicAttackSeries::read_attacks(directory, files, graph)),
+			<span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid attack type"</span>),
+		};
 	}
 
-	<span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	</span><span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
 		<span class="kw">let </span>nb_threads = std::env::var(<span class="string">"LSRT_NB_THREADS"</span>);
 		<span class="kw">if let </span><span class="prelude-val">Ok</span>(nb_threads) = nb_threads {
 			<span class="kw">let </span>nb_threads = nb_threads.parse().unwrap();

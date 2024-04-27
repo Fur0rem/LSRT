@@ -1,4 +1,4 @@
-//! Distance matrices and distance matrix arrays to compute distances in graphs.
+//! Distance matrices, distance matrix arrays, and square matrices to compute distances and store informations from graphs.
 
 use crate::graph::Graph;
 use crate::{Node, Tick};
@@ -83,6 +83,7 @@ impl DistanceMatrix {
 		}
 	}
 
+	/// Returns the number of nodes in the distance matrix
 	pub const fn nb_nodes(&self) -> Node {
 		self.dim as Node
 	}
@@ -147,19 +148,24 @@ impl DistanceMatrix {
 				else {
 					distance.to_string()
 				};
-				print!("{distance_to_str} ");
+				// Pad the string to 4 characters
+				print!("{distance_to_str:4} ");
 			}
 			println!();
 		}
 	}
 }
 
+/// A distance matrix array to stock the distance matrices for each time in a graph.
+/// It is used for dynamic attacks.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DistanceMatrixArray {
-	// 3D array of distance matrices flattened
-	pub distances: Vec<Tick>,
+	/// 3D (Time, From, To) array of distances flattened
+	distances: Vec<Tick>,
+	/// Number of nodes in the graph
 	nb_nodes: Node,
-	pub max_tick: Tick,
+	/// Maximum tick in the simulation
+	max_tick: Tick,
 }
 
 impl Index<(Tick, Node, Node)> for DistanceMatrixArray {
@@ -185,10 +191,12 @@ impl IndexMut<(Tick, Node, Node)> for DistanceMatrixArray {
 }
 
 impl DistanceMatrixArray {
+	/// Returns the number of elements in the distance matrix array
 	pub fn total_size(&self) -> usize {
 		usize::from(self.nb_nodes) * usize::from(self.nb_nodes) * usize::from(self.max_tick)
 	}
 
+	/// Counts the number of zeros in the distance matrix array
 	pub fn count_zeros(&self) -> usize {
 		let mut nb_zeros = 0;
 		for t in 0..self.max_tick {
@@ -203,6 +211,7 @@ impl DistanceMatrixArray {
 		return nb_zeros;
 	}
 
+	/// Fills the diagonal every matrix with 1
 	pub fn fill_1_on_diagonals(&mut self) {
 		for t in 0..self.max_tick {
 			for i in 0..self.nb_nodes {
@@ -211,6 +220,7 @@ impl DistanceMatrixArray {
 		}
 	}
 
+	/// Returns a new distance matrix array with all distances set to the maximum value and the diagonal set to 1
 	pub fn maxed(nb_nodes: Node, max_tick: Tick) -> Self {
 		let size = usize::from(nb_nodes);
 		let max_tick_usize = usize::from(max_tick);
@@ -224,6 +234,7 @@ impl DistanceMatrixArray {
 		return dma;
 	}
 
+	/// Returns a new distance matrix array with all distances set to 0 and the diagonal set to 1
 	pub fn zeroed(nb_nodes: Node, max_tick: Tick) -> Self {
 		let size = usize::from(nb_nodes);
 		let max_tick_usize = usize::from(max_tick);
@@ -237,6 +248,7 @@ impl DistanceMatrixArray {
 		return dma;
 	}
 
+	/// Returns a new distance matrix array with all distances set to the distances of the distance matrix
 	pub fn propagated(dst_matrix: &DistanceMatrix, max_tick: Tick) -> Self {
 		let mut new_matrix = Self::zeroed(dst_matrix.nb_nodes(), max_tick);
 		for t in 0..max_tick {
@@ -249,6 +261,8 @@ impl DistanceMatrixArray {
 		return new_matrix;
 	}
 
+	/// Returns a new distance matrix array with all zeros,
+	/// except for the distances of the distance matrix which would be unreachable at the max tick
 	pub fn propagated_and_unvalidated(dst_matrix: &DistanceMatrix, max_tick: Tick) -> Self {
 		let mut dma = Self::zeroed(dst_matrix.nb_nodes(), max_tick);
 		for i in 0..dst_matrix.nb_nodes() {
@@ -263,6 +277,7 @@ impl DistanceMatrixArray {
 		return dma;
 	}
 
+	/// Computes the efficiency and reachables of the distance matrix array
 	pub fn efficiency_reachables(&self, max_tick: Tick) -> (f64, u64) {
 		let mut sum = 0.0;
 		let mut reachables = 0;
@@ -286,6 +301,7 @@ impl DistanceMatrixArray {
 		return (sum, reachables);
 	}
 
+	/// Prints the distance matrix array
 	pub fn print(&self) {
 		for t in 0..self.max_tick {
 			println!("Time : {t}");

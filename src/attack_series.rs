@@ -1,3 +1,5 @@
+//! Optimised computation for multiple attacks on a single graph.
+
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -13,16 +15,20 @@ use crate::{
 
 use crate::benchmark;
 
+/// A series of dynamic attacks on a graph.
 pub struct DynamicAttackSeries<'a> {
 	pub series: Vec<(&'a str, DynamicAttack)>,
 	pub graph: &'a Graph,
 }
 
 impl<'a> DynamicAttackSeries<'a> {
+	/// Returns the maximum tick of the series.
+	/// It assumes that all the attacks have the same maximum tick.
 	pub fn max_tick(&self) -> Tick {
 		self.series[0].1.max_tick()
 	}
 
+	/// Reads a series of dynamic attacks from a directory and a list of files.
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		let series = files
 			.iter()
@@ -38,6 +44,9 @@ impl<'a> DynamicAttackSeries<'a> {
 		return Self { series, graph };
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
+	/// This function uses a naive approach to compute the distances, it calls the [`temporal_dijkstra`] function for each pair of nodes and each tick.
+	/// It is not recommended to use as it is slower than [`efficiencies_write`][DynamicAttackSeries::efficiencies_write]
 	pub fn efficiencies_bourrin(&self) -> Vec<(&'a str, (f64, u64))> {
 		self.series
 			.par_iter()
@@ -70,6 +79,10 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
+	/// This function uses a more efficient approach to compute the distances, it calls the [`temporal_dijkstra_write`] function for each pair of nodes and each tick.
+	/// However, it is faster than [`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin] since it writes more informations in the distance matrix per call.
+	/// Therefore, for most iterations, the function will not even be called.
 	pub fn efficiencies_write(&self) -> Vec<(&'a str, (f64, u64))> {
 		// First, compute the paths for the unattacked graph
 		let dst_mat = self.graph.all_pairs_distances();
@@ -104,6 +117,11 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
+	/// This function first computes the paths for the unattacked graph, then for each path, it calculates whether it was impacted by the attack.
+	/// If it was, it invalidates the path and recomputes it.
+	/// This function is slower than [`efficiencies_write`][DynamicAttackSeries::efficiencies_write] since despite having to compute 3 times less paths originally for small attacks,
+	/// [`temporal_dijkstra_write`] writes so much information per call that it doesn't make a difference.
 	pub fn efficiencies_invalidation(&self) -> Vec<(&'a str, (f64, u64))> {
 		let (dst_mat, paths) = self.graph.all_pairs_distances_and_paths(self.max_tick());
 		self.series
@@ -150,6 +168,9 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
+	/// Just a test function to check that the 3 methods
+	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation])
+	/// give the same results.
 	pub fn efficiencies_reachables_test(&self) -> Vec<(&'a str, (f64, u64))> {
 		println!("Computing dynamic attack series bourrin");
 		let results_bourrin = self.efficiencies_bourrin();
@@ -179,17 +200,24 @@ impl<'a> DynamicAttackSeries<'a> {
 		return results_bourrin;
 	}
 
-	fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
+	/// Computes the efficiency and reachables for each attack in the series.
+	/// It uses the most efficient method to compute the distances.
+	/// It is recommended to use this function.
+	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
 		self.efficiencies_reachables_test()
 	}
 }
 
+/// A series of static attacks on a graph.
 pub struct StaticAttackSeries<'a> {
+	/// The series of attacks.
 	pub series: Vec<(&'a str, StaticAttack)>,
+	/// The graph on which the attacks are performed.
 	pub graph: &'a Graph,
 }
 
 impl<'a> StaticAttackSeries<'a> {
+	/// Reads a series of static attacks from a directory and a list of files.
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		let series = files
 			.iter()
@@ -205,6 +233,7 @@ impl<'a> StaticAttackSeries<'a> {
 		return Self { series, graph };
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
 	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
 		self.series
 			.par_iter()
@@ -220,12 +249,16 @@ impl<'a> StaticAttackSeries<'a> {
 	}
 }
 
+/// A series of attacks on a graph.
+/// The attacks can either be static or dynamic, but not both.
 pub enum AttackSeries<'a> {
 	Static(StaticAttackSeries<'a>),
 	Dynamic(DynamicAttackSeries<'a>),
 }
 
 impl<'a> AttackSeries<'a> {
+	/// Reads a series of attacks from a directory and a list of files.
+	/// It assumes that all the files are of the same type (either static or dynamic).
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		// Open the first file to check if it is a static or dynamic attack
 		let file_name = format!("{}{}", directory, files[0]);
@@ -234,17 +267,14 @@ impl<'a> AttackSeries<'a> {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 
-		if line.starts_with('S') {
-			AttackSeries::Static(StaticAttackSeries::read_attacks(directory, files, graph))
-		}
-		else if line.starts_with('D') {
-			AttackSeries::Dynamic(DynamicAttackSeries::read_attacks(directory, files, graph))
-		}
-		else {
-			panic!("Invalid attack file");
-		}
+		return match line.trim() {
+			"S" => AttackSeries::Static(StaticAttackSeries::read_attacks(directory, files, graph)),
+			"D" => AttackSeries::Dynamic(DynamicAttackSeries::read_attacks(directory, files, graph)),
+			_ => panic!("Invalid attack type"),
+		};
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
 	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
 		let nb_threads = std::env::var("LSRT_NB_THREADS");
 		if let Ok(nb_threads) = nb_threads {

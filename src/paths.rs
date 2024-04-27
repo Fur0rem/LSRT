@@ -1,3 +1,5 @@
+//! Contains structures and functions to work with paths in a graph or a time varying graph
+
 use crate::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
 use crate::graph::{Graph, Neighbour};
 use crate::time_varying_graph::{PhantomEdgesMap, TimeVaryingGraph};

@@ -247,6 +247,14 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -284,26 +292,34 @@
 /// An attack is a set of blocked links, and contains its delta and max time.
 /// Any attack must implement this trait to have its efficiency computed.
 </span><span class="kw">pub trait </span>Attack: Debug {
-	<span class="comment">// efficiency + reachables
+	<span class="doccomment">/// Computes the distance matrix for the attack.
 	</span><span class="kw">fn </span>all_pairs_distances(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; AttackResult;
-	<span class="kw">fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; (f64, u64) {
+	<span class="doccomment">/// Computes the efficiency and reachables for the attack.
+	</span><span class="kw">fn </span>efficiency_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>, graph: <span class="kw-2">&amp;</span>Graph) -&gt; (f64, u64) {
 		<span class="kw">let </span>distance_matrix = <span class="self">self</span>.all_pairs_distances(graph);
 		<span class="kw">match </span>distance_matrix {
 			AttackResult::Static(dm) =&gt; dm.efficiency_reachables(<span class="self">self</span>.max_tick()),
 			AttackResult::Dynamic(dma) =&gt; dma.efficiency_reachables(<span class="self">self</span>.max_tick()),
 		}
 	}
-
-	<span class="kw">fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick;
-	<span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;DeletedLink&gt;&gt;;
-	<span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8;
+	<span class="doccomment">/// Returns the max tick of the attack.
+	</span><span class="kw">fn </span>max_tick(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick;
+	<span class="doccomment">/// Returns the blocked links of the attack.
+	</span><span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;DeletedLink&gt;&gt;;
+	<span class="doccomment">/// Returns the delta of the attack.
+	</span><span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8;
 }
 
-<span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
+<span class="doccomment">/// A deleted link from an attack.
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>DeletedLink {
-	<span class="kw">pub </span>from: Node,
-	<span class="kw">pub </span>to: Node,
-	<span class="kw">pub </span>times: Vec&lt;Time&gt;,
+	<span class="doccomment">/// The node from which the link is deleted.
+	</span><span class="kw">pub </span>from: Node,
+	<span class="doccomment">/// The node to which the link is deleted.
+	</span><span class="kw">pub </span>to: Node,
+	<span class="doccomment">/// The times at which the link is deleted, they are sorted and unique.
+	/// Note : A [`Time`] is different from a [`Tick`]
+	</span><span class="kw">pub </span>times: Vec&lt;Time&gt;,
 }
 
 <span class="attr">#[derive(Debug)]
