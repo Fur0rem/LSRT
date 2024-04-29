@@ -168,6 +168,11 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
+	/// Computes the efficiency and reachables for each attack in the series.
+	/// This function does the same as [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], but it uses the dependencies of the nodes to compute the distances.
+	/// We call A a dependency of B if there is an edge A -> B.
+	/// If the distance of a dependency has not been computed, it will compute it, and then compute the distance to the node.
+	/// The benchmarks we did show a speedup from 1.7x to 2.1x compared to [`efficiencies_write`][DynamicAttackSeries::efficiencies_write].
 	pub fn efficiencies_dependencies(&self) -> Vec<(&'a str, (f64, u64))> {
 		let dst_mat = self.graph.all_pairs_distances();
 

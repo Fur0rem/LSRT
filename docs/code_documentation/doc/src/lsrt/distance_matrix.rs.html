@@ -327,6 +327,7 @@
 <a href="#326" id="326">326</a>
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Distance matrices, distance matrix arrays, and square matrices to compute distances and store informations from graphs.
 //!
 //! A distance matrix is a matrix that stores the distances between nodes in a graph.
@@ -601,7 +602,8 @@
 		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
 			<span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..dst_matrix.nb_nodes() {
 				<span class="kw">let </span>weight = dst_matrix[(i, j)];
-				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(<span class="number">2</span>);
+				<span class="kw">let </span>max_tick_reachable = max_tick.saturating_add(<span class="number">2</span>);
+				<span class="kw">let </span>max_tick_reachable = max_tick_reachable.saturating_sub(weight);
 				<span class="kw">for </span>t <span class="kw">in </span>max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}

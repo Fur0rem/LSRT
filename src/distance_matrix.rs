@@ -272,7 +272,8 @@ impl DistanceMatrixArray {
 		for i in 0..dst_matrix.nb_nodes() {
 			for j in 0..dst_matrix.nb_nodes() {
 				let weight = dst_matrix[(i, j)];
-				let max_tick_reachable = max_tick.saturating_sub(weight).saturating_add(2);
+				let max_tick_reachable = max_tick.saturating_add(2);
+				let max_tick_reachable = max_tick_reachable.saturating_sub(weight);
 				for t in max_tick_reachable..max_tick {
 					dma[(t, i, j)] = weight;
 				}
