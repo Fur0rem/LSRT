@@ -204,7 +204,7 @@ impl<'a> DynamicAttackSeries<'a> {
 	/// It uses the most efficient method to compute the distances.
 	/// It is recommended to use this function.
 	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
-		self.efficiencies_reachables_test()
+		self.efficiencies_write()
 	}
 }
 
