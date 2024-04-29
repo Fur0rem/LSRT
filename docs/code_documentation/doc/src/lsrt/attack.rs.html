@@ -307,7 +307,7 @@
 	<span class="doccomment">/// Returns the blocked links of the attack.
 	</span><span class="kw">fn </span>blocked_links(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;Vec&lt;BlockedLink&gt;&gt;;
 	<span class="doccomment">/// Returns the delta of the attack.
-	</span><span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8;
+	</span><span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick;
 }
 
 <span class="doccomment">/// A blocked link from an attack.
@@ -325,14 +325,14 @@
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>DynamicAttack {
 	<span class="kw">pub </span>blocked_links: Vec&lt;BlockedLink&gt;,
-	<span class="kw">pub </span>delta: u8,
+	<span class="kw">pub </span>delta: Tick,
 	<span class="kw">pub </span>max_tick: Tick,
 }
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>StaticAttack {
 	<span class="kw">pub </span>blocked_links: Vec&lt;Vec&lt;Node&gt;&gt;,
-	<span class="kw">pub </span>delta: u8,
+	<span class="kw">pub </span>delta: Tick,
 	<span class="kw">pub </span>max_tick: Tick,
 }
 
@@ -358,7 +358,7 @@
 		// Then, the list of blocked links separated by a space
 		</span><span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).expect(<span class="string">"Empty attack file"</span>);
-		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, u8).expect(<span class="string">"Invalid attack format : Expected &lt;max tick&gt; &lt;delta&gt;"</span>);
+		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, Tick).expect(<span class="string">"Invalid attack format : Expected &lt;max tick&gt; &lt;delta&gt;"</span>);
 
 		<span class="comment">// while there is new line, read it and append to the result
 		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes().into());
@@ -400,7 +400,7 @@
 		<span class="kw">return </span><span class="self">self</span>.max_tick;
 	}
 
-	<span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
+	<span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="kw">return </span><span class="self">self</span>.delta;
 	}
 
@@ -439,7 +439,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 		<span class="kw">let </span>(nb_edges, delta, max_tick) =
-			<span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {} {}"</span>, usize, u8, Tick).expect(<span class="string">"Invalid attack file : Expected &lt;nb_edges&gt; &lt;delta&gt; &lt;max_tick&gt;"</span>);
+			<span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {} {}"</span>, usize, Tick, Tick).expect(<span class="string">"Invalid attack file : Expected &lt;nb_edges&gt; &lt;delta&gt; &lt;max_tick&gt;"</span>);
 
 		<span class="comment">// Then for each line, nb_blocked (node1,node2) &lt;the times at which it is blocked&gt;
 		// For example : 4 (0,2) 5 9 17 18
@@ -481,7 +481,7 @@
 		<span class="kw">return </span><span class="self">self</span>.max_tick;
 	}
 
-	<span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
+	<span class="kw">fn </span>delta(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="kw">return </span><span class="self">self</span>.delta;
 	}
 

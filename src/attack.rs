@@ -50,7 +50,7 @@ pub trait Attack: Debug {
 	/// Returns the blocked links of the attack.
 	fn blocked_links(&self) -> Cow<Vec<BlockedLink>>;
 	/// Returns the delta of the attack.
-	fn delta(&self) -> u8;
+	fn delta(&self) -> Tick;
 }
 
 /// A blocked link from an attack.
@@ -68,14 +68,14 @@ pub struct BlockedLink {
 #[derive(Debug)]
 pub struct DynamicAttack {
 	pub blocked_links: Vec<BlockedLink>,
-	pub delta: u8,
+	pub delta: Tick,
 	pub max_tick: Tick,
 }
 
 #[derive(Debug)]
 pub struct StaticAttack {
 	pub blocked_links: Vec<Vec<Node>>,
-	pub delta: u8,
+	pub delta: Tick,
 	pub max_tick: Tick,
 }
 
@@ -101,7 +101,7 @@ impl StaticAttack {
 		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
 		reader.read_line(&mut line).expect("Empty attack file");
-		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, u8).expect("Invalid attack format : Expected <max tick> <delta>");
+		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, Tick).expect("Invalid attack format : Expected <max tick> <delta>");
 
 		// while there is new line, read it and append to the result
 		let mut blocked_links = Vec::with_capacity(graph.nb_nodes().into());
@@ -143,7 +143,7 @@ impl Attack for StaticAttack {
 		return self.max_tick;
 	}
 
-	fn delta(&self) -> u8 {
+	fn delta(&self) -> Tick {
 		return self.delta;
 	}
 
@@ -182,7 +182,7 @@ impl DynamicAttack {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();
 		let (nb_edges, delta, max_tick) =
-			scanf!(line.trim(), "{} {} {}", usize, u8, Tick).expect("Invalid attack file : Expected <nb_edges> <delta> <max_tick>");
+			scanf!(line.trim(), "{} {} {}", usize, Tick, Tick).expect("Invalid attack file : Expected <nb_edges> <delta> <max_tick>");
 
 		// Then for each line, nb_blocked (node1,node2) <the times at which it is blocked>
 		// For example : 4 (0,2) 5 9 17 18
@@ -224,7 +224,7 @@ impl Attack for DynamicAttack {
 		return self.max_tick;
 	}
 
-	fn delta(&self) -> u8 {
+	fn delta(&self) -> Tick {
 		return self.delta;
 	}
 

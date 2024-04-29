@@ -31,7 +31,7 @@ impl<'a> DynamicAttackSeries<'a> {
 	/// Reads a series of dynamic attacks from a directory and a list of files.
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		let series = files
-			.iter()
+			.par_iter()
 			.map(|budget| {
 				let file_name = format!("{directory}{budget}");
 				let file = File::open(file_name).unwrap();
@@ -168,11 +168,76 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
+	pub fn efficiencies_dependencies(&self) -> Vec<(&'a str, (f64, u64))> {
+		let dst_mat = self.graph.all_pairs_distances();
+
+		// Invert the graph to get the dependencies
+		// Which is a list of nodes that are outgoing from a node
+		let mut dependencies = vec![vec![]; self.graph.nb_nodes().into()];
+		for node in 0..self.graph.nb_nodes() {
+			for edge in self.graph.neighbours(node) {
+				dependencies[edge.node as usize].push(node);
+			}
+		}
+
+		self.series
+			.par_iter()
+			.map(|(budget, attack)| {
+				benchmark!(format!("(Dynamic) Recomputing distances for {}", budget), {
+					let time_graph = graph_to_temporal(self.graph, self.max_tick(), &attack.blocked_links(), attack.delta());
+					let edges_map = PhantomEdgesMap::from_graph(&time_graph);
+					let mut dma = DistanceMatrixArray::propagated_and_unvalidated(&dst_mat, time_graph.max_tick());
+
+					for t in 0..time_graph.max_tick() {
+						for i in 0..time_graph.nb_nodes() {
+							// Doing the j in reverse seems to improve slightly the performance
+							// Probably because nodes that are far in real
+							// life apart also have far apart indexes
+							for j in (0..time_graph.nb_nodes()).rev() {
+								// Not 0 -> already computed
+								if dma[(t, i, j)] != 0 {
+									continue;
+								}
+
+								// We look at all the nodes that could lead to j
+								let mut min_distance = Tick::MAX;
+								for dep in &dependencies[j as usize] {
+									let distance = dma[(t, i, *dep)];
+									if distance == 0 {
+										temporal_dijkstra_write(&time_graph, i, *dep, t, &mut dma, &edges_map);
+									}
+									// Issue with [(i, i)]
+									let distance = if i == *dep { 0 } else { dma[(t, i, *dep)] };
+
+									let time_to_inspect = t.saturating_add(distance);
+									if time_to_inspect >= time_graph.max_tick() {
+										continue;
+									}
+									let edge_weight = edges_map.get_edge(*dep, j).unwrap().weights[usize::from(time_to_inspect)];
+									let weight = distance.saturating_add(edge_weight);
+									if weight < min_distance {
+										min_distance = weight;
+									}
+								}
+								dma[(t, i, j)] = min_distance;
+							}
+						}
+					}
+
+					let (efficiency, reachables) = dma.efficiency_reachables(self.max_tick());
+
+					std::mem::drop(dma);
+					(*budget, (efficiency, reachables))
+				})
+			})
+			.collect()
+	}
+
 	/// Just a test function to check that the 3 methods
 	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation])
 	/// give the same results.
 	pub fn efficiencies_reachables_test(&self) -> Vec<(&'a str, (f64, u64))> {
-		println!("Computing dynamic attack series bourrin");
+		/*println!("Computing dynamic attack series bourrin");
 		let results_bourrin = self.efficiencies_bourrin();
 		println!("Computing dynamic attack series write");
 		let results_write = self.efficiencies_write();
@@ -184,10 +249,13 @@ impl<'a> DynamicAttackSeries<'a> {
 			.iter()
 			.map(|(_, attack)| attack.efficiency_reachables(self.graph))
 			.collect();
+		println!("Computing dependencies");
+		let results_dependencies = self.efficiencies_dependencies();
 		for i in 0..results_bourrin.len() {
 			let (budget, (efficiency_bourrin, reachables_bourrin)) = results_bourrin[i];
 			let (_, (efficiency_write, reachables_write)) = results_write[i];
 			let (_, (efficiency_invalidation, reachables_invalidation)) = results_invalidation[i];
+			let (_, (efficiency_dependencies, reachables_dependencies)) = results_dependencies[i];
 			let (efficiency_no_series, reachables_no_series) = results_no_series[i];
 			assert_eq!(efficiency_bourrin, efficiency_write);
 			assert_eq!(efficiency_bourrin, efficiency_invalidation);
@@ -195,16 +263,31 @@ impl<'a> DynamicAttackSeries<'a> {
 			assert_eq!(reachables_bourrin, reachables_invalidation);
 			assert_eq!(efficiency_bourrin, efficiency_no_series);
 			assert_eq!(reachables_bourrin, reachables_no_series);
+			assert_eq!(efficiency_bourrin, efficiency_dependencies);
+			assert_eq!(reachables_bourrin, reachables_dependencies);
 			println!("{budget}: Efficiency: {efficiency_bourrin} / Reachables: {reachables_bourrin}");
+		}*/
+
+		let results_write = benchmark!("Dynamic Attack Series Write", { self.efficiencies_write() });
+
+		let results_dependencies = benchmark!("Dynamic Attack Series Dependencies", { self.efficiencies_dependencies() });
+
+		for i in 0..results_write.len() {
+			let (budget, (efficiency_write, reachables_write)) = results_write[i];
+			let (_, (efficiency_dependencies, reachables_dependencies)) = results_dependencies[i];
+			assert_eq!(efficiency_write, efficiency_dependencies);
+			assert_eq!(reachables_write, reachables_dependencies);
+			println!("{budget}: Efficiency: {efficiency_write} / Reachables: {reachables_write}");
 		}
-		return results_bourrin;
+
+		return results_write;
 	}
 
 	/// Computes the efficiency and reachables for each attack in the series.
 	/// It uses the most efficient method to compute the distances.
 	/// It is recommended to use this function.
 	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
-		self.efficiencies_reachables_test()
+		self.efficiencies_dependencies()
 	}
 }
 
