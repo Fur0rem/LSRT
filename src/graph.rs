@@ -314,7 +314,7 @@ pub fn dijkstra_write(graph: &Graph, start: Node, end: Node, dst_mat: &mut Dista
 	// Compute the subpaths of the path
 	let subpaths = SubPathsPyramid::from_path(graph, &path);
 	for subpath in &subpaths.subpaths {
-		dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+		dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 	}
 }
 
@@ -336,7 +336,7 @@ impl Graph {
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
 				for subpath in &subpaths.subpaths {
-					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 				}
 				paths.push(subpaths);
 			}
@@ -382,11 +382,11 @@ impl Graph {
 				// If the path is too long, set the value to infinity (max of possible weight)
 				let subpaths = SubPathsPyramid::from_path(self, &path);
 				for subpath in &subpaths.subpaths {
-					if subpath.total_weight > max_time {
+					if subpath.total_cost > max_time {
 						dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
 						continue;
 					}
-					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 				}
 				paths.push(subpaths);
 			}

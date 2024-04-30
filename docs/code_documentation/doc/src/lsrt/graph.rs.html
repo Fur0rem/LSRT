@@ -712,7 +712,7 @@
 	<span class="comment">// Compute the subpaths of the path
 	</span><span class="kw">let </span>subpaths = SubPathsPyramid::from_path(graph, <span class="kw-2">&amp;</span>path);
 	<span class="kw">for </span>subpath <span class="kw">in </span><span class="kw-2">&amp;</span>subpaths.subpaths {
-		dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+		dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 	}
 }
 
@@ -734,7 +734,7 @@
 				<span class="comment">// If the path is too long, set the value to infinity (max of possible weight)
 				</span><span class="kw">let </span>subpaths = SubPathsPyramid::from_path(<span class="self">self</span>, <span class="kw-2">&amp;</span>path);
 				<span class="kw">for </span>subpath <span class="kw">in </span><span class="kw-2">&amp;</span>subpaths.subpaths {
-					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 				}
 				paths.push(subpaths);
 			}
@@ -780,11 +780,11 @@
 				<span class="comment">// If the path is too long, set the value to infinity (max of possible weight)
 				</span><span class="kw">let </span>subpaths = SubPathsPyramid::from_path(<span class="self">self</span>, <span class="kw-2">&amp;</span>path);
 				<span class="kw">for </span>subpath <span class="kw">in </span><span class="kw-2">&amp;</span>subpaths.subpaths {
-					<span class="kw">if </span>subpath.total_weight &gt; max_time {
+					<span class="kw">if </span>subpath.total_cost &gt; max_time {
 						dst_mat[(subpath.start, subpath.end)] = Tick::MAX;
 						<span class="kw">continue</span>;
 					}
-					dst_mat[(subpath.start, subpath.end)] = subpath.total_weight;
+					dst_mat[(subpath.start, subpath.end)] = subpath.total_cost;
 				}
 				paths.push(subpaths);
 			}

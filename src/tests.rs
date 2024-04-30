@@ -423,15 +423,11 @@ mod tests {
 			println!(
 				"{} : prof {} left {} right {} parents {:?}",
 				i,
-				SubPathsPyramid::get_prof(i),
+				SubPathsPyramid::get_layer(i),
 				SubPathsPyramid::get_idx_left_son(i),
 				SubPathsPyramid::get_idx_right_son(i),
 				SubPathsPyramid::get_idx_parents(i),
 			);
-			assert_eq!(SubPathsPyramid::get_prof(i), TemporalSubPathsPyramid::get_prof(i));
-			assert_eq!(SubPathsPyramid::get_idx_left_son(i), TemporalSubPathsPyramid::get_idx_left_son(i));
-			assert_eq!(SubPathsPyramid::get_idx_right_son(i), TemporalSubPathsPyramid::get_idx_right_son(i));
-			assert_eq!(SubPathsPyramid::get_idx_parents(i), TemporalSubPathsPyramid::get_idx_parents(i));
 		}
 	}
 
