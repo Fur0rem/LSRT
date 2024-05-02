@@ -11,6 +11,7 @@ tstex_modules/*
 tstex_modules
 data/*
 data
+nohup.out
 plots/*
 plots
 docs/code_documentation/debug/
