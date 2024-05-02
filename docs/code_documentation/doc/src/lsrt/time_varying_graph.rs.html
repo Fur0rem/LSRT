@@ -452,12 +452,12 @@
 		<span class="self">self</span>.max_tick
 	}
 
-	<span class="kw">pub fn </span>from_kind(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
+	<span class="kw">pub fn </span>from_kind(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges(graph, max_tick, deleted_edges, delta);
 		<span class="kw">return </span><span class="self">Self </span>{ max_tick, nodes: phantoms };
 	}
 
-	<span class="kw">pub fn </span>from_aggressive(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: u8) -&gt; <span class="self">Self </span>{
+	<span class="kw">pub fn </span>from_aggressive(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: Tick) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 		<span class="kw">return </span><span class="self">Self </span>{ max_tick, nodes: phantoms };
 	}
@@ -558,7 +558,7 @@
 }
 
 <span class="doccomment">/// Creates the phantom edges for the time varying graph by computing how much time we need to wait to have it avalaible again
-</span><span class="kw">pub fn </span>create_phantom_edges(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: u8) -&gt; Vec&lt;Vec&lt;PhantomEdge&gt;&gt; {
+</span><span class="kw">pub fn </span>create_phantom_edges(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: Tick) -&gt; Vec&lt;Vec&lt;PhantomEdge&gt;&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>phantoms = <span class="macro">vec!</span>[];
 	<span class="kw">let </span>max_tick = usize::from(max_tick);
 	<span class="kw">let </span>delta = usize::from(delta);
@@ -607,7 +607,7 @@
 }
 
 <span class="kw">pub fn </span>create_phantom_edges_aggressive(
-	graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: u8,
+	graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: Tick,
 ) -&gt; Vec&lt;Vec&lt;PhantomEdge&gt;&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>phantoms = <span class="macro">vec!</span>[];
 
@@ -678,7 +678,7 @@
 	<span class="kw">return </span>phantoms;
 }
 
-<span class="kw">pub fn </span>graph_to_temporal(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: u8) -&gt; TimeVaryingGraph {
+<span class="kw">pub fn </span>graph_to_temporal(graph: <span class="kw-2">&amp;</span>Graph, max_tick: Tick, deleted_edges: <span class="kw-2">&amp;</span>Vec&lt;BlockedLink&gt;, delta: Tick) -&gt; TimeVaryingGraph {
 	<span class="attr">#[cfg(feature = <span class="string">"aggressive"</span>)]
 	</span><span class="kw">let </span>phantoms = create_phantom_edges_aggressive(graph, max_tick, deleted_edges, delta);
 	<span class="attr">#[cfg(not(feature = <span class="string">"aggressive"</span>))]

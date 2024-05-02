@@ -288,6 +288,94 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Optimised computation for multiple attacks on a single graph.
 
 </span><span class="kw">use </span>std::fs::File;
@@ -321,7 +409,7 @@
 	<span class="doccomment">/// Reads a series of dynamic attacks from a directory and a list of files.
 	</span><span class="kw">pub fn </span>read_attacks(directory: <span class="kw-2">&amp;</span>str, files: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str], graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>series = files
-			.iter()
+			.par_iter()
 			.map(|budget| {
 				<span class="kw">let </span>file_name = <span class="macro">format!</span>(<span class="string">"{directory}{budget}"</span>);
 				<span class="kw">let </span>file = File::open(file_name).unwrap();
@@ -458,43 +546,131 @@
 			.collect()
 	}
 
+	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
+	/// This function does the same as [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], but it uses the dependencies of the nodes to compute the distances.
+	/// We call A a dependency of B if there is an edge A -&gt; B.
+	/// If the distance of a dependency has not been computed, it will compute it, and then compute the distance to the node.
+	/// The benchmarks we did show a speedup from 1.7x to 2.1x compared to [`efficiencies_write`][DynamicAttackSeries::efficiencies_write].
+	</span><span class="kw">pub fn </span>efficiencies_dependencies(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
+		<span class="kw">let </span>dst_mat = <span class="self">self</span>.graph.all_pairs_distances();
+
+		<span class="comment">// Invert the graph to get the dependencies
+		// Which is a list of nodes that are outgoing from a node
+		</span><span class="kw">let </span><span class="kw-2">mut </span>dependencies = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]; <span class="self">self</span>.graph.nb_nodes().into()];
+		<span class="kw">for </span>node <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.graph.nb_nodes() {
+			<span class="kw">for </span>edge <span class="kw">in </span><span class="self">self</span>.graph.neighbours(node) {
+				dependencies[edge.node <span class="kw">as </span>usize].push(node);
+			}
+		}
+
+		<span class="self">self</span>.series
+			.par_iter()
+			.map(|(budget, attack)| {
+				<span class="macro">benchmark!</span>(<span class="macro">format!</span>(<span class="string">"(Dynamic) Recomputing distances for {}"</span>, budget), {
+					<span class="kw">let </span>time_graph = graph_to_temporal(<span class="self">self</span>.graph, <span class="self">self</span>.max_tick(), <span class="kw-2">&amp;</span>attack.blocked_links(), attack.delta());
+					<span class="kw">let </span>edges_map = PhantomEdgesMap::from_graph(<span class="kw-2">&amp;</span>time_graph);
+					<span class="kw">let </span><span class="kw-2">mut </span>dma = DistanceMatrixArray::propagated_and_unvalidated(<span class="kw-2">&amp;</span>dst_mat, time_graph.max_tick());
+
+					<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_graph.max_tick() {
+						<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..time_graph.nb_nodes() {
+							<span class="comment">// Doing the j in reverse seems to improve slightly the performance
+							// Probably because nodes that are far in real
+							// life apart also have far apart indexes
+							</span><span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..time_graph.nb_nodes()).rev() {
+								<span class="comment">// Not 0 -&gt; already computed
+								</span><span class="kw">if </span>dma[(t, i, j)] != <span class="number">0 </span>{
+									<span class="kw">continue</span>;
+								}
+
+								<span class="comment">// We look at all the nodes that could lead to j
+								</span><span class="kw">let </span><span class="kw-2">mut </span>min_distance = Tick::MAX;
+								<span class="kw">for </span>dep <span class="kw">in </span><span class="kw-2">&amp;</span>dependencies[j <span class="kw">as </span>usize] {
+									<span class="kw">let </span>distance = dma[(t, i, <span class="kw-2">*</span>dep)];
+									<span class="kw">if </span>distance == <span class="number">0 </span>{
+										temporal_dijkstra_write(<span class="kw-2">&amp;</span>time_graph, i, <span class="kw-2">*</span>dep, t, <span class="kw-2">&amp;mut </span>dma, <span class="kw-2">&amp;</span>edges_map);
+									}
+									<span class="comment">// Issue with [(i, i)]
+									</span><span class="kw">let </span>distance = <span class="kw">if </span>i == <span class="kw-2">*</span>dep { <span class="number">0 </span>} <span class="kw">else </span>{ dma[(t, i, <span class="kw-2">*</span>dep)] };
+
+									<span class="kw">let </span>time_to_inspect = t.saturating_add(distance);
+									<span class="kw">if </span>time_to_inspect &gt;= time_graph.max_tick() {
+										<span class="kw">continue</span>;
+									}
+									<span class="kw">let </span>edge_weight = edges_map.get_edge(<span class="kw-2">*</span>dep, j).unwrap().weights[usize::from(time_to_inspect)];
+									<span class="kw">let </span>weight = distance.saturating_add(edge_weight);
+									<span class="kw">if </span>weight &lt; min_distance {
+										min_distance = weight;
+									}
+								}
+								dma[(t, i, j)] = min_distance;
+							}
+						}
+					}
+
+					<span class="kw">let </span>(efficiency, reachables) = dma.efficiency_reachables(<span class="self">self</span>.max_tick());
+
+					std::mem::drop(dma);
+					(<span class="kw-2">*</span>budget, (efficiency, reachables))
+				})
+			})
+			.collect()
+	}
+
 	<span class="doccomment">/// Just a test function to check that the 3 methods
 	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation])
 	/// give the same results.
 	</span><span class="kw">pub fn </span>efficiencies_reachables_test(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
-		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series bourrin"</span>);
-		<span class="kw">let </span>results_bourrin = <span class="self">self</span>.efficiencies_bourrin();
-		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series write"</span>);
-		<span class="kw">let </span>results_write = <span class="self">self</span>.efficiencies_write();
-		<span class="macro">println!</span>(<span class="string">"Computing dynamic attack series invalidation"</span>);
-		<span class="kw">let </span>results_invalidation = <span class="self">self</span>.efficiencies_invalidation();
-		<span class="macro">println!</span>(<span class="string">"Computing without series"</span>);
-		<span class="kw">let </span>results_no_series: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-			</span>.series
+		<span class="comment">/*println!("Computing dynamic attack series bourrin");
+		let results_bourrin = self.efficiencies_bourrin();
+		println!("Computing dynamic attack series write");
+		let results_write = self.efficiencies_write();
+		println!("Computing dynamic attack series invalidation");
+		let results_invalidation = self.efficiencies_invalidation();
+		println!("Computing without series");
+		let results_no_series: Vec&lt;_&gt; = self
+			.series
 			.iter()
-			.map(|(<span class="kw">_</span>, attack)| attack.efficiency_reachables(<span class="self">self</span>.graph))
+			.map(|(_, attack)| attack.efficiency_reachables(self.graph))
 			.collect();
-		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..results_bourrin.len() {
-			<span class="kw">let </span>(budget, (efficiency_bourrin, reachables_bourrin)) = results_bourrin[i];
-			<span class="kw">let </span>(<span class="kw">_</span>, (efficiency_write, reachables_write)) = results_write[i];
-			<span class="kw">let </span>(<span class="kw">_</span>, (efficiency_invalidation, reachables_invalidation)) = results_invalidation[i];
-			<span class="kw">let </span>(efficiency_no_series, reachables_no_series) = results_no_series[i];
-			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_write);
-			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_invalidation);
-			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_write);
-			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_invalidation);
-			<span class="macro">assert_eq!</span>(efficiency_bourrin, efficiency_no_series);
-			<span class="macro">assert_eq!</span>(reachables_bourrin, reachables_no_series);
-			<span class="macro">println!</span>(<span class="string">"{budget}: Efficiency: {efficiency_bourrin} / Reachables: {reachables_bourrin}"</span>);
+		println!("Computing dependencies");
+		let results_dependencies = self.efficiencies_dependencies();
+		for i in 0..results_bourrin.len() {
+			let (budget, (efficiency_bourrin, reachables_bourrin)) = results_bourrin[i];
+			let (_, (efficiency_write, reachables_write)) = results_write[i];
+			let (_, (efficiency_invalidation, reachables_invalidation)) = results_invalidation[i];
+			let (_, (efficiency_dependencies, reachables_dependencies)) = results_dependencies[i];
+			let (efficiency_no_series, reachables_no_series) = results_no_series[i];
+			assert_eq!(efficiency_bourrin, efficiency_write);
+			assert_eq!(efficiency_bourrin, efficiency_invalidation);
+			assert_eq!(reachables_bourrin, reachables_write);
+			assert_eq!(reachables_bourrin, reachables_invalidation);
+			assert_eq!(efficiency_bourrin, efficiency_no_series);
+			assert_eq!(reachables_bourrin, reachables_no_series);
+			assert_eq!(efficiency_bourrin, efficiency_dependencies);
+			assert_eq!(reachables_bourrin, reachables_dependencies);
+			println!("{budget}: Efficiency: {efficiency_bourrin} / Reachables: {reachables_bourrin}");
+		}*/
+
+		</span><span class="kw">let </span>results_write = <span class="macro">benchmark!</span>(<span class="string">"Dynamic Attack Series Write"</span>, { <span class="self">self</span>.efficiencies_write() });
+
+		<span class="kw">let </span>results_dependencies = <span class="macro">benchmark!</span>(<span class="string">"Dynamic Attack Series Dependencies"</span>, { <span class="self">self</span>.efficiencies_dependencies() });
+
+		<span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..results_write.len() {
+			<span class="kw">let </span>(budget, (efficiency_write, reachables_write)) = results_write[i];
+			<span class="kw">let </span>(<span class="kw">_</span>, (efficiency_dependencies, reachables_dependencies)) = results_dependencies[i];
+			<span class="macro">assert_eq!</span>(efficiency_write, efficiency_dependencies);
+			<span class="macro">assert_eq!</span>(reachables_write, reachables_dependencies);
+			<span class="macro">println!</span>(<span class="string">"{budget}: Efficiency: {efficiency_write} / Reachables: {reachables_write}"</span>);
 		}
-		<span class="kw">return </span>results_bourrin;
+
+		<span class="kw">return </span>results_write;
 	}
 
 	<span class="doccomment">/// Computes the efficiency and reachables for each attack in the series.
 	/// It uses the most efficient method to compute the distances.
 	/// It is recommended to use this function.
 	</span><span class="kw">pub fn </span>efficiencies_reachables(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, (f64, u64))&gt; {
-		<span class="self">self</span>.efficiencies_reachables_test()
+		<span class="self">self</span>.efficiencies_dependencies()
 	}
 }
 

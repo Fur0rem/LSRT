@@ -490,10 +490,6 @@
 <a href="#489" id="489">489</a>
 <a href="#490" id="490">490</a>
 <a href="#491" id="491">491</a>
-<a href="#492" id="492">492</a>
-<a href="#493" id="493">493</a>
-<a href="#494" id="494">494</a>
-<a href="#495" id="495">495</a>
 </pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
 
@@ -919,15 +915,11 @@
 			<span class="macro">println!</span>(
 				<span class="string">"{} : prof {} left {} right {} parents {:?}"</span>,
 				i,
-				SubPathsPyramid::get_prof(i),
+				SubPathsPyramid::get_layer(i),
 				SubPathsPyramid::get_idx_left_son(i),
 				SubPathsPyramid::get_idx_right_son(i),
 				SubPathsPyramid::get_idx_parents(i),
 			);
-			<span class="macro">assert_eq!</span>(SubPathsPyramid::get_prof(i), TemporalSubPathsPyramid::get_prof(i));
-			<span class="macro">assert_eq!</span>(SubPathsPyramid::get_idx_left_son(i), TemporalSubPathsPyramid::get_idx_left_son(i));
-			<span class="macro">assert_eq!</span>(SubPathsPyramid::get_idx_right_son(i), TemporalSubPathsPyramid::get_idx_right_son(i));
-			<span class="macro">assert_eq!</span>(SubPathsPyramid::get_idx_parents(i), TemporalSubPathsPyramid::get_idx_parents(i));
 		}
 	}
 

@@ -521,6 +521,22 @@
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
 <a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Contains structures and functions to work with paths in a graph or a time varying graph
 
 </span><span class="kw">use </span><span class="kw">crate</span>::distance_matrix::{DistanceMatrix, DistanceMatrixArray, SquareMatrix};
@@ -529,24 +545,34 @@
 <span class="kw">use crate</span>::{Node, Tick};
 
 <span class="kw">use </span>std::cmp::Ordering;
-<span class="kw">use </span>std::ops::Range;
+<span class="kw">use </span>std::ops::RangeInclusive;
 
-<span class="kw">pub struct </span>Path&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
-	<span class="kw">pub </span>start: Node,
-	<span class="kw">pub </span>steps: Vec&lt;Neighbour&gt;,
+<span class="doccomment">/// A path in a graph.
+///
+/// A path that does not exist is represented by an empty vector.
+</span><span class="kw">pub struct </span>Path&lt;<span class="lifetime">'a</span>&gt; {
+	<span class="doccomment">/// The graph the path is in
+	</span><span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
+	<span class="doccomment">/// The start node of the path
+	</span><span class="kw">pub </span>start: Node,
+	<span class="doccomment">/// The steps of the path, each step is a neighbour of the previous node.
+	/// The start node is not included in the steps
+	</span><span class="kw">pub </span>steps: Vec&lt;Neighbour&gt;,
 }
 
 <span class="kw">impl </span>Path&lt;<span class="lifetime">'_</span>&gt; {
-	<span class="kw">pub fn </span>cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
+	<span class="doccomment">/// Returns the total cost of the path
+	/// The cost of a path is the sum of the weights of its steps
+	/// If the path does not exist, the cost is `Tick::MAX`
+	</span><span class="kw">pub fn </span>cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="kw">if </span><span class="self">self</span>.steps.is_empty() {
 			<span class="kw">return </span>Tick::MAX;
 		}
 		<span class="self">self</span>.steps.iter().map(|x| x.weight).sum()
 	}
 
-	<span class="doccomment">/// Print the path
-	/// Print the start, then each step, then the end
+	<span class="doccomment">/// Prints the path
+	/// Prints the start, then each step, then the end
 	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="macro">print!</span>(<span class="string">"P {} "</span>, <span class="self">self</span>.start);
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.steps {
@@ -556,7 +582,11 @@
 	}
 }
 
-<span class="doccomment">/// Assuming the two vectors are sorted, merges them into a single sorted vector, with the offset substracted from the first vector
+<span class="doccomment">/// Assuming the two vectors are sorted in ascending order, merges them into a single sorted vector, with the offset substracted from the first vector.
+///
+/// If the value of any element is greater than `max_time`, the function stops and returns the result
+/// If any element of vec1 is less than offset_vec_1, it is ignored
+/// If there are no duplicates in each vector respectively, the result will have no duplicates
 </span><span class="kw">fn </span>merge_sorted(vec1: <span class="kw-2">&amp;</span>[Tick], vec2: <span class="kw-2">&amp;</span>[Tick], offset_vec_1: Tick, max_time: Tick) -&gt; Vec&lt;Tick&gt; {
 	<span class="kw">let </span><span class="kw-2">mut </span>res = Vec::with_capacity(vec1.len() + vec2.len());
 	<span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
@@ -593,43 +623,61 @@
 	<span class="comment">// Add the remaining elements
 	</span><span class="kw">while </span>i &lt; vec1.len() {
 		<span class="kw">let </span>val1 = vec1[i].saturating_sub(offset_vec_1);
+		<span class="kw">if </span>val1 &gt; max_time {
+			<span class="kw">break</span>;
+		}
 		res.push(val1);
 		i += <span class="number">1</span>;
 	}
+
 	<span class="kw">while </span>j &lt; vec2.len() {
+		<span class="kw">if </span>vec2[j] &gt; max_time {
+			<span class="kw">break</span>;
+		}
 		res.push(vec2[j]);
 		j += <span class="number">1</span>;
 	}
 	<span class="kw">return </span>res;
 }
 
-<span class="attr">#[derive(Debug, Clone)]
+<span class="doccomment">/// A path that is included inside another path
+</span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>SubPath {
-	<span class="kw">pub </span>start: Node,
-	<span class="kw">pub </span>end: Node,
-	<span class="kw">pub </span>total_weight: Tick,
-	<span class="kw">pub </span>time_taken: Tick,
+	<span class="doccomment">/// The start node of the subpath
+	</span><span class="kw">pub </span>start: Node,
+	<span class="doccomment">/// The end node of the subpath
+	</span><span class="kw">pub </span>end: Node,
+	<span class="doccomment">/// The total cost of the subpath
+	</span><span class="kw">pub </span>total_cost: Tick,
+	<span class="doccomment">/// The time taken to reach the start of the subpath
+	</span><span class="kw">pub </span>start_tick: Tick,
 }
 
-<span class="kw">pub struct </span>SubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
+<span class="doccomment">/// A pyramid of subpaths used to store all the subpaths of a path and efficiently re-use already computed subpaths.
+///
+/// For example, if we have a path 0--1--2--3, we can store these subpaths
+/// ```plaintext
+///     0--1--2--3
+///  0--1--2 | 1--2--3
+/// 0--1 | 1--2 | 2--3
+/// ```
+/// It is similar to a segment tree, but with a pyramidal structure.
+/// The layers are numbered from 0 for the top, and the last layer is the bricks, similar to leaves in a perfectly balanced tree.
+</span><span class="kw">pub struct </span>SubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Graph,
 	<span class="kw">pub </span>subpaths: Vec&lt;SubPath&gt;,
 }
 
-<span class="comment">// 1 has parents (None, 0), 2 has parents (0, None), 3 has parents (None, 1), 4 has parents (1, 2), 5 has parents (2, None)
-// Structure :
-// 0
-// 1 2
-// 3 4 5
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; SubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; SubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
+	<span class="doccomment">/// Prints the pyramid, layer by layer
+	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="kw">let </span><span class="kw-2">mut </span>idx = <span class="number">0</span>;
-		<span class="kw">let </span><span class="kw-2">mut </span>prof = <span class="number">0</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>layer = <span class="number">0</span>;
 		<span class="kw">for </span>subpath <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.subpaths {
-			<span class="macro">print!</span>(<span class="string">"{}--{}--&gt;{} "</span>, subpath.start, subpath.total_weight, subpath.end);
-			<span class="kw">if </span>idx == prof {
+			<span class="macro">print!</span>(<span class="string">"{}--{}--&gt;{} "</span>, subpath.start, subpath.total_cost, subpath.end);
+			<span class="kw">if </span>idx == layer {
 				<span class="macro">println!</span>();
-				prof += <span class="number">1</span>;
+				layer += <span class="number">1</span>;
 				idx = <span class="number">0</span>;
 			}
 			<span class="kw">else </span>{
@@ -637,7 +685,9 @@
 			}
 		}
 	}
-	<span class="kw">pub fn </span>get_prof(idx: usize) -&gt; usize {
+
+	<span class="doccomment">/// Returns the layer of the pyramid where the element is
+	</span><span class="kw">pub fn </span>get_layer(idx: usize) -&gt; usize {
 		<span class="kw">if </span>idx &lt;= <span class="number">1 </span>{
 			<span class="kw">return </span>idx;
 		}
@@ -645,26 +695,35 @@
 		</span><span class="kw">return </span>(((<span class="number">2 </span>* idx) <span class="kw">as </span>f64 + <span class="number">0.25</span>).sqrt() - <span class="number">0.5</span>) <span class="kw">as </span>usize;
 	}
 
-	<span class="kw">pub fn </span>get_idx_left_son(idx: usize) -&gt; usize {
-		<span class="kw">return </span>idx + <span class="self">Self</span>::get_prof(idx) + <span class="number">1</span>;
+	<span class="doccomment">/// Returns the index of the left son of an element in the pyramid.
+	/// It does not check if the son exists, however [`Self::get_idx_children`] does
+	</span><span class="kw">pub fn </span>get_idx_left_son(idx: usize) -&gt; usize {
+		<span class="kw">return </span>idx + <span class="self">Self</span>::get_layer(idx) + <span class="number">1</span>;
 	}
 
-	<span class="kw">pub fn </span>get_idx_right_son(idx: usize) -&gt; usize {
+	<span class="doccomment">/// Returns the index of the right son of an element in the pyramid.
+	/// It does not check if the son exists, however [`Self::get_idx_children`] does
+	</span><span class="kw">pub fn </span>get_idx_right_son(idx: usize) -&gt; usize {
 		<span class="kw">return </span><span class="self">Self</span>::get_idx_left_son(idx) + <span class="number">1</span>;
 	}
 
-	<span class="kw">pub fn </span>get_idx_parents(idx: usize) -&gt; (<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+	<span class="doccomment">/// Returns the indices of the parents of an element in the pyramid.
+	/// None if the parent does not exist, because the element is at the edge of the pyramid, or if the element is the top of the pyramid
+	</span><span class="kw">pub fn </span>get_idx_parents(idx: usize) -&gt; (<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
 		<span class="kw">if </span>idx == <span class="number">0 </span>{
 			<span class="kw">return </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>);
 		}
-		<span class="kw">let </span>prof = <span class="self">Self</span>::get_prof(idx);
-		<span class="kw">let </span>(minr, maxr) = <span class="self">Self</span>::get_range(prof);
-		<span class="kw">let </span>left_parent = <span class="kw">if </span>idx == minr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - prof - <span class="number">1</span>) };
-		<span class="kw">let </span>right_parent = <span class="kw">if </span>idx == maxr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - prof) };
+		<span class="kw">let </span>layer = <span class="self">Self</span>::get_layer(idx);
+		<span class="kw">let </span>range = <span class="self">Self</span>::get_range(layer);
+		<span class="kw">let </span>(minr, maxr) = (<span class="kw-2">*</span>range.start(), <span class="kw-2">*</span>range.end());
+		<span class="kw">let </span>left_parent = <span class="kw">if </span>idx == minr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - layer - <span class="number">1</span>) };
+		<span class="kw">let </span>right_parent = <span class="kw">if </span>idx == maxr { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(idx - layer) };
 		<span class="kw">return </span>(left_parent, right_parent);
 	}
 
-	<span class="kw">pub fn </span>get_idx_children(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, usize)&gt; {
+	<span class="doccomment">/// Returns the indices of the children of an element in the pyramid.
+	/// None if the child does not exist, because the element is at the bottom layer of the pyramid
+	</span><span class="kw">pub fn </span>get_idx_children(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, usize)&gt; {
 		<span class="kw">let </span>(left_child, right_child) = (<span class="self">Self</span>::get_idx_left_son(idx), <span class="self">Self</span>::get_idx_right_son(idx));
 		<span class="kw">if </span>left_child &gt;= <span class="self">self</span>.subpaths.len() {
 			<span class="kw">return </span><span class="prelude-val">None</span>;
@@ -672,37 +731,37 @@
 		<span class="kw">return </span><span class="prelude-val">Some</span>((right_child, left_child));
 	}
 
-	<span class="kw">pub fn </span>leaves_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range&lt;usize&gt; {
-		<span class="comment">// The leaves are the last elements of the pyramid
-		</span><span class="kw">if </span><span class="self">self</span>.subpaths.is_empty() {
-			<span class="kw">return </span><span class="number">0</span>..<span class="number">0</span>;
+	<span class="doccomment">/// Returns the range of the indices of the bricks of the pyramid
+	</span><span class="kw">pub fn </span>bricks_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RangeInclusive&lt;usize&gt; {
+		<span class="kw">if </span><span class="self">self</span>.subpaths.is_empty() {
+			<span class="kw">return </span><span class="number">1</span>..=<span class="number">0</span>;
 		}
-		<span class="kw">let </span>prof = <span class="self">Self</span>::get_prof(<span class="self">self</span>.subpaths.len() - <span class="number">1</span>);
-		<span class="kw">let </span>(minr, maxr) = <span class="self">Self</span>::get_range(prof);
-		<span class="kw">return </span>minr..maxr + <span class="number">1</span>;
+		<span class="kw">let </span>layer = <span class="self">Self</span>::get_layer(<span class="self">self</span>.subpaths.len() - <span class="number">1</span>);
+		<span class="kw">return </span><span class="self">Self</span>::get_range(layer);
 	}
 
-	<span class="kw">pub fn </span>leaves(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[SubPath] {
-		<span class="comment">// The leaves are the last elements of the pyramid
+	<span class="doccomment">/// Returns the bricks of the pyramid
+	</span><span class="kw">pub fn </span>bricks(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[SubPath] {
+		<span class="comment">// If there is only one element, it is the brick
 		</span><span class="kw">if </span><span class="self">self</span>.subpaths.len() &lt;= <span class="number">1 </span>{
 			<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.subpaths;
 		}
 
-		<span class="kw">let </span>prof = <span class="self">Self</span>::get_prof(<span class="self">self</span>.subpaths.len() - <span class="number">1</span>);
-		<span class="kw">let </span>(minr, maxr) = <span class="self">Self</span>::get_range(prof);
-		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[minr..=maxr];
+		<span class="kw">let </span>layer = <span class="self">Self</span>::get_layer(<span class="self">self</span>.subpaths.len() - <span class="number">1</span>);
+		<span class="kw">return </span><span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[<span class="self">Self</span>::get_range(layer)];
 	}
 
-	<span class="doccomment">/// Returns the inclusive range of the indices of the elements of the pyramid at a given level
-	</span><span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
-		<span class="kw">if </span>prof == <span class="number">0 </span>{
-			<span class="kw">return </span>(<span class="number">0</span>, <span class="number">0</span>);
+	<span class="doccomment">/// Returns the inclusive range of the indices of the elements of the pyramid at a given layer
+	</span><span class="kw">pub const fn </span>get_range(layer: usize) -&gt; RangeInclusive&lt;usize&gt; {
+		<span class="kw">if </span>layer == <span class="number">0 </span>{
+			<span class="kw">return </span><span class="number">0</span>..=<span class="number">0</span>;
 		}
-		<span class="kw">let </span>most_right = ((prof + <span class="number">2</span>) * (prof + <span class="number">1</span>)) / <span class="number">2</span>;
-		<span class="kw">return </span>(most_right - prof - <span class="number">1</span>, most_right - <span class="number">1</span>);
+		<span class="kw">let </span>most_right = ((layer + <span class="number">2</span>) * (layer + <span class="number">1</span>)) / <span class="number">2</span>;
+		<span class="kw">return </span>(most_right - layer - <span class="number">1</span>)..=(most_right - <span class="number">1</span>);
 	}
 
-	<span class="kw">pub fn </span>from_path&lt;<span class="lifetime">'b</span>&gt;(graph: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>Graph, path: <span class="kw-2">&amp;</span>Path) -&gt; SubPathsPyramid&lt;<span class="lifetime">'b</span>&gt; {
+	<span class="doccomment">/// Constructs a pyramid of subpaths from a path
+	</span><span class="kw">pub fn </span>from_path&lt;<span class="lifetime">'b</span>&gt;(graph: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>Graph, path: <span class="kw-2">&amp;</span>Path) -&gt; SubPathsPyramid&lt;<span class="lifetime">'b</span>&gt; {
 		<span class="kw">if </span>path.steps.is_empty() {
 			<span class="kw">return </span>SubPathsPyramid { graph, subpaths: <span class="macro">vec!</span>[] };
 		}
@@ -712,8 +771,8 @@
 				subpaths: <span class="macro">vec!</span>[SubPath {
 					start: path.start,
 					end: path.steps[<span class="number">0</span>].node,
-					total_weight: path.steps[<span class="number">0</span>].weight,
-					time_taken: <span class="number">0</span>,
+					total_cost: path.steps[<span class="number">0</span>].weight,
+					start_tick: <span class="number">0</span>,
 				}],
 			};
 		}
@@ -722,44 +781,43 @@
 			SubPath {
 				start: <span class="number">0</span>,
 				end: <span class="number">0</span>,
-				total_weight: <span class="number">0</span>,
-				time_taken: <span class="number">0</span>,
+				total_cost: <span class="number">0</span>,
+				start_tick: <span class="number">0</span>,
 			};
 			nb_elems
 		];
 
 		<span class="kw">let </span><span class="kw-2">mut </span>prev_node = path.start;
-		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>brick_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = <span class="number">0</span>;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
-			elems[leaf_index] = SubPath {
+			elems[brick_index] = SubPath {
 				start: prev_node,
 				end: step.node,
-				total_weight: step.weight,
-				time_taken: wait,
+				total_cost: step.weight,
+				start_tick: wait,
 			};
 			prev_node = step.node;
-			leaf_index += <span class="number">1</span>;
+			brick_index += <span class="number">1</span>;
 			wait += step.weight;
 		}
 
-		<span class="kw">let </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
-		<span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..SubPathsPyramid::get_prof(leaf_index)).rev() {
-			<span class="kw">let </span>(minr, maxr) = SubPathsPyramid::get_range(p);
-			<span class="kw">for </span>i <span class="kw">in </span>minr..=maxr {
+		<span class="kw">let </span>brick_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
+		<span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..SubPathsPyramid::get_layer(brick_index)).rev() {
+			<span class="kw">for </span>i <span class="kw">in </span>SubPathsPyramid::get_range(p) {
 				<span class="kw">let </span>il = SubPathsPyramid::get_idx_left_son(i);
 				<span class="kw">let </span>ir = SubPathsPyramid::get_idx_right_son(i);
 
 				<span class="kw">let </span>shared = SubPathsPyramid::get_idx_left_son(ir);
-				<span class="kw">let </span>shared_len = <span class="kw">if </span>shared &lt; nb_elems { elems[shared].total_weight } <span class="kw">else </span>{ <span class="number">0 </span>};
+				<span class="kw">let </span>shared_len = <span class="kw">if </span>shared &lt; nb_elems { elems[shared].total_cost } <span class="kw">else </span>{ <span class="number">0 </span>};
 				<span class="kw">let </span>left = <span class="kw-2">&amp;</span>elems[il];
 				<span class="kw">let </span>right = <span class="kw-2">&amp;</span>elems[ir];
 
 				<span class="kw">let </span>new_path = SubPath {
 					start: left.start,
 					end: right.end,
-					total_weight: (left.total_weight + right.total_weight) - shared_len,
-					time_taken: left.time_taken,
+					total_cost: (left.total_cost + right.total_cost) - shared_len,
+					start_tick: left.start_tick,
 				};
 				elems[i] = new_path;
 			}
@@ -769,21 +827,9 @@
 	}
 
 	<span class="doccomment">/// Invalidate the path in the distance matrix array because an attack impacted the path
+	/// You can see an example of how to use this function in [here][`crate::attack_series::DynamicAttackSeries::efficiencies_invalidation`]
 	///
-	/// How to use this function :
-	/// ```rust
-	/// let graph = Graph::from_file(&amp;mut reader);
-	/// let attack = DynamicAttack::from_file(&amp;mut reader);
-	/// let (dst_mat, paths) = graph.all_pairs_distances_and_paths(max_tick);
-	/// let dma = DistanceMatrixArray::propagated_and_infinitied(&amp;dst_mat, max_tick);
-	/// let time_graph = graph_to_temporal(graph, max_tick, &amp;attack.blocked_links(), attack.delta());
-	/// let mut already_done = SquareMatrix::new(graph.nb_nodes().into(), false);
-	/// for path in &amp;paths {
-	///     path.invalidate_path(&amp;time_graph, &amp;mut already_done, &amp;mut dma, &amp;dst_mat);
-	/// }
-	/// ```
-	///
-	/// Note : This approach is far slower than just recomputing everything, the method used in [attack_series.rs](src/attack_series.rs)
+	/// Note : This approach is far slower than just recomputing everything, the method used in [the actual program][crate::attack_series::DynamicAttackSeries::efficiencies_write]
 	</span><span class="kw">pub fn </span>invalidate_path(
 		<span class="kw-2">&amp;</span><span class="self">self</span>, time_varying_graph: <span class="kw-2">&amp;</span>TimeVaryingGraph, already_done: <span class="kw-2">&amp;mut </span>SquareMatrix&lt;bool&gt;, dma: <span class="kw-2">&amp;mut </span>DistanceMatrixArray,
 		original_dst_mat: <span class="kw-2">&amp;</span>DistanceMatrix, edges_map: <span class="kw-2">&amp;</span>PhantomEdgesMap,
@@ -799,25 +845,26 @@
 
 		<span class="kw">let </span><span class="kw-2">mut </span>times_to_invalidate = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]; <span class="self">self</span>.subpaths.len()];
 		<span class="kw">let </span><span class="kw-2">mut </span>total_invalidations = <span class="macro">vec!</span>[];
-		<span class="comment">// Invalidate the leaves
+		<span class="comment">// Invalidate the bricks
 		</span><span class="kw">let </span><span class="kw-2">mut </span>to_invalidate = <span class="macro">vec!</span>[];
-		<span class="kw">for </span>leaf <span class="kw">in </span><span class="self">self</span>.leaves_range().rev() {
-			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[leaf];
+		<span class="kw">for </span>brick <span class="kw">in </span><span class="self">self</span>.bricks_range().rev() {
+			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[brick];
 			<span class="kw">let </span>phantom_edge = edges_map.get_edge(subpath.start, subpath.end).unwrap();
 			<span class="kw">let </span>unattacked_edge = <span class="self">self</span>.graph.get_edge(subpath.start, subpath.end).unwrap();
 			<span class="kw">let </span><span class="kw-2">mut </span>invalid_times = <span class="macro">vec!</span>[];
-			<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..time_varying_graph
+			<span class="kw">let </span>max_time_reachable = time_varying_graph
 				.max_tick()
-				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - <span class="number">1</span>)
-			{
+				.saturating_sub(original_dst_mat[(subpath.start, subpath.end)] - <span class="number">1</span>);
+
+			<span class="kw">for </span>t <span class="kw">in </span><span class="number">0</span>..max_time_reachable {
 				<span class="kw">if </span>phantom_edge[t] != unattacked_edge.weight {
 					invalid_times.push(t);
 				}
 			}
 			<span class="kw">if </span>!invalid_times.is_empty() {
-				to_invalidate.push(leaf);
-				times_to_invalidate[leaf] = invalid_times;
-				total_invalidations.push(leaf);
+				to_invalidate.push(brick);
+				times_to_invalidate[brick] = invalid_times;
+				total_invalidations.push(brick);
 			}
 		}
 
@@ -827,7 +874,7 @@
 			<span class="kw">for </span>i <span class="kw">in </span>to_invalidate {
 				<span class="kw">if let </span><span class="prelude-val">Some</span>((right_child, left_child)) = <span class="self">self</span>.get_idx_children(i) {
 					<span class="comment">// gather all the invalid times from your children
-					</span><span class="kw">let </span>right_children_offset = <span class="self">self</span>.subpaths[right_child].time_taken - <span class="self">self</span>.subpaths[i].time_taken;
+					</span><span class="kw">let </span>right_children_offset = <span class="self">self</span>.subpaths[right_child].start_tick - <span class="self">self</span>.subpaths[i].start_tick;
 					<span class="kw">let </span>invalid_times_right = <span class="kw-2">&amp;</span>times_to_invalidate[right_child];
 					<span class="kw">let </span>invalid_times_left = <span class="kw-2">&amp;</span>times_to_invalidate[left_child];
 					<span class="kw">let </span>invalid_times = merge_sorted(
@@ -868,7 +915,7 @@
 			<span class="kw">let </span>subpath = <span class="kw-2">&amp;</span><span class="self">self</span>.subpaths[i];
 			<span class="kw">for </span><span class="kw-2">&amp;</span>tick <span class="kw">in </span>invalid_times {
 				<span class="comment">// If we can't find a path short enough to fit in the time budget, we can't use it
-				</span><span class="kw">if </span>subpath.total_weight.saturating_add(tick) &gt; time_varying_graph.max_tick() {
+				</span><span class="kw">if </span>subpath.total_cost.saturating_add(tick) &gt; time_varying_graph.max_tick() {
 					<span class="kw">break</span>;
 				}
 				dma[(tick, subpath.start, subpath.end)] = <span class="number">0</span>;
@@ -878,7 +925,7 @@
 	}
 }
 
-<span class="doccomment">/// A path in a time varying graph
+<span class="doccomment">/// A path in a time varying graph.
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>TemporalPath&lt;<span class="lifetime">'a</span>&gt; {
 	<span class="kw">pub </span>time_graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph,
@@ -888,7 +935,8 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; TemporalPath&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub fn </span>cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
+	<span class="doccomment">/// Returns the total cost of the path
+	</span><span class="kw">pub fn </span>cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Tick {
 		<span class="kw">if </span><span class="self">self</span>.steps.is_empty() {
 			<span class="kw">return </span>Tick::MAX;
 		}
@@ -904,11 +952,13 @@
 		<span class="kw">return </span>total_weight;
 	}
 
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+	<span class="doccomment">/// Prints the path
+	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="macro">println!</span>(<span class="string">"TP {}"</span>, <span class="self">self</span>.to_str());
 	}
 
-	<span class="kw">pub fn </span>to_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+	<span class="doccomment">/// Returns the path as a string
+	</span><span class="kw">pub fn </span>to_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
 		<span class="kw">if </span><span class="self">self</span>.cost() == Tick::MAX {
 			<span class="kw">return </span><span class="string">"No path"</span>.to_string();
 		}
@@ -925,7 +975,7 @@
 	}
 }
 
-<span class="doccomment">/// A subpath from a temporal path
+<span class="doccomment">/// Temporal variant of [`SubPath`]
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>TemporalSubPath {
 	<span class="kw">pub </span>start: Node,
@@ -935,42 +985,25 @@
 }
 
 <span class="kw">impl </span>TemporalSubPath {
-	<span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+	<span class="doccomment">/// Prints the subpath
+	</span><span class="kw">pub fn </span>print(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 		<span class="macro">println!</span>(<span class="string">"TSP {}--{}--&gt;{} @ {}"</span>, <span class="self">self</span>.start, <span class="self">self</span>.total_weight, <span class="self">self</span>.end, <span class="self">self</span>.start_time);
 	}
 }
 
-<span class="doccomment">/// A pyramid of subpaths
-/// This is used to store all the subpaths of a path
-/// And efficiently re-use already computed subpaths
-/// For example, if we have a path 0--1--2--3, we can store the subpaths 0--1, 1--2, 2--3, 0--1--2, 1--2--3, 0--1--2--3
+<span class="doccomment">/// Temporal variant of [`SubPathsPyramid`].
+///
+/// Any function regarding indexing or getting the children of a node is the same as [`SubPathsPyramid`], so use those functions
 </span><span class="kw">pub struct </span>TemporalSubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
-	<span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph,
-	<span class="kw">pub </span>subpaths: Vec&lt;TemporalSubPath&gt;,
+	<span class="doccomment">/// The graph the subpaths are in
+	</span><span class="kw">pub </span>graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph,
+	<span class="doccomment">/// The subpaths in the pyramid
+	</span><span class="kw">pub </span>subpaths: Vec&lt;TemporalSubPath&gt;,
 }
 
-<span class="kw">impl </span>TemporalSubPathsPyramid&lt;<span class="lifetime">'_</span>&gt; {
-	<span class="kw">pub fn </span>get_prof(idx: usize) -&gt; usize {
-		<span class="kw">return </span>SubPathsPyramid::get_prof(idx);
-	}
-
-	<span class="kw">pub fn </span>get_idx_left_son(idx: usize) -&gt; usize {
-		<span class="kw">return </span>SubPathsPyramid::get_idx_left_son(idx);
-	}
-
-	<span class="kw">pub fn </span>get_idx_right_son(idx: usize) -&gt; usize {
-		<span class="kw">return </span>SubPathsPyramid::get_idx_right_son(idx);
-	}
-
-	<span class="kw">pub fn </span>get_idx_parents(idx: usize) -&gt; (<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
-		<span class="kw">return </span>SubPathsPyramid::get_idx_parents(idx);
-	}
-
-	<span class="kw">pub const fn </span>get_range(prof: usize) -&gt; (usize, usize) {
-		<span class="kw">return </span>SubPathsPyramid::get_range(prof);
-	}
-
-	<span class="kw">pub fn </span>from_path&lt;<span class="lifetime">'a</span>&gt;(graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph, path: <span class="kw-2">&amp;</span>TemporalPath) -&gt; TemporalSubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; TemporalSubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
+	<span class="doccomment">/// Constructs a pyramid of temporal subpaths from a temporal path
+	</span><span class="kw">pub fn </span>from_path(graph: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TimeVaryingGraph, path: <span class="kw-2">&amp;</span>TemporalPath) -&gt; TemporalSubPathsPyramid&lt;<span class="lifetime">'a</span>&gt; {
 		<span class="kw">if </span>path.steps.is_empty() {
 			<span class="kw">return </span>TemporalSubPathsPyramid { graph, subpaths: <span class="macro">vec!</span>[] };
 		}
@@ -987,13 +1020,13 @@
 			nb_elems
 		];
 
-		<span class="comment">// Fill the leaves of the pyramid
+		<span class="comment">// Fill the bricks of the pyramid
 		</span><span class="kw">let </span><span class="kw-2">mut </span>prev_node = path.start;
-		<span class="kw">let </span><span class="kw-2">mut </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
+		<span class="kw">let </span><span class="kw-2">mut </span>brick_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
 		<span class="kw">let </span><span class="kw-2">mut </span>wait = path.start_time;
 		<span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>path.steps {
 			<span class="kw">if </span>wait &gt; graph.max_tick() {
-				elems[leaf_index] = TemporalSubPath {
+				elems[brick_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
 					total_weight: Tick::MAX,
@@ -1001,7 +1034,7 @@
 				};
 			}
 			<span class="kw">else </span>{
-				elems[leaf_index] = TemporalSubPath {
+				elems[brick_index] = TemporalSubPath {
 					start: prev_node,
 					end: step.node,
 					total_weight: step.weight,
@@ -1010,7 +1043,7 @@
 				wait += step.weight;
 			}
 			prev_node = step.node;
-			leaf_index += <span class="number">1</span>;
+			brick_index += <span class="number">1</span>;
 		}
 
 		<span class="kw">if </span>path.steps.len() == <span class="number">1 </span>{
@@ -1018,14 +1051,13 @@
 		}
 
 		<span class="comment">// Fill the rest of the pyramid
-		</span><span class="kw">let </span>leaf_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
-		<span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..TemporalSubPathsPyramid::get_prof(leaf_index)).rev() {
-			<span class="kw">let </span>(minr, maxr) = TemporalSubPathsPyramid::get_range(p);
-			<span class="kw">for </span>i <span class="kw">in </span>minr..=maxr {
-				<span class="kw">let </span>il = TemporalSubPathsPyramid::get_idx_left_son(i);
-				<span class="kw">let </span>ir = TemporalSubPathsPyramid::get_idx_right_son(i);
+		</span><span class="kw">let </span>brick_index = ((path.steps.len() - <span class="number">1</span>) * (path.steps.len())) / <span class="number">2</span>;
+		<span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..SubPathsPyramid::get_layer(brick_index)).rev() {
+			<span class="kw">for </span>i <span class="kw">in </span>SubPathsPyramid::get_range(p) {
+				<span class="kw">let </span>il = SubPathsPyramid::get_idx_left_son(i);
+				<span class="kw">let </span>ir = SubPathsPyramid::get_idx_right_son(i);
 
-				<span class="kw">let </span>shared = TemporalSubPathsPyramid::get_idx_left_son(ir);
+				<span class="kw">let </span>shared = SubPathsPyramid::get_idx_left_son(ir);
 				<span class="kw">let </span>shared_len = <span class="kw">if </span>shared &lt; nb_elems { elems[shared].total_weight } <span class="kw">else </span>{ <span class="number">0 </span>};
 				<span class="kw">let </span>left = <span class="kw-2">&amp;</span>elems[il];
 				<span class="kw">let </span>right = <span class="kw-2">&amp;</span>elems[ir];
