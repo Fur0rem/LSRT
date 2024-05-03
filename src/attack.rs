@@ -65,21 +65,31 @@ pub struct BlockedLink {
 	pub times: Vec<Time>,
 }
 
+/// A dynamic attack.
 #[derive(Debug)]
 pub struct DynamicAttack {
+	/// The blocked links.
 	pub blocked_links: Vec<BlockedLink>,
+	/// The delta of the attack.
 	pub delta: Tick,
+	/// The max tick of the attack.
 	pub max_tick: Tick,
 }
 
+/// A static attack.
 #[derive(Debug)]
 pub struct StaticAttack {
+	/// The blocked links.
 	pub blocked_links: Vec<Vec<Node>>,
+	/// The delta of the attack.
 	pub delta: Tick,
+	/// The max tick of the attack.
 	pub max_tick: Tick,
 }
 
 impl dyn Attack {
+	/// Creates an attack from a file.
+	/// It reads the first line to determine if the attack is static or dynamic.
 	pub fn from_file(file: &str, graph: &Graph) -> Box<dyn Attack> {
 		// Format : D for dynamic, S for static
 		let file = File::open(file).expect("Failed to open attack file");
@@ -96,14 +106,16 @@ impl dyn Attack {
 }
 
 impl StaticAttack {
+	/// Creates a static attack from a file.
+	/// The file must contain in the second line the max tick and delta, then for the rest the blocked links.
+	/// This assumes the first line has already been read and contains S, therefore the reader is at the second line.
+	/// Then it reads as many lines as there are nodes, and each line contains which of its neighbors are blocked.
+	/// For example, if the first line is `S`, the second line is `100 1`, and the third line is `1 2 3`, it means that the attack lasts 100 ticks, the delta is 1, and the first node has its links to 1, 2 and 3 blocked.
 	pub fn from_file(reader: &mut BufReader<File>, graph: &Graph) -> Self {
-		// Format : first line contains max_tick and delta
-		// Then, the list of blocked links separated by a space
 		let mut line = String::new();
 		reader.read_line(&mut line).expect("Empty attack file");
 		let (max_tick, delta) = scanf!(line.trim(), "{} {}", Tick, Tick).expect("Invalid attack format : Expected <max tick> <delta>");
 
-		// while there is new line, read it and append to the result
 		let mut blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		for _ in 0..graph.nb_nodes() {
 			let mut line = String::new();
@@ -129,6 +141,8 @@ impl StaticAttack {
 		};
 	}
 
+	/// Creates a static attack from a file name.
+	/// It opens the file and calls `from_file`.
 	pub fn from_file_name(file_name: String, graph: &Graph) -> Self {
 		let file = File::open(file_name).unwrap();
 		let mut reader = BufReader::new(file);
@@ -178,6 +192,11 @@ impl Attack for StaticAttack {
 
 // TODO : ew it's ugly af
 impl DynamicAttack {
+	/// Creates a dynamic attack from a file.
+	/// The file must contain in the first line the number of edges, delta and max tick, then for the rest the blocked links.
+	/// A line has format: `x (node1,node2) t0 t1 t2 t3 ...` where x is the number of times the link is blocked, node1 and node2 are the nodes of the link, and t0, t1, t2, ... are the times at which the link is blocked.
+	/// It assumes the times are sorted in ascending order and unique.
+	/// It assumes the first line has already been read and contains D, therefore the reader is at the second line.
 	pub fn from_file(reader: &mut BufReader<File>) -> Self {
 		let mut line = String::new();
 		reader.read_line(&mut line).unwrap();

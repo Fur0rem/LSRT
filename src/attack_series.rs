@@ -1,4 +1,4 @@
-//! Optimised computation for multiple attacks on a single graph.
+//! Optimised computation for multiple [attacks](module@crate::attack) on a graph.
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -17,7 +17,9 @@ use crate::benchmark;
 
 /// A series of dynamic attacks on a graph.
 pub struct DynamicAttackSeries<'a> {
+	/// Multiple attacks along with their budget.
 	pub series: Vec<(&'a str, DynamicAttack)>,
+	/// The graph on which the attacks are performed.
 	pub graph: &'a Graph,
 }
 
@@ -29,6 +31,7 @@ impl<'a> DynamicAttackSeries<'a> {
 	}
 
 	/// Reads a series of dynamic attacks from a directory and a list of files.
+	/// Check [`DynamicAttack::from_file`] for more information about the file format.
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		let series = files
 			.par_iter()
@@ -238,8 +241,8 @@ impl<'a> DynamicAttackSeries<'a> {
 			.collect()
 	}
 
-	/// Just a test function to check that the 3 methods
-	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation])
+	/// Just a test function to check that the 4 methods
+	/// ([`efficiencies_bourrin`][DynamicAttackSeries::efficiencies_bourrin], [`efficiencies_write`][DynamicAttackSeries::efficiencies_write], [`efficiencies_invalidation`][DynamicAttackSeries::efficiencies_invalidation], [`efficiencies_dependencies`][DynamicAttackSeries::efficiencies_dependencies])
 	/// give the same results.
 	pub fn efficiencies_reachables_test(&self) -> Vec<(&'a str, (f64, u64))> {
 		/*println!("Computing dynamic attack series bourrin");
@@ -306,6 +309,7 @@ pub struct StaticAttackSeries<'a> {
 
 impl<'a> StaticAttackSeries<'a> {
 	/// Reads a series of static attacks from a directory and a list of files.
+	/// Check [`StaticAttack::from_file`] for more information about the file format.
 	pub fn read_attacks(directory: &str, files: &[&'a str], graph: &'a Graph) -> Self {
 		let series = files
 			.iter()

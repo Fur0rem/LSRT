@@ -255,6 +255,25 @@
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
 <a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A singular attack.
 //!
 //! Attacks are separated into 2 categories:
@@ -322,22 +341,32 @@
 	</span><span class="kw">pub </span>times: Vec&lt;Time&gt;,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// A dynamic attack.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>DynamicAttack {
-	<span class="kw">pub </span>blocked_links: Vec&lt;BlockedLink&gt;,
-	<span class="kw">pub </span>delta: Tick,
-	<span class="kw">pub </span>max_tick: Tick,
+	<span class="doccomment">/// The blocked links.
+	</span><span class="kw">pub </span>blocked_links: Vec&lt;BlockedLink&gt;,
+	<span class="doccomment">/// The delta of the attack.
+	</span><span class="kw">pub </span>delta: Tick,
+	<span class="doccomment">/// The max tick of the attack.
+	</span><span class="kw">pub </span>max_tick: Tick,
 }
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// A static attack.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>StaticAttack {
-	<span class="kw">pub </span>blocked_links: Vec&lt;Vec&lt;Node&gt;&gt;,
-	<span class="kw">pub </span>delta: Tick,
-	<span class="kw">pub </span>max_tick: Tick,
+	<span class="doccomment">/// The blocked links.
+	</span><span class="kw">pub </span>blocked_links: Vec&lt;Vec&lt;Node&gt;&gt;,
+	<span class="doccomment">/// The delta of the attack.
+	</span><span class="kw">pub </span>delta: Tick,
+	<span class="doccomment">/// The max tick of the attack.
+	</span><span class="kw">pub </span>max_tick: Tick,
 }
 
 <span class="kw">impl dyn </span>Attack {
-	<span class="kw">pub fn </span>from_file(file: <span class="kw-2">&amp;</span>str, graph: <span class="kw-2">&amp;</span>Graph) -&gt; Box&lt;<span class="kw">dyn </span>Attack&gt; {
+	<span class="doccomment">/// Creates an attack from a file.
+	/// It reads the first line to determine if the attack is static or dynamic.
+	</span><span class="kw">pub fn </span>from_file(file: <span class="kw-2">&amp;</span>str, graph: <span class="kw-2">&amp;</span>Graph) -&gt; Box&lt;<span class="kw">dyn </span>Attack&gt; {
 		<span class="comment">// Format : D for dynamic, S for static
 		</span><span class="kw">let </span>file = File::open(file).expect(<span class="string">"Failed to open attack file"</span>);
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
@@ -353,15 +382,17 @@
 }
 
 <span class="kw">impl </span>StaticAttack {
-	<span class="kw">pub fn </span>from_file(reader: <span class="kw-2">&amp;mut </span>BufReader&lt;File&gt;, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
-		<span class="comment">// Format : first line contains max_tick and delta
-		// Then, the list of blocked links separated by a space
-		</span><span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
+	<span class="doccomment">/// Creates a static attack from a file.
+	/// The file must contain in the second line the max tick and delta, then for the rest the blocked links.
+	/// This assumes the first line has already been read and contains S, therefore the reader is at the second line.
+	/// Then it reads as many lines as there are nodes, and each line contains which of its neighbors are blocked.
+	/// For example, if the first line is `S`, the second line is `100 1`, and the third line is `1 2 3`, it means that the attack lasts 100 ticks, the delta is 1, and the first node has its links to 1, 2 and 3 blocked.
+	</span><span class="kw">pub fn </span>from_file(reader: <span class="kw-2">&amp;mut </span>BufReader&lt;File&gt;, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
+		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).expect(<span class="string">"Empty attack file"</span>);
 		<span class="kw">let </span>(max_tick, delta) = <span class="macro">scanf!</span>(line.trim(), <span class="string">"{} {}"</span>, Tick, Tick).expect(<span class="string">"Invalid attack format : Expected &lt;max tick&gt; &lt;delta&gt;"</span>);
 
-		<span class="comment">// while there is new line, read it and append to the result
-		</span><span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes().into());
+		<span class="kw">let </span><span class="kw-2">mut </span>blocked_links = Vec::with_capacity(graph.nb_nodes().into());
 		<span class="kw">for _ in </span><span class="number">0</span>..graph.nb_nodes() {
 			<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 			reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
@@ -386,7 +417,9 @@
 		};
 	}
 
-	<span class="kw">pub fn </span>from_file_name(file_name: String, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Creates a static attack from a file name.
+	/// It opens the file and calls `from_file`.
+	</span><span class="kw">pub fn </span>from_file_name(file_name: String, graph: <span class="kw-2">&amp;</span>Graph) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span>file = File::open(file_name).unwrap();
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = BufReader::new(file);
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
@@ -435,7 +468,12 @@
 
 <span class="comment">// TODO : ew it's ugly af
 </span><span class="kw">impl </span>DynamicAttack {
-	<span class="kw">pub fn </span>from_file(reader: <span class="kw-2">&amp;mut </span>BufReader&lt;File&gt;) -&gt; <span class="self">Self </span>{
+	<span class="doccomment">/// Creates a dynamic attack from a file.
+	/// The file must contain in the first line the number of edges, delta and max tick, then for the rest the blocked links.
+	/// A line has format: `x (node1,node2) t0 t1 t2 t3 ...` where x is the number of times the link is blocked, node1 and node2 are the nodes of the link, and t0, t1, t2, ... are the times at which the link is blocked.
+	/// It assumes the times are sorted in ascending order and unique.
+	/// It assumes the first line has already been read and contains D, therefore the reader is at the second line.
+	</span><span class="kw">pub fn </span>from_file(reader: <span class="kw-2">&amp;mut </span>BufReader&lt;File&gt;) -&gt; <span class="self">Self </span>{
 		<span class="kw">let </span><span class="kw-2">mut </span>line = String::new();
 		reader.read_line(<span class="kw-2">&amp;mut </span>line).unwrap();
 		<span class="kw">let </span>(nb_edges, delta, max_tick) =
