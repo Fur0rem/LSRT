@@ -43,145 +43,59 @@ Cela va permettre de ne pas avoir besoin de regarder dans le futur pour calculer
 et ainsi rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, que nous avons utilisé pour notre implémentation.
 
 \todo{Mettre ca en vertical et rendre ça moins moche et finir exemple}
+
 \begin{figure}[H]
-    \begin{figure}[H]
-        \centering
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                    \begin{scope}[every edge/.style={draw=black,ultra thick}]
-                    \draw[->] (0) -- node[above] {2} (1);
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{0}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{1}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                    \begin{scope}[every edge/.style={draw=black,ultra thick}]
-                    \draw[->] (0) -- node[above] {2} (1);
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{2}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{3}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                    \begin{scope}[every edge/.style={draw=black,ultra thick}]
-                    \draw[->] (0) -- node[above] {2} (1);
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{4}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-        \begin{minipage}[b]{.5\textwidth}
-            \centering
-            \begin{minipage}{\textwidth}
-                \centering
-                \begin{tikzpicture}[shorten >=1pt, auto, node distance=2cm]
-                    \begin{scope}[every node/.style={circle,draw=blue,fill=blue!20!,font=\sffamily\Large\bfseries}]
-                    \node (0) {0};
-                    \node (1) [right of=0] {1};
-                    \end{scope}
-                    \begin{scope}[every edge/.style={draw=black,ultra thick}]
-                    \draw[->] (0) -- node[above] {2} (1);
-                    \end{scope}
-                \end{tikzpicture}
-            \end{minipage}
-            \begin{minipage}{\textwidth}
-                \centering
-                \vspace{0.2cm}
-                \begin{tikzpicture}[node distance={15mm}, main/.style = {draw, rectangle}] 
-                    \node[main] (0) {${GT_{5}}$};
-                \end{tikzpicture}
-            \end{minipage}
-        \end{minipage}
-    \end{figure}
+    \centering
+    \evolvinglink{GT}{2, -1, 2, 2}{Lien de base}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \evolvinglink{GT kind}{2, 3, 2, 2}{Stratégie gentille}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \evolvinglink{GT aggressive}{4, 3, 2, 2}{Stratégie agressive}
 \end{figure}
 
 \subsubsection{Algorithme de calcul de la mesure}
+
+Comme dit précédemment, nous avons adapté l'algorithme de Dijkstra pour les graphes temporels.
+Avec la nouvelle structure de données, la seule différence avec le dijkstra classique est qu'au lieu de regarder la distance avec le noeud actuel, on regarde la distance avec le noeud voisin au temps déjà parcouru.
+
+\begin{algorithm}[H]
+    TemporalDijkstra(graphe temporel \ GT, Noeud \ depart, Noeud \ arrivee) -> Distance
+\begin{algorithmic}
+    \State $NoeudVisited \gets \emptyset$
+    \State $NoeudsATraiter \gets \{depart\}$
+    
+    \While {$nodesToVisit \neq \{\}$}
+        \State $Noeud \ currentNode \gets nodesToVisit.pop()$
+        \If {$currentNode \ is \ arrivee$}
+            \State \Return $visited[currentNode]$
+        \EndIf
+        \State $visited[currentNode] \gets distance$
+        \State $PhantomEdges \ neighbours \gets GT.getNeighbours(currentNode)$
+        \For {$voisin \ in \ neighbours$}
+            \State $distance \ dist \gets visited[currentNode] + voisin[visited[currentNode]]$
+            \If {$voisin \ not \ in \ visited \ or \ visited[voisin] > dist$}
+                \State $visited[voisin] \gets dist$
+                \State $nodesToVisit.push(voisin)$
+            \EndIf
+        \EndFor
+    \EndWhile
+\end{algorithmic}
+\end{algorithm}
+\footnote{L'algorithme est simplifié et renvoie une distance et non un chemin, mais il est facile de le modifier pour qu'il renvoie un chemin.}
+\todo{Mettre au propre temporal dijkstra}
 
 \subsubsection{Optimisations faites}
 
 L'algorithme de Dijkstra est donc mis en place et adapté pour les graphes temporels, mais il reste encore des optimisations à faire.
 En effet, l'algorithme de Dijkstra est souvent utilisé pour calculer le plus court chemin entre deux noeuds, mais il calcule en réalité beaucoup plus de plus courts chemins.
 Donc nous avons modifié l'algorithme pour qu'il écrive directement dans la matrice de distances, puis le but va être d'écrire le plus de distances possibles en une seule fois.
+
+Nous avons prit parti d'optimiser pour le temps et non la mémoire, le projet étant fait pour tourner sur des supercalculateurs avec des centaines de Go de RAM.
+Ainsi que le temps global de plusieurs attaques plutôt que le temps d'une seule attaque, le but du projet étant de regarder une évolution de l'efficacité des attaques.
 
 \subsubsubsection{Calcul de la distance entre le noeud de départ et tous les autres noeuds}
 Pour connaître la distance entre le noeud de départ et le noeud d'arrivée, Dijkstra va explorer beaucoup de noeuds candidats.
@@ -191,23 +105,40 @@ Donc, pour chaque noeud candidat à une distance $d$ du noeud de départ qu'il s
 
 Soit un chemin calculé 0->1->2->3, on a un chemin trivial à noter entre 0 et 3, mais on a aussi beaucoup de sous-chemins qui sont calculés.
 Ici, on a les chemins 0->1->2, 1->2->3, 0->1, 1->2, 2->3.
+
+\graphpath{0, 1, 2, 3}{1, 1, 1}
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
 
 Nous avons donc créer une structure de données qui va permettre de rapidement stocker tous les sous-chemins à partir des pas faits dans le chemin.
 Cette structure ressemble à un arbre de segments, mais en structure pyramidale.
-Pour l'exemple précédent, notre pyramide ressemblerait à ça :
-0->3
-0->1, 1->3
-0->1, 1->2, 2->3
-\todo{Faire un dessin de la pyramide}
 
-Les éléments 0->1, 1->2, 2->3 sont les briques de la pyramide, qui sont l'équivalent des feuilles de l'arbre de segments.
+Les éléments \link{0}{1}{1}, \link{1}{1}{2}, \link{2}{1}{3} 
+sont les briques de base de la pyramide, qui sont l'équivalent des feuilles dans un arbre.
 Dans notre pyramide, chaque élément va stocker le noeud de départ, le noeud d'arrivée, la distance entre ces deux noeuds, et le temps nécessaire pour arriver au noeud de départ.
 Ensuite, pour chaque étage de la pyramide, on va regarder notre fils gauche et notre fils droit, ainsi que notre petit-fils commun.
 Le noeud de départ sera celui du fils gauche, le noeud d'arrivée celui du fils droit, la distance sera la somme des distances des deux fils moins la distance du petit-fils (partie commune comptée deux fois sinon), et le temps nécessaire pour arriver au noeud de départ sera celui du fils gauche.
-S'il n'y a pas de petit-fils, alors la distance commune entre les 2 est comptée.
+S'il n'y a pas de petit-fils, alors il n'y a pas de distance commune, et donc la distance sera la somme des distances des deux fils.
 
-En les propageant de bas en haut, on va noter tous les sous-chemins possibles dans la matrice de distances, et donc éviter de les recalculer plus tard.
+Pour l'exemple précédent, notre pyramide ressemblerait à ça:
+Avec la notation \link{A}{x}{B} @ t pour dire que le lien va de A à B, a une distance de x, et qu'il faut t ticks pour arriver à A.
+\usetikzlibrary{calc, positioning}
+
+\begin{tikzpicture}
+    \begin{scope}[every node/.style={rectangle,draw=black}, node distance=2cm]
+    \node (0) {\link{0}{3}{3} @ 0};
+    \node (1) [below left of=0] {\link{0}{2}{2} @ 0};
+    \node (2) [below right of=0] {\link{1}{2}{3} @ 1};
+    \node (3) [below left of=1] {\link{0}{1}{1} @ 0};
+    \node (5) [below right of=2] {\link{2}{1}{3} @ 2};
+    \node (4) at ($(3)!0.5!(5)$) {\link{1}{1}{2} @ 2};
+    \end{scope}
+    \draw[<->] (1) -- (0);
+    \draw[<->] (2) -- (0);
+    \draw[<->] (3) -- (1);
+    \draw[<->] (4) -- (1);
+    \draw[<->] (4) -- (2);
+    \draw[<->] (5) -- (2);
+\end{tikzpicture}
 
 \subsubsubsection{Prédiction des chemins avec le plus d'étapes}
 
@@ -229,12 +160,19 @@ Ensuite, nous prenons le minimum de toutes ces distances ($u -> k$ + $k -> v$) p
 C'est très utile pour les noeuds qu'on ne peut atteindre que par un seul autre noeud, car ça évite de refaire un parcours avec juste un noeud en plus.
 
 \subsubsubsection{Se rapporter à un parcours de graphe classique quand c'est possible}
-\todo{Attaques statiques}
+Certaines stratégies d'attaque sont statiques, et ne dépendent pas du temps.
+Cela implique que toutes les matrices de distances sont les mêmes, et donc que les calculer pour chaque matrice est inutile.
+Ainsi, on a divisé le format d'attaque en deux, un format statique et un format dynamique, 
+et lorsque l'algorithme détecte que l'attaque est statique, il va se rapporter à un parcours de graphe classique avec une seule matrice de distances, 
+puis calculer l'efficacité de l'attaque comme s'il y en avait plusieurs.
+\todo{Ref vers attaques}
 
 \subsubsubsection{Calcul du non-attqué}
-\todo{blehhhhhh}
-
-\todo{est ce que je parle du cache et de la edges map ?}
+Nous nous sommes rendus compte que les matrices de distances plus loin dans le temps étaient beaucoup plus vides que les premières,
+dû à la nature de la mesure, qui va ignoré tous les chemins impossible à compléter dans notre lapse de temps.
+Par exemple, si notre tick max est de 100, notre tick courant est de 70, alors on ne peut pas calculer un chemin de plus de 30 ticks.
+Surtout que ne pas pouvoir le calculer signifie qu'on ne peut pas écrire plusieures valeurs dans la matrice de distances car il n'y a pas de chemin complet.
+Donc, on commence par calculer les distances sur le graphe non-attaqué, grâce à la méthode précédante, puis on dit au programme de ne calculer des chemins qui ont une chance de finir dans le temps imparti.
 
 \subsubsection{Complexité de l'algorithme}
 

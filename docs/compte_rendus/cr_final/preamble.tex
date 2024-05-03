@@ -70,3 +70,47 @@
 
 \newcommand{\weightedlinkright}[1]{$\xrightarrow{\text{\hspace{0.2cm}\scriptsize{#1}\hspace{0.2cm}}}$} % Intermediate state, should not be used directly
 \newcommand{\link}[3]{\mbox{#1 \weightedlinkright{#2} #3}} % link from #1 to #3 with weight #2
+
+\usepackage{etoolbox}
+
+\newcounter{timecounter}
+
+\newcommand{\evolvinglink}[3]{
+    \setcounter{timecounter}{0}
+    \renewcommand*{\do}[1]{%
+        \begin{minipage}[b]{0.22\textwidth}
+            \centering
+            \begin{minipage}{\textwidth}
+                \centering
+                \begin{tikzpicture}[shorten >=1pt, auto, node distance=18mm]
+                    \begin{scope}[every node/.style={circle,draw=black}]
+                        \node (0) {0};
+                        \node (1) [right of=0] {1};
+                    \end{scope}
+                    \begin{scope}[every edge/.style={draw=black,ultra thick}]
+                        \ifnumcomp{##1}{=}{-1}
+                            {} % Do nothing if the weight is -1
+                            {\draw[->] (0) -- node[above] {##1} (1);} % Draw the edge otherwise
+                    \end{scope}
+                \end{tikzpicture}
+            \caption*{$#1_{\thetimecounter}$}
+            \end{minipage}
+        \end{minipage}
+        \stepcounter{timecounter}
+    }
+    \docsvlist{#2} % Process list of weights
+    \caption*{#3}
+}
+
+\newcommand{\graphpath}[2]{
+        \def\nodes{#1}
+        \def\weights{#2}
+        \foreach \node [count=\i] in \nodes {
+            \ifnum\i=1
+                \node
+                \weightedlinkright{\weights[0]}
+            \else
+                \link{\node}{\weights[\i-2]}{\nodes[\i]}
+            \fi
+        }
+}
