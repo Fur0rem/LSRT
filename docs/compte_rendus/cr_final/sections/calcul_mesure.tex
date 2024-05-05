@@ -118,7 +118,23 @@ Donc, pour chaque noeud candidat à une distance $d$ du noeud de départ qu'il s
 Soit un chemin calculé 0->1->2->3, on a un chemin trivial à noter entre 0 et 3, mais on a aussi beaucoup de sous-chemins qui sont calculés.
 Ici, on a les chemins 0->1->2, 1->2->3, 0->1, 1->2, 2->3.
 
-\indexing{1,2,3}{2}
+% Construction du tableau
+\newcounter{push_elem}
+\setcounter{push_elem}{0}
+\expandafter\newcommand\csname mon_array\the\value{push_elem} \endcsname{zero}
+\stepcounter{push_elem}
+\expandafter\newcommand\csname mon_array\the\value{push_elem} \endcsname{one}
+\stepcounter{push_elem}
+\expandafter\newcommand\csname mon_array\the\value{push_elem} \endcsname{two}
+\stepcounter{push_elem}
+\expandafter\newcommand\csname mon_array\the\value{push_elem} \endcsname{three}
+\stepcounter{push_elem}
+
+Valeur à l'index 2:
+\newcounter{index}
+\setcounter{index}{2}
+\csname mon_array\the\value{index} \endcsname
+
 
 \graphpath{0, 1, 2, 3}{1, 1, 1}
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
