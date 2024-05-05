@@ -5,7 +5,7 @@
 if [ $# -eq 1 ]; then
     city=$1
     if [ -d "data/$city" ]; then
-        echo "City: $city"
+        echo "Launching backup on single city: $city"
         # Remove "graph" file
         attacks=$(ls data/$city/ | grep -v graph)
         for attack in $attacks; do
@@ -18,6 +18,7 @@ if [ $# -eq 1 ]; then
                 for budget in $budgets; do
                     budget_string="$budget_string $budget"
                 done
+                echo "./lsrt $city $attack $budget_string"
                 ./lsrt $city $attack $budget_string
             fi
         done

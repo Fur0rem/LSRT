@@ -14,10 +14,11 @@ if [ $# -eq 1 ]; then
         for attack in $attacks; do
             rm "$new_name/$attack/result"
         done
-        ./rust_aggressive "$new_name"
     else
         echo "City $city does not exist"
     fi
+    echo "Launching aggressive single backup on city: "$city"__Aggressive"
+    ./launch_scripts/launch_backup.sh "$city"__Aggressive
     exit 0
 fi
 
@@ -38,4 +39,4 @@ for city in data/*; do
     fi
 done
 
-./launch_backup.sh
+./launch_scripts/launch_backup.sh
