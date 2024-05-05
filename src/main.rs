@@ -135,6 +135,12 @@ pub fn main() {
 		std::process::exit(1);
 	}
 
+	let nb_threads = std::env::var("LSRT_NB_THREADS");
+	if let Ok(nb_threads) = nb_threads {
+		let nb_threads = nb_threads.parse().unwrap();
+		rayon::ThreadPoolBuilder::new().num_threads(nb_threads).build_global().unwrap();
+	}
+
 	// Load graph and attack files
 	let graph_filename = format!("{FILES_DIR_NAME}/{}/graph", &args[1]);
 	let attack_directory = format!("{FILES_DIR_NAME}/{}/{}/", &args[1], &args[2]);

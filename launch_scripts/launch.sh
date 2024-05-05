@@ -25,25 +25,25 @@ echo "Number of nodes: $NB_NODES"
 echo "Diameter: $DIAMETER"
 
 # Launch the non-attacked city
-./launch_single.sh -c $1 -a none -n 0 -x 0 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a none -n 0 -x 0 -t $DIAMETER
 
 # Launch sorted, deterministic attacks
-./launch_single.sh -c $1 -a betweenness -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-./launch_single.sh -c $1 -a identifier -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-./launch_single.sh -c $1 -a longitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-./launch_single.sh -c $1 -a latitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-./launch_single.sh -c $1 -a longitude_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-./launch_single.sh -c $1 -a max_lanes -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a betweenness -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a identifier -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a longitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a latitude -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a longitude_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a max_lanes -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 
 # Launch random attacks
 for i in $(seq 1 $NB_ATTACK_RANDOMS); do
-    ./launch_single.sh -c $1 -a random -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-    ./launch_single.sh -c $1 -a full_random -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
-    ./launch_single.sh -c $1 -a random_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+    ./launch_scripts/launch_single.sh -c $1 -a random -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+    ./launch_scripts/launch_single.sh -c $1 -a full_random -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+    ./launch_scripts/launch_single.sh -c $1 -a random_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 done
 
 # Done in last because it takes a lot of time
-./launch_single.sh -c $1 -a betweenness_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
+./launch_scripts/launch_single.sh -c $1 -a betweenness_moving -g 15 -r 14 -x $NB_EDGES -s 2 -t $DIAMETER
 
 
 # Exemple :

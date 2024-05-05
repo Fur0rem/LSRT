@@ -368,11 +368,6 @@ impl<'a> AttackSeries<'a> {
 
 	/// Computes the efficiency and reachables for each attack in the series.
 	pub fn efficiencies_reachables(&self) -> Vec<(&'a str, (f64, u64))> {
-		let nb_threads = std::env::var("LSRT_NB_THREADS");
-		if let Ok(nb_threads) = nb_threads {
-			let nb_threads = nb_threads.parse().unwrap();
-			rayon::ThreadPoolBuilder::new().num_threads(nb_threads).build_global();
-		}
 		match self {
 			AttackSeries::Static(series) => series.efficiencies_reachables(),
 			AttackSeries::Dynamic(series) => series.efficiencies_reachables(),
