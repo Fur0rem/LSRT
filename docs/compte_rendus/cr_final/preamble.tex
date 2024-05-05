@@ -102,6 +102,36 @@
     \caption*{#3}
 }
 
+\usepackage{etoolbox}
+
+\newcommand{\indexinge}[2]{
+    %index into the list of nodes
+    %\foreach \elem [count=\i] in #1 {
+        %\ifnum\i=#2
+            %\elem
+        %\fi
+    %}
+
+    % Create a new empty list
+    \newcommand{\nodes}{}
+    % Fill the list with the elements of the first argument
+    \foreach \elem [count=\i] in #1 {
+        % if i is equal to the second argument, add the element to the list
+        \ifnum\i=#2
+            \xappto{\nodes}{\elem}
+        \fi
+    }
+
+    % Print the list
+    \nodes
+
+}
+
+\newcommand{\indexing}[2]{
+    #1[#2]
+}
+
+
 \newcommand{\graphpath}[2]{
         \def\nodes{#1}
         \def\weights{#2}
@@ -114,3 +144,12 @@
             \fi
         }
 }
+
+%\usepackage{luacode}
+
+%\newcommand{\indexeee}[2]{
+    %\directlua{
+        %local list = {#1}
+        %tex.sprint(list[#2])
+    %}
+%}

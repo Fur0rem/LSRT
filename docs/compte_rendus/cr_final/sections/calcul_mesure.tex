@@ -37,10 +37,12 @@ notamment des graphes étranges comme les ceux avec des arêtes à poids négati
 \end{algorithm}
 
 \subsubsection{Création d'une structure de données adaptée}
-Le problème des autres algorithmes classiques de graphes est qu'ils ne peuvent pas voir dans le futur, et donc ne peuvent pas prendre en compte les liens bloqués.
-Cependannt, nous avons pensé à créer des liens fantômes qui remplacent les liens supprimés, équivalents à la distance réelle plus l'attente nécessaire.
+Le problème des autres algorithmes classiques de graphes est qu'ils ne peuvent pas voir dans le futur, et donc ne peuvent pas prendre en compte les liens bloqués puis débloqués.
+Cependant, nous avons pensé à créer des liens fantômes qui remplacent les liens supprimés, 
+équivalents à la distance du lien d'origine plus l'attente nécessaire pour que le lien soit à nouveau disponible.
 Cela va permettre de ne pas avoir besoin de regarder dans le futur pour calculer les chemins, tout en calculant quand même la vraie distance minimale,
-et ainsi rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, que nous avons utilisé pour notre implémentation.
+car le cas où attendre est bénéfique a été pris en compte par le lien fantôme.
+Ainsi, nous avons pu rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, que nous avons utilisé pour notre implémentation.
 
 \todo{Mettre ca en vertical et rendre ça moins moche et finir exemple}
 
@@ -86,7 +88,17 @@ Avec la nouvelle structure de données, la seule différence avec le dijkstra cl
 \end{algorithmic}
 \end{algorithm}
 \footnote{L'algorithme est simplifié et renvoie une distance et non un chemin, mais il est facile de le modifier pour qu'il renvoie un chemin.}
-\todo{Mettre au propre temporal dijkstra}
+
+A noter que cet algorithme reste correct pour tout type de graphe temporel (discret) ou flot de liens (continu), 
+multi-graphe\footnote{Graphe ayant plusieurs liens entre 2 noeuds} ou non, 
+orienté ou non, tant qu'il vérifie ces 2 propriétés:
+Pour tout noeud $u$, $v$, ayant pour poids au cours du temps $p_{u,v}(t)$,
+\begin{itemize}
+    \item $p_{u,v}(t) > 0 \ \forall t \in \mathbb{R}$, car l'algorithme de Dijkstra ne peut pas travailler avec des poids négatifs.
+    \item $\frac{p_{u,v}(t)}{p_{u,v}(t')} \geq -1 \ \forall t, t' \in \mathbb{R} | t > t'$, car notre algorithme suppose qu'une attente n'est jamais bénéfique.
+\end{itemize}
+
+\todo{Mettre au propre temporal dijkstra} 
 
 \subsubsection{Optimisations faites}
 
@@ -105,6 +117,8 @@ Donc, pour chaque noeud candidat à une distance $d$ du noeud de départ qu'il s
 
 Soit un chemin calculé 0->1->2->3, on a un chemin trivial à noter entre 0 et 3, mais on a aussi beaucoup de sous-chemins qui sont calculés.
 Ici, on a les chemins 0->1->2, 1->2->3, 0->1, 1->2, 2->3.
+
+\indexing{1,2,3}{2}
 
 \graphpath{0, 1, 2, 3}{1, 1, 1}
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
