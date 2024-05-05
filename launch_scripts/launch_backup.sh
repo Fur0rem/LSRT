@@ -18,7 +18,6 @@ if [ $# -eq 1 ]; then
                 for budget in $budgets; do
                     budget_string="$budget_string $budget"
                 done
-                echo "./lsrt $city $attack $budget_string"
                 ./lsrt $city $attack $budget_string
             fi
         done
