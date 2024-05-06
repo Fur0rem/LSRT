@@ -149,6 +149,17 @@
         }
 }
 
+\newcommand{\graphpatheee}[1]{
+    \def\nodes{#1}
+    \foreach \node [count=\i] in \nodes {
+        % if i is pair (modulo 2)
+        \ifodd\i
+        \else
+            \weightedlinkright{\node}
+        \fi
+    }
+}
+
 %\usepackage{luacode}
 
 %\newcommand{\indexeee}[2]{
