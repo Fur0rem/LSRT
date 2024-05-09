@@ -1,16 +1,16 @@
 \section{Calcul de la mesure}\label{sec:calcul_mesure}
 
-\subsection{Ancien algorithme}
-\todo{Ancien algorithme}
-
-\subsection{Nouvel algorithme}
-
+\subsection{Premier algorithme}
 \todo{Le problème des calculs de chemin dans les graphes temporels}
 
 Le problème des plus courts chemins est déjà assez complexe dans un graphe classique, mais il devient encore plus difficile dans un graphe temporel,
 où les arêtes peuvent être bloquées à certains moments.
-Nous sommes d'abord partis sur une adaptation de l'algorithme de Floyd-Warshall, car nous savons que cet algorithme marche tout type de graphe, 
-notamment des graphes étranges comme les ceux avec des arêtes à poids négatifs.
+Notre première approche a été d'adapter l'algorithme de Floyd-Warshall. Ce choix a été motivé par le fait que l'algorithme 
+est simple à comprendre et à adapter a un graphe temporel. Nous avons donc implémenté cette algorithme en C pour 
+effectuer nos premières mesures. Nous nous sommes cependant rendu compte que le programme de simulation n'était 
+pas assez efficace, notamment à cause de la complexité de l'algorithme de Floyd-Warshall, qui est en $O(n^3)$,
+et qui devient en $O(n^3 \times t)$ pour un graphe temporel, avec $n$ le nombre de noeuds et $t$ le nombre de "pas 
+de temps" dans le graphe temporel. Nous avons donc décidé de changer d'approche et de chercher algorithme plus efficace.
 
 \begin{algorithm}[H]
     TemporalFloydWarshall(graphe temporel \ GT, DistanceMatrixes \ dma)
@@ -35,6 +35,8 @@ notamment des graphes étranges comme les ceux avec des arêtes à poids négati
 	\EndFor 
 \end{algorithmic}
 \end{algorithm}
+
+\subsection{Nouvel algorithme}
 
 \subsubsection{Création d'une structure de données adaptée}
 Le problème des autres algorithmes classiques de graphes est qu'ils ne peuvent pas voir dans le futur, et donc ne peuvent pas prendre en compte les liens bloqués puis débloqués.
