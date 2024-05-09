@@ -1,0 +1,69 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\title{Compte rendu de la réunion du 6 Mai}
+\date{}
+
+\begin{document}
+	
+\maketitle
+	
+\section*{Squelette du rapport}
+	\begin{itemize}
+		\item Ne pas dire ancien/nouvel algorithme (historique mal vue) mais plutôt premier/deuxième ou algo de base/amélioré. Ne pas rabaisser le premier algorithme mais plutôt dire que le second est meilleur.
+		\item Enlever le titre des sous-sections (3 points dans le numéro de section max)
+		\item Ne pas dire que quelque chose n'a pas été fait mais dire que ça n'avait pas été très exploré auparavant et que c'est une approche nouvelle. Aussi cela peut faire partie du "folklore scientifique" et que personne n'a fait de vrais articles dessus même si c'est connu.
+	\end{itemize}
+
+\section*{Partie Introduction}
+	\begin{itemize}
+		\item Parler de la motivation du projet, de la problématique/sujet, puis comment on a transformé ça en un problème mathématique. Montrer qu'il y a des enjeux derrière.
+		\item Donner quelques définitions formelles, comparer à ce qui existe déjà (linkstreams et graphes dynamiques) et les différentes approches.
+	\end{itemize}
+
+\section*{Génération du graphe}
+	\begin{itemize}
+		\item Donner des définitions plus poussées sur les graphes dynamiques si la section est trop courte et l'introduction trop longue.
+	\end{itemize}
+
+\section*{Génération des attaques}
+	Rien à redire pour le moment.
+
+\section*{Calcul de la mesure}
+	\begin{itemize}
+		\item Si on introduit des nouvelles notions, les définir concrètement avant de les utiliser. (Ex : "Nous appelons <comme ça> <ceci> qui <fait ça>") + macro \\emph et \\emphasize pour les termes importants.
+		\item Vérifier que cette notion n'a pas déjà un nom ou qu'une autre notion possède le même nom.
+		\item Ne pas utiliser une notion sans l'avoir définie avant, et garder une cohérence dans les notations.
+		\item Ne pas inventer des termes si on ne l'utilise qu'une fois.
+		\item Parler de la tentative d'invalidation des liens ici même si elle était plus lente. Montrer aussi qu'il y a une reflexion derrière car le graphe statique existe toujours. Dire que c'était plus lent car l'algorithme n'a pas grande différence de nombre de dijkstra à faire entre 3/4 de la matrice à recalculer et 1/4 de la matrice à recalculer.
+		\item Expliquer le soucis des différentes approches pour le blocage de lien et l'ambiguité de l'impact qu'a le blocage d'un lien. Comme on utilise la même ordre de grandeur pour les poids et le temps de traversée, on doit prendre parti sur comment traiter le blocage pendant que quelqu'un est en train de traverser, car la traversée n'est pas instantanée, contrairement à la plupart de la littérature.
+		\item Utiliser "indulgent/tolérant/impact bas" plutôt que gentil pour parler de l'impact du blocage d'un lien.
+		\item "Regarder le futur" est ambigu, dire plutôt qu'on a connaissance du graphe à tout instant, et qu'on utilise cette connaissance pour faire de meilleurs parcours. On peut rajouter en ouverture que ce n'est pas très réaliste et que c'est une limite de notre modèle, et que c'est une piste d'amélioration.
+	\end{itemize}
+
+\section*{Résultats}
+	\begin{itemize}
+		\item L'objectif du sujet étant d'analyser des attaques dynamiques, se focaliser sur celles-ci (enlever identifier, max lanes et les autres).
+		\item Illustrer avec des images de graphe sur lesquels on a travaillé. (Avec notre normalisation ou non).
+	\end{itemize}
+
+\section*{Ouvertures}
+	\begin{itemize}
+		\item Segmenter les liens de façon à avoir des poids de 1 ou stratégie demi-bloquée et éviter ce problème d'ambiguité pour le blocage de lien.
+	\end{itemize}
+
+\section*{Questions qu'on va nous poser}
+	\begin{itemize}
+		\item Si nous n'avons pas de résultats sur Paris, il va falloir le justifier.
+	\end{itemize}
+
+\section*{Parties}
+	\begin{itemize}
+		\item Ivan : Flyod-Warshall + Résultats + Références
+		\item Damien : Invalidations + Génération graphe
+		\item Pierre : Dijkstra + Génération attaques
+		\item Introduction et concusion : Tout le monde
+	\end{itemize}
+
+\end{document}
