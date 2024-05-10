@@ -174,13 +174,13 @@ Avec la notation \link{A}{x}{B} @ t pour dire que le lien va de A à B, a une di
     \draw[<->] (5) -- (2);
 \end{tikzpicture}
 
-\subsubsubsection{Prédiction des chemins avec le plus d'étapes}
+\subsubsubsection*{Prédiction des chemins avec le plus d'étapes}
 
 Cette optimisation va de pair avec la précédente, en faisant des benchmarks, nous avons remarqué que parcourir la boucle j à l'envers permettait de gagner du temps.
 On suppose que c'est dû au fait que les noeuds avec des indices éloignés soient aussi éloignés dans le graphe,
 donc que le chemin entre ces deux noeuds ai plus d'étapes, et que donc on va écrire plus de sous-chemins dans la matrice de distances qui seraint écrasés plus tard si on avait parcouru la boucle dans le sens normal.
 
-\subsubsubsection{Regarder ses voisins}
+\subsubsubsection*{Regarder ses voisins}
 
 La distance de $u$ à $v$ est le minimum entre la distance de $u$ à $k$ plus la distance de $k$ à $v$ pour chaque noeud $k$ tel que l'arête $u -> k$ et l'arête $k -> v$ existent.
 Donc si nous connaissons toutes ces distances $u -> k$, alors nous pouvons calculer la distance $u -> v$ sans avoir besoin de reparcourir le graphe.
@@ -193,7 +193,7 @@ Pour chaque noeud $k$, si la distance est calculée, alors nous pouvons directem
 Ensuite, nous prenons le minimum de toutes ces distances ($u -> k$ + $k -> v$) pour avoir la distance $u -> v$.
 C'est très utile pour les noeuds qu'on ne peut atteindre que par un seul autre noeud, car ça évite de refaire un parcours avec juste un noeud en plus.
 
-\subsubsubsection{Se rapporter à un parcours de graphe classique quand c'est possible}
+\subsubsubsection*{Se rapporter à un parcours de graphe classique quand c'est possible}
 Certaines stratégies d'attaque sont statiques, et ne dépendent pas du temps.
 Cela implique que toutes les matrices de distances sont les mêmes, et donc que les calculer pour chaque matrice est inutile.
 Ainsi, on a divisé le format d'attaque en deux, un format statique et un format dynamique, 
@@ -201,7 +201,7 @@ et lorsque l'algorithme détecte que l'attaque est statique, il va se rapporter 
 puis calculer l'efficacité de l'attaque comme s'il y en avait plusieurs.
 \todo{Ref vers attaques}
 
-\subsubsubsection{Calcul du non-attqué}
+\subsubsubsection*{Calcul du non-attqué}
 Nous nous sommes rendus compte que les matrices de distances plus loin dans le temps étaient beaucoup plus vides que les premières,
 dû à la nature de la mesure, qui va ignoré tous les chemins impossible à compléter dans notre lapse de temps.
 Par exemple, si notre tick max est de 100, notre tick courant est de 70, alors on ne peut pas calculer un chemin de plus de 30 ticks.
