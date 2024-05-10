@@ -6,21 +6,30 @@ une ville. Pour modéliser ce problème nous utiliserons une variante des graphe
 Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. 
 Les graphes permettent de modéliser de nombreux problèmes, notamment en informatique, en biologigie, en sociologie,
 physique,... 
-Un graphe peut être décrit comme un couple G=(V,E) où V est l'ensemble des sommets et E l'ensemble des arrêtes.
-avec V=\{v1, v2, ..., vn\} et E=\{(v1, v2), (v2, v3), ...\}.
+
+% \subsection{Rappels sur les graphes}\label{subsec:rappels_graphe}
+Un graphe peut être défini par $G=(V,E)$ où $V$ est l'ensemble des sommets et \mbox{$E\subseteq V^2$ est l'ensemble des liens} \mbox{$e = (u,v,w)$ $u,v \in V, w \in \mathbb{N}$ qui est la pondération du lien de $u$ à $v$},
+noté \link{u}{w}{v}. Les graphes seront également orienté, i.e si \mbox{$(u,v,w) \in E$} alors il est possible d'accéder à $v$ depuis $u$ mais pas forcément d'accéder à $u$ depuis $v$, à moins que $\exists\ (v,u,w') \in E$.
+% Un chemin est 
 
 Un graphe dynamique est alors un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
-Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
-où T={(t1,v1), (t1,v2), ... (tn,vn)} est l'ensemble des instants auxquelles des liens 
+Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet $G=(V, E, T) $
+où \mbox{$T=\left\{(t,E_t)\ |\ t \in [\![0,t_{max}]\!] \text{ et } E_t \subseteq E \right\}$} est l'ensemble des instants auxquelles des liens 
 entre les sommets sont supprimés.
 \todo{référence pour graphe dynamique}
+
+Nous utilisons également diamètre d'un graphe, définie par :
+\begin{equation*}
+    {diametre = \max_{\forall u, v \in V} \{\text{longueur}(PlusCourtChemin(u,v))\}}
+\footnote{Cette formule ne marche que si le graphe est connexe, sinon il faut prendre le maximum des diamètres des composantes connexes.}
+\end{equation*}
 
 La mesure classique pour déterminer à quel point il est facile de se déplacer dans un réseau est l'efficacité.
 L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
 \begin{equation}
-    E(G) = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
+    E(G) = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(v_i, v_j)}
 \end{equation}
-avec d(vi, vj) la distance entre deux sommets vi et vj, N le nombre de sommets du graphe.
+avec $d(v_i, v_j)$ la distance entre deux sommets $v_i$ et $v_j$, $N$ le nombre de sommets du graphe.
 
 \todo{référence pour efficacité}  
 
