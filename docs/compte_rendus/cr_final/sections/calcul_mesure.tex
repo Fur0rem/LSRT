@@ -216,3 +216,91 @@ La calculer réellement serait extrêmement complexe et dépend beaucoup de la t
 qui peut être modélisée par une fonction en $O(???????)$.
 
 \todo{Calcul de la mesure}
+
+\subsection{Autres optimisations tentées : Invalidation des chemins attaqués}\todo{Changer le nom}
+
+Afin de réduire le nombre de chemins à calculer, nous avons tenté de calculer une première fois les plus courts chemins, puis à chercher à invalider les chemins comportant un lien attaqué, aux temps où celui-ci est attaqué et réutiliser les résultats non impactés. Nous avons déterminé que si un lien $(u,v)$ est attaqué au temps $t$, alors
+\begin{itemize}
+	\item Tout chemin commençant par le lien attaqué est invalidé au temps $t$
+	\item Les chemins de la forme $(x, ..., u, v, ..., y)$n avec $(x, ..., u)$ un sous chemins de distance $w$, sont invalidés au temps $t-w$
+\end{itemize}
+
+\subsubsection*{Première invalidation}
+
+Nous avons dans un premier temps invalidé les chemins en utilisant les pyramides définies dans \todo{label}. Pour cela nous associons à chaque sous-chemin des ticks pendant lesquels ils seront invalidés, vide au début, sauf pour le dernier niveau (correspondant aux liens) où cela corresponds aux ticks où le lien est attaqué. Puis, en partant du bas, on propage aux deux sous-chemins au-dessus. \todo{expliquer la méthode}\todo{mettre algo ?}
+
+\begin{algorithm}[H]
+\caption{Première invalidation}\label{algo:premiere_invalidation}
+\begin{algorithmic}
+	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
+	\Function{$init\_intervals\_to\_invalidate$}{Path $path$, Attack $attack$}
+		\State $intervals\_to\_invalidate\gets$ Dictionnary<SubPath,Set<Tick>$>$ % Dictionnaires[sous-chemin, ensemble de ticks]
+		\ForAll{$subpath\in path.leaves]$}
+			\If{$subpaths.is\_unvalidated$}
+				\For{$time\in time\_matrix[subpath.start,subpath.end]$}
+					\For{$delta\in [\![0,attack.delta-1]\!]$}
+						\State $idx \gets time\times attack.delta+delta$
+						\If{$idx < attack.max\_time$}
+							\State $interval\_to\_invalidate[subpath].insert(idx)$
+						\EndIf
+					\EndFor
+				\EndFor
+			\EndIf
+		\EndFor
+		\State \Return $intervals\_to\_invalidate$
+	\EndFunction
+	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
+	\ForAll{$subpath \in path.subpaths.rev()$}
+		\If{$subpath.has\_left\_parent$}
+			\State $left \gets subpath.left\_parent$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
+			\EndFor
+		\EndIf
+		\If{$subpath.has\_right\_parent$}
+			\State $right \gets subpath.right\_parent$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[right].insert(time)$
+			\EndFor
+		\EndIf
+		\For{$time \in interval\_to\_invalidate[subpath]$}
+			\State $dma[time][subpath.start][subpath.end] \gets 0$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection*{Deuxième invalidation}
+
+Cette première méthode c'est avérée peu efficace. En effet, dans le cas où deux chemins partagent un même sous-chemin, le calcul et la propagation des temps où le sous-chemin sera invalidé sera fait deux fois. Nous avons donc choisis d'utiliser un tableau en 2 dimensions indexé par un couple $(u,v)$, correspondant au chemin allant de $u$ à $v$. Chaque case de ce tableau contient la distance de $u$ à $v$, les sommets sources et de destinations, ainsi que les sommets $x$ tels que $(x, u, ..., v)$ soit le plus court chemin de $x$ à $v$ et $y$ tels que $(u, ..., v, y)$ soit le plus court chemin de $u$ à $y$.
+
+L'invalidation \todo{mettre algo ?} reprends l'algorithme de l'invalidation précédente, à la différence que l'on utilise une file contenant initialement que les liens du graphe au lieu d'itérer sur un tableau, et que l'on ne traite un chemin qu'une seule fois, puis on ajoute les chemins à traiter dans la file.
+
+\begin{algorithm}[H]
+\caption{Seconde invalidation}\label{algo:premiere_invalidation}
+\begin{algorithmic}
+	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
+	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
+	\While{$!to\_invalidate.is\_empty$}
+		\State $(start, end) \gets fifo.pop()$
+ 		\State $subpath \gets path\_matrix[start,end].subpath$
+		\ForAll{$left\_node \in path\_matrix[start,end].left\_neighbours$}
+			\State $left \gets path\_matrix[left\_node, end].subpath$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
+			\EndFor
+		\EndFor
+		\ForAll{$right\_node \in path\_matrix[start,end].right\_neighbours$}
+			\State $right \gets path\_matrix[right\_node, end].subpath$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[right].insert(time)$
+			\EndFor
+		\EndFor
+		\For{$time \in interval\_to\_invalidate[subpath]$}
+			\State $dma[time][subpath.start][subpath.end] \gets 0$
+		\EndFor
+	\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\todo{expliquer pourquoi on ne l'a pas gardé}
