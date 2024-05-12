@@ -135,10 +135,10 @@ Ici, on a les chemins 0->1->2, 1->2->3, 0->1, 1->2, 2->3. \todo{Mettre au propre
 \expandafter\newcommand\csname mon_array\the\value{push_elem} \endcsname{three}
 \stepcounter{push_elem}
 
-Valeur à l'index 2:
+%Valeur à l'index 2:
 \newcounter{index}
 \setcounter{index}{2}
-\csname mon_array\the\value{index} \endcsname
+%\csname mon_array\the\value{index} \endcsname
 
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
 
