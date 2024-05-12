@@ -46,20 +46,21 @@ car le cas où attendre est bénéfique a été pris en compte par le lien fant�
 Ainsi, nous avons pu rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, que nous avons utilisé pour notre implémentation.
 
 Cependant, calculer ces liens fantômes relève de l'interprétation de l'impact qu'à le blocage d'un lien.
-Ici nous définissons deux impacts possibles pour un lien de poids $p$ bloqué à un temps $t$:
-Un impact bas signifie que pour traverser le lien, il faut juste l'atteindre, c'est-à-dire que si le lien existe au temps $t$, alors on peut le traverser.
-Un impact haut signifie que pour traverser le lien, il faut qu'il soit disponible à chaque instant où on le traverse, c'est-à-dire que le lien doit être disponible à chaque $t_{i}$ tel que $t_{i} \in [t, t+p]$.
+Ici nous définissons deux modélisations possibles pour le blocage lien de poids $p$ bloqué à un temps $t$:
+Une modélisation modérée signifie que pour traverser le lien, il faut juste l'atteindre, c'est-à-dire que si le lien existe au temps $t$, alors on peut le traverser.
+Une modélisation agressive signifie que pour traverser le lien, il faut qu'il soit disponible à chaque instant où on le traverse, c'est-à-dire que le lien doit être disponible à chaque $t_{i}$ tel que $t_{i} \in [t, t+p]$.
+\label{modere_agressif}
 \begin{figure}[H]
     \centering
     \evolvinglink{GT}{2, -1, 2, 2}{Lien de base}
 \end{figure}
 \begin{figure}[H]
     \centering
-    \evolvinglink{GTLow}{2, 3, 2, 2}{Impact Bas}
+    \evolvinglink{GTModerate}{2, 3, 2, 2}{Impact Modéré}
 \end{figure}
 \begin{figure}[H]
     \centering
-    \evolvinglink{GTHigh}{4, 3, 2, 2}{Impact Haut}
+    \evolvinglink{GTAgressive}{4, 3, 2, 2}{Impact Agressif}
 \end{figure}
 
 \subsubsection{Algorithme de calcul de la mesure}
@@ -214,9 +215,7 @@ La calculer réellement serait extrêmement complexe et dépend beaucoup de la t
 \todo{Courbe de la complexité}
 qui peut être modélisée par une fonction en $O(???????)$.
 
-\todo{Calcul de la mesure}
-
-\subsection{Autres optimisations tentées : Invalidation des chemins attaqués}\todo{Changer le nom}
+\subsection{Autres optimisations tentées : Invalidation des chemins attaqués}
 
 Afin de réduire le nombre de chemins à calculer, nous avons tenté de calculer une première fois les plus courts chemins, puis à chercher à invalider les chemins comportant un lien attaqué, aux temps où celui-ci est attaqué et réutiliser les résultats non impactés. Nous avons déterminé que si un lien $(u,v)$ est attaqué au temps $t$, alors
 \begin{itemize}
@@ -229,18 +228,17 @@ Afin de réduire le nombre de chemins à calculer, nous avons tenté de calculer
 Nous avons dans un premier temps invalidé les chemins en utilisant les pyramides définies dans \todo{label}. Pour cela nous associons à chaque sous-chemin des ticks pendant lesquels ils seront invalidés, vide au début, sauf pour le dernier niveau (correspondant aux liens) où cela corresponds aux ticks où le lien est attaqué. Puis, en partant du bas, on propage aux deux sous-chemins au-dessus. \todo{expliquer la méthode}\todo{mettre algo ?}
 
 \begin{algorithm}[H]
-\caption{Première invalidation}\label{algo:premiere_invalidation}
-\begin{algorithmic}
-	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
+	\caption{Intervales à invalider}\label{algo:intervals_to_invalidate}
+	\begin{algorithmic}
 	\Function{$init\_intervals\_to\_invalidate$}{Path $path$, Attack $attack$}
-		\State $intervals\_to\_invalidate\gets$ Dictionnary<SubPath,Set<Tick>$>$ % Dictionnaires[sous-chemin, ensemble de ticks]
-		\ForAll{$subpath\in path.leaves]$}
+		\State $intervals\_to\_invalidate\gets$ Dictionnary<SubPath,Set<Tick>$>$::empty() % Dictionnaires[sous-chemin, ensemble de ticks]
+		\ForAll{$subpath\in path.bricks]$}
 			\If{$subpaths.is\_unvalidated$}
 				\For{$time\in time\_matrix[subpath.start,subpath.end]$}
 					\For{$delta\in [\![0,attack.delta-1]\!]$}
-						\State $idx \gets time\times attack.delta+delta$
-						\If{$idx < attack.max\_time$}
-							\State $interval\_to\_invalidate[subpath].insert(idx)$
+						\State $tick \gets time\times attack.delta+delta$
+						\If{$tick < attack.max\_time$}
+							\State $interval\_to\_invalidate[subpath].insert(tick)$
 						\EndIf
 					\EndFor
 				\EndFor
@@ -248,6 +246,13 @@ Nous avons dans un premier temps invalidé les chemins en utilisant les pyramide
 		\EndFor
 		\State \Return $intervals\_to\_invalidate$
 	\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Première invalidation}\label{algo:premiere_invalidation}
+\begin{algorithmic}
+	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
 	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
 	\ForAll{$subpath \in path.subpaths.rev()$}
 		\If{$subpath.has\_left\_parent$}

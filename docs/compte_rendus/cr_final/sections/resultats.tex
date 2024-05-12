@@ -4,30 +4,29 @@
 \todo{courbe pas agressive et agressive melun ici} 
 
 La figure de gauche, montrant l'évolution de l'efficacité en fonction du nombre de liens retirés pour 
-différentes stratégie d'attaque montre que la modélisation "gentille" de l'attaque est peu efficace. 
+différentes stratégie d'attaque montre que la modélisation "modérée" de l'attaque est peu efficace. 
 En effet, les stratégies profitant du dynamisme du graphe sont bien moins efficace que des 
 stratégies d'attaque statiques. Le fait que les stratégies d'attaque dynamiques soient moins efficaces
-dans la modélisation "gentille" de l'attaque est probablement dû au fait que peu de chemins sont vraiment 
+dans la modélisation "modérée" de l'attaque est probablement dû au fait que peu de chemins sont vraiment 
 bloqués par les attaques, en effet, les chemins supprimés au temps T sont souvent rétablis au temps T+1.
 Cela fait que l'impact des attaques dynamiques est faible par rapport aux attaques statiques, qui 
 bloquent des chemins de manière permanente.
 
 La figure de droite, montrant l'évolution de l'efficacité en fonction du nombre de liens retirés pour 
 différentes stratégie d'attaque montre que la modélisation "agressive", bien que toujours moins efficace
-que les attaques statiques, est bien plus efficace que la modélisation "gentille".
+que les attaques statiques, est bien plus efficace que la modélisation "modérée".
 Chaque lien supprimé lors d'une attaque agressive bloquera les chemins dont il fait partie pendant un 
 temps égal au poids du lien. Les attaques agressives ont un impact plus fort sur l'efficacité. 
 
 On en conclut donc qu'avec un changement mineur dans la modélisation des attaques, on a des résultats
 très différents. Avec notre modélisation actuelle de l'efficacité sur un graphe dynamique et notre modélisation
 des attaques, les attaques dynamiques restent moins impactantes que les attaques statiques. 
-Cependant, la différence d'impact entre la modélisation "gentille" et "agressive" est très importante.
+Cependant, la différence d'impact entre la modélisation "modérée" et "agressive" est très importante.
  
 Cela montre qu'il est utile de continuer à travailler sur une mesure de l'efficacité conçue pour les graphes dynamiques 
 et possiblement sur une modélisation plus fine des attaques sur un réseau urbain.
 
 \todo{définir attaque dynamique / statique si pas fait plus haut}
-\todo{changer nom stratégie gentille / agressive}
 
 
 \todo{courbe delta agressive et pas agressive melun ici}
@@ -35,8 +34,8 @@ et possiblement sur une modélisation plus fine des attaques sur un réseau urba
 Ces figures montrent l'évolution de l'impact des attaques dynamiques sur l'efficacité en fonction du nombre de "ticks" 
 avant le changement de liens attaqués. Le but de ces figures était de déterminer l'impact du nombre de "ticks" sur
 l'efficacité des attaques. 
-Ces figures nous montre qu'un nombre de tick trop bas à un impact plus faible. Cela rejoint le problème des 
-stratégies "gentilles" qui ont un impact faible sur l'efficacité car les chemins supprimés sont souvent rétablis
+Ces figures nous montre qu'un nombre de tick trop bas à un impact plus faible. Cela rejoint le problème de l'interprétation des modélisations modérées/agressives.
+ sur l'efficacité car les chemins supprimés sont souvent rétablis
 rapidement.
 
 \todo{utiliser plot pr décrire des trucs j'ai pas le plot encore :/}
