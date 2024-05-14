@@ -5,12 +5,24 @@
 
 Le problème des plus courts chemins est déjà assez complexe dans un graphe classique, mais il devient encore plus difficile dans un graphe temporel,
 où les arêtes peuvent être bloquées à certains moments.
-Notre première approche a été d'adapter l'algorithme de Floyd-Warshall. Ce choix a été motivé par le fait que l'algorithme 
-est simple à comprendre et à adapter a un graphe temporel. Nous avons donc implémenté cette algorithme en C pour 
-effectuer nos premières mesures. Nous nous sommes cependant rendu compte que le programme de simulation n'était 
-pas assez efficace, notamment à cause de la complexité de l'algorithme de Floyd-Warshall, qui est en $O(n^3)$,
-et qui devient en $O(n^3 \times t)$ pour un graphe temporel, avec $n$ le nombre de noeuds et $t$ le nombre de pas de temps dans le graphe temporel.
-Nous avons donc décidé de changer d'approche et de chercher algorithme plus efficace.
+Notre première approche a été d'adapter l'algorithme de Floyd-Warshall\cite{floyd_warshall_ref}. 
+Ce choix a été motivé par le fait que l'algorithme est simple à comprendre et à adapter a un graphe temporel. 
+L'algorithme de Floyd-Warshall est un algorithme qui permet de trouver le plus court chemin entre 
+tous les sommets d'un graphe. Il est basé sur la programmation dynamique, et consiste à 
+comparer la distance entre deux sommets en passant par un sommet intermédiaire, 
+et à mettre à jour la distance si elle est plus courte. Cet algorithme est en $O(n^3)$. 
+
+Pour adapter cet algorithme à un graphe temporel, nous avons créé une matrice de distances pour 
+chaque pas de temps, et nous avons mis à jour la matrice de distance à chaque pas de temps 
+en prenant en compte qand chaque lien était bloqué (cf pseudocode ci-dessous).
+
+Nous avons implementé un programme basé sur ce "Floyd-Warshall temporel" en C pour effectuer nos premières mesures. 
+
+Nous nous sommes cependant rendu compte que le programme de simulation n'était 
+pas assez efficace, notamment à cause de la complexité de l'algorithme de "Floyd-Warshall temporel" qui est 
+en $O(n^3 \times t)$
+avec $n$ le nombre de noeuds et $t$ le nombre de pas de temps dans le graphe temporel.
+Nous avons donc décidé de changer d'approche et de chercher un algorithme plus efficace.
 
 \begin{algorithm}[H]
     TemporalFloydWarshall(graphe temporel \ GT, DistanceMatrixes \ dma)
