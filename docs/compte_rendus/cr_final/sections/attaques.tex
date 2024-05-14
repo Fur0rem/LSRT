@@ -1,22 +1,37 @@
 \section{Génération des attaques}\label{sec:attaques}
 
-\`A chaque pas de temps ${t_{i}}$, nous allons attaquer le graphe en bloquant des liens jusqu'à un certain budget.
-Nous avons choisi de mettre le prix de chaque lien à 1, car il est plus simple d'interpréter les résultats avec un prix constant.
+Nous définissons un pas de temps comme une unité de temps de la simulation. 
+Nous définissons une attaque comme un ensemble de liens supprimés dans une 
+intervalle de pas de temps.
 
-Nous avons choisi de séparer la gestion des attaques des stratégies d'attaques.
+Nous définissons la fréquence d'attaque comme le nombre de pas de temps
+que durent chaque attaque. Pour décrire la fréquencre d'attaque, nous utiliserons 
+églament le term "delta" et le symbole \delta.
+
+Nous définissons le budget d'attaque comme le nombre de liens que l'on peut
+supprimer à chaque attaque. 
+
+Nous définissons une stratégie d'attaque comme une fonction de choix permettant 
+de sélectionner les liens à supprimer lors d'une attaque.
+
+Afin de générer un graphe dynamique à partir d'un graphe de réseau urbain, nous appliquons 
+une succession d'attaque, à une fréquence d'attaque donnée, sur le graphe de réseau urbain.
+
+Pour l'implémentation de ces attaques, nous avons choisi de séparer la gestion des attaques (écriture, 
+sauvegarde, etc\dots) de leur génération. 
 Pour la gestion, nous avons la classe Attaque, avec 2 primitives :
 \begin{itemize}
 \item Bloquer un lien à un temps donné
 \item Retranscrire l'attaque dans un fichier pour la simulation
 \end{itemize}
-Comme ça, les stratégies peuvent se focaliser sur l'algorithme de choix des liens à supprimer, et la classe Attaque se charge de faire le reste.
+
+Ce choix d'implémentation nous permet de facilement implémenter de nouvelles stratégies d'attaque, car il 
+suffit de définir une fonction choisissant des liens à supprimer. 
 
 Nous classons les stratégies d'attaques en deux catégories: les attaques dynamiques et les attaques statiques.
 \subsection{Attaques statiques}\label{subsec:attaques_statiques}
 
 Les attaques statiques sont des attaques qui n'évoluent pas dans le temps, c'est à dire qu'un lien bloqué est bloqué de ${t_{0}}$ à ${t_{\max}}$.
-Les attaques statiques choisies sont l'attaque aléatoire statique et l'attaque par centralité intermédiaire.
-Ces 2 attaques sont les plus couramment utilisées dans la littérature, et nous servirons de référence en tant que pire et meilleure attaque pour comparer les attaques dynamiques.
 
 \subsubsection{Attaque aléatoire statique}\label{subsubsec:attaque_aleatoire_statique}
 
