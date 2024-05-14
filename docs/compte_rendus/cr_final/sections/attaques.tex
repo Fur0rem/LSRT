@@ -5,8 +5,8 @@ Nous définissons une attaque comme un ensemble de liens supprimés dans une
 intervalle de pas de temps.
 
 Nous définissons la fréquence d'attaque comme le nombre de pas de temps
-que durent chaque attaque. Pour décrire la fréquencre d'attaque, nous utiliserons 
-églament le term "delta" et le symbole \delta.
+que durent chaque attaque. Pour décrire la fréquence d'attaque, nous utiliserons 
+également le terme delta. 
 
 Nous définissons le budget d'attaque comme le nombre de liens que l'on peut
 supprimer à chaque attaque. 
@@ -15,7 +15,7 @@ Nous définissons une stratégie d'attaque comme une fonction de choix permettan
 de sélectionner les liens à supprimer lors d'une attaque.
 
 Afin de générer un graphe dynamique à partir d'un graphe de réseau urbain, nous appliquons 
-une succession d'attaque, à une fréquence d'attaque donnée, sur le graphe de réseau urbain.
+une succession d'attaques, à une fréquence d'attaque donnée, sur le graphe de réseau urbain.
 
 Pour l'implémentation de ces attaques, nous avons choisi de séparer la gestion des attaques (écriture, 
 sauvegarde, etc\dots) de leur génération. 
@@ -31,11 +31,11 @@ suffit de définir une fonction choisissant des liens à supprimer.
 Nous classons les stratégies d'attaques en deux catégories: les attaques dynamiques et les attaques statiques.
 \subsection{Attaques statiques}\label{subsec:attaques_statiques}
 
-Les attaques statiques sont des attaques qui n'évoluent pas dans le temps, c'est à dire qu'un lien bloqué est bloqué de ${t_{0}}$ à ${t_{\max}}$.
+Les attaques statiques sont des attaques qui n'évoluent pas dans le temps, c'est-à-dire qu'un lien bloqué est bloqué de ${t_{0}}$ à ${t_{\max}}$.
 
 \subsubsection{Attaque aléatoire statique}\label{subsubsec:attaque_aleatoire_statique}
 
-Cette première stratégie consiste à bloquer des liens aléatoirement, et rester sur ces liens pour toute la durée de l'attaque.
+Cette première stratégie consiste à bloquer des liens aléatoirement, et à rester sur ces liens pour toute la durée de l'attaque.
 \begin{algorithm}[H]
 \caption{Attaque aléatoire statique}
 \begin{algorithmic}
@@ -131,7 +131,7 @@ Dans notre contexte de manifestations et de marches, cette stratégie est plus r
 \subsubsection{Attaque par centralité intermédiaire mouvante}\label{subsubsec:attaque_centralite_intermediaire_mouvante}
 
 Cette stratégie consiste à bloquer les liens les plus importants en les triant par centralité intermédiaire, puis pour les prochains pas de temps, on calcule les nouvelles centralités intermédiaires sur le graphe avec les liens bloqués, et on bloque ces nouveaux liens les plus importants.
-Note : dû aux nombre de calculs nécessaires pour les centralités intermédiaires, nous les avons approximées en ne prennant que 20\% des chemins les plus courts, ce qui est suffisant pour avoir une très bonne approximation.
+Note : dû aux nombre de calculs nécessaires pour les centralités intermédiaires, nous les avons approximées en ne prenant que 20\% des chemins les plus courts, ce qui est suffisant pour avoir une très bonne approximation.
 
 \begin{algorithm}[H]
 \caption{Attaque par centralité intermédiaire mouvante}
