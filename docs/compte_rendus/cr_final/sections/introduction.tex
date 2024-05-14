@@ -9,7 +9,7 @@ modéliser comme un problème de congestion classique.
 
 En plus de cela, les études existantes sur les réseaux dynamiques se font généralement sur des réseaux 
 dont la structure est très différente des réseaux routiers. Par exemple des réseaux d'appels téléphoniques 
-qui sont des réseaux extrèmement clairsemés où très peu de noeuds sont connectés entre eux.
+qui sont des réseaux extrêmement clairsemés où très peu de nœuds sont connectés entre eux.
 
 Le but de notre projet était alors de modéliser l'évolution d'un réseau urbain pendant une manifestation comme 
 un graphe, d'implémenter un programme efficace permettant de simuler l'évolution du réseau pendant une manifestation et 
@@ -19,22 +19,22 @@ Pour modéliser un réseau urbain comme un graphe, nous représenterons les rues
 et les intersections des rues comme ses sommets.
 
 Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. 
-C'est un couple G=(V,E) où V est l'ensemble des sommets et E l'ensemble des arrêtes.
-avec V=\{v1, v2, ..., vn\} et E=\{(v1, v2), (v2, v3), ...\}.
+C'est un couple $G=(V,E)$ où $V$ est l'ensemble des sommets et $E$ l'ensemble des arrêtes.
+avec $V=\{v_1, v_2, ..., v_n\}$ et $E=\{(v_1, v_2), (v_2, v_3), ...\}$.
 
 Afin de tenir compte de l'évolution du réseau au cours de la manifestation, nous transformerons le graphe du réseau urbain 
-en un graphe dynamique\cite{dynamic_graphs}, où les liens supprimées représentent les rues bloquées par la manifestation.
+en un graphe dynamique \cite{dynamic_graphs}, où les liens supprimées représentent les rues bloquées par la manifestation.
 
 Un graphe dynamique est un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
 Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
-où T={($t_1$,$e_1$), ($t1$,$e_2$), ... ($t_n$,$e_n$)} est l'ensemble des instants auxquelles des liens 
+où $T={(t_1,e_1), (t1,e_2), ... (t_n,e_n)}$ est l'ensemble des instants auxquelles des liens 
 entre les sommets sont supprimés, avec $t_i$ l'indice de temps et
 $e_i$ une arrête du graphe supprimée à cet indice de temps.
 
-Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité\cite{efficiency}.
+Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité \cite{efficiency}.
 L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
 \begin{equation}
-    \varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
+    \varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(v_i, v_j)}
 \end{equation}
 avec $d(v_i, v_j)$ la distance entre deux sommets $v_i$ et $v_j$, $N$ le nombre de sommets du graphe.
 
