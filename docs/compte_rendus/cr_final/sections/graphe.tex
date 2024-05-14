@@ -1,71 +1,28 @@
 \section{Génération du graphe}\label{sec:graphe}
-% \todo{Génération du graphe}
-Nous représentons les villes sous la forme d'un graphe. Les données sont importées depuis une bibliothèque de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}. Pour cela, nous utilisons la librairie Python  OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} qui les convertis sous la forme d'un graphe.
-
+Nous représentons les villes sous la forme d'un graphe, où une arête correspond à une rue et un sommet à une intersection.
+Les données sont importées depuis une bibliothèque de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}. Pour cela, nous utilisons la librairie Python OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} qui les convertis sous la forme d'un graphe.
 \begin{figure}[H]
 	\centering
 	\includegraphics[scale=0.5]{Melun.pdf}
 	\caption{Graphe de la ville de Melun}
 	\label{fig:Paris}
 \end{figure}
-
-
-
-% Nous importerons les villes attaquées depuis une bibliothèque de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}, puis le paquet python OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} pour les convertir en graphes que nous pourrons manipuler.
-
-% Le graphe récupéré par OSMnx est sous la forme d'un multigraphe orienté : pour tout couple de sommets $(u,v)\in E$ le nombre de liens allant de $u$ à $v$ n'est pas limité à 1. Cela est notamment dû à des rues parallèles. Dans ce cas, $e\in E$ est tel que $e=(u,v,k,w)$ où $u,v\in V$, $w\in\mathbb{N}$ est la pondération du lien, et $k\in\mathbb{N}$ est un indice qui permet de différencier les multiples liens de $u$ à $v$.
-	
-% Afin de faciliter la manipulation du graphe, nous avons créé une classe $CityGraph$ qui prends comme paramètre le nom d'une ville et propose différentes méthodes le manipuler ou récupérer les informations du graphe. Elle permet également de l'enregistrer dans un fichier pour le programme de simulation. % \todo{keep paragraphe CityGraph ?}
-	% Présenter CityGraph ?
-
-%
-
-\subsection{Transformation du graphe}
-Nous avons choisi de représenter le graphe sous la forme d'une matrice creuse en format CSR (Compressed Sparse Row). Sous cette représentation, le graphe est représenté par trois tableaux~: %\todo{Refaire l'explication}
-\begin{itemize}
-	\item $ROW\_INDEX$ qui contient les bornes des intervalles de valeurs liés aux liens partant d'un nœud $u$.
-	\[[\![ROW\_INDEX[u],ROW\_INDEX[u+1]-1]\!]\]
-	% si $u$ a au moins un lien sortant ($i<i+1$), sinon $i=i+1$.
-	Si $u$ n'a aucun lien sortant, $ROW\_INDEX[u]=ROW\_INDEX[u+1]$. % et le sous-tableau est vide.
-	\item $COL\_INDEX$ contient le sommet destination d'un lien à l'index donné
-	\item $V$ contient le poids du lien.
-\end{itemize}
-
-Lors de la récupération des données, OSMnx renvoie un multi-graphe orienté.
-
-Nous transformons le graphe car~: \begin{enumerate}
-	\item Nous utilisons des distances temporels et non la distance physique entre les deux noeuds. % \todo{harmoniser distance/poids avec le reste}
+Lors de la récupération des données, OSMnx renvoie un multi-graphe orienté, cependant, il n'est pas encore utilisable.
+Nous devons transformer le graphe car~: \begin{itemize}
+	\item Nous utilisons des distances temporels et non la distance physique entre les deux noeuds.
 	\item La ville est représentée sous la forme d'un multigraphe alors que les simulations sont faites sur un graphe avec au plus un lien d'un sommet $u$ à $v$.
-\end{enumerate}
-
-Pour cela, nous utilisons les fonctions des librairies NetworkX et SciPy
-% qui permettent respectivement de transformer le graphe en une matrice creuse SciPy, puis d'obtenir
-afin d'obtenir les tableaux $ROW\_INDEX$ et $COL\_INDEX$. Le tableau $V$ doit est calculé via l'algorithme~\ref{algo:poids}
-
-\begin{algorithm}[H]
-\caption{Calcul de $V$}\label{algo:poids}
-\begin{algorithmic}
-	\Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
-	\For{$i\in[\![0,G.NumNodes]\!]$}
-		\For{$j\in ROW\_INDEX[i,i+1]$}
-			\State $weigth \gets \emptyset$
-			\ForAll{$e\in G.edges[i][COL\_INDEX[j]]$}
-				\State $weigth.append\left(\frac{e.length}{e.maxspeed}\right)$
-			\EndFor
-			\State $V[j]\gets min(weigth)$
-		\EndFor
-	\EndFor
-\end{algorithmic}
-\end{algorithm}
-
-L'algorithme~\ref{algo:poids} parcourt l'ensemble des couples $(u,v)\in V^2$ tels qu'il existe au moins un lien de $u$ à $v$ dans $E$. % $k,w\in\mathbb{N}$ tels que $(u,v,k,w)\in E$.
-Après, il parcourt tout les liens de $u$ à $v$ et calcul le minimum des distances temporelles, donnés par la formule
+	\item Certaines données sont manquantes, comme la longueur de la rue, la vitesse, \dots
+	\item Les données sont dans des mesures différentes, comme les miles/h en Angleterre et les km/h en France.
+\end{itemize}
+Pour harmonsier ces données, nous parcourons l'ensemble des couples $(u,v)\in V^2$ tels qu'il existe au moins un lien de $u$ à $v$ dans $E$. % $k,w\in\mathbb{N}$ tels que $(u,v,k,w)\in E$.
+Après, nous parcourons tous les liens de $u$ à $v$ et nous calculons le minimum des distances temporelles, donnés par la formule
 	\[\Delta t=\frac{d}{v}\]
 Où la durée $\Delta t$ est la distance temporelle, $d$ la longueur du lien et $v$ la vitesse maximale.
-Dans le cas où il y a plusieurs liens entre deux sommets $u$ et $v$, on garde le lien de poids le plus petit car c'est celui-ci qui sera emprunter lors d'un plus court chemin.	
-Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut pour la vitesse max, et la distance euclidienne de $u$ à $v$ pour la longueur du lien.
+Dans le cas où il y a plusieurs liens entre deux sommets $u$ et $v$, nous gardons le lien de poids le plus petit car c'est celui-ci qui sera emprunter lors d'un plus court chemin.	
+Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut pour la limite de vitesse, ou des interpolations comme la distance euclidienne de $u$ à $v$ pour la longueur du lien.
+De plus, certaines données sont dans d'autres unités que celles utilisées en France, comme les miles/h en Angleterre, où des vitesses dépendantes de la météo en Allemagne.
 
-La figure~\ref{fig:5th} montre le graphe résultant de cette transformation sur un sous-ensemble du graphe de Paris correspondant au cinquième arrondissement.
+La figure~\ref{fig:temporal} montre le graphe résultant de cette transformation sur un sous-ensemble du graphe de Paris correspondant au cinquième arrondissement.
 
 \begin{figure}[H]
 	\centering {
@@ -76,3 +33,6 @@ La figure~\ref{fig:5th} montre le graphe résultant de cette transformation sur 
 	\label{fig:temporal}
 
 \end{figure}
+
+Une fois ces données récupérées, nous les passons sous forme de listes d'adjacence pour le programme de calcul de l'efficacité.
+Nous utilisons les listes d'adjacences car elles sont peu coûteuses en mémoire, simples à manipuler, et très utilisées pour les graphes peu denses, comme les graphes de villes.

@@ -27,11 +27,13 @@ ind = np.arange(len(Villes))
 # Define the width of the bars
 width = 0.15
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(13, 8))  # Set width to 10 inches and height to 6 inches
+
 
 # Create the bars
 percentages = [_1_pourcent, _25_pourcent, _50_pourcent, _75_pourcent, _100_pourcent]
 labels = ['1%', '25%', '50%', '75%', '99%']
+ax.set_yscale('linear')
 
 COLOR_YELLOW = (1, 0.8, 0.1)
 COLOR_RED = (0.9, 0.1, 0)
@@ -60,5 +62,5 @@ ax.set_xticklabels(index, size=17)  # Set x-axis labels as indices
 
 # Add the legend with title "Pourcentage de liens attaqués"
 ax.legend(title='Pourcentage de liens attaqués', loc='upper left', fontsize=15, title_fontsize=15)
-
-plt.show()
+fig.tight_layout()
+fig.savefig('Complexite.pdf', bbox_inches='tight')
