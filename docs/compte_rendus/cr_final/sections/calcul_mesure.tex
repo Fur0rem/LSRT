@@ -9,7 +9,7 @@ Notre première approche a été d'adapter l'algorithme de Floyd-Warshall. Ce ch
 est simple à comprendre et à adapter a un graphe temporel. Nous avons donc implémenté cette algorithme en C pour 
 effectuer nos premières mesures. Nous nous sommes cependant rendu compte que le programme de simulation n'était 
 pas assez efficace, notamment à cause de la complexité de l'algorithme de Floyd-Warshall, qui est en $O(n^3)$,
-et qui devient en $O(n^3 \times t)$ pour un graphe temporel, avec $n$ le nombre de noeuds et $t$ le nombre de ticks dans le graphe temporel.
+et qui devient en $O(n^3 \times t)$ pour un graphe temporel, avec $n$ le nombre de noeuds et $t$ le nombre de pas de temps dans le graphe temporel.
 Nous avons donc décidé de changer d'approche et de chercher algorithme plus efficace.
 
 \begin{algorithm}[H]
@@ -200,9 +200,10 @@ Donc, on commence par calculer les distances sur le graphe non-attaqué, grâce 
 \subsubsection{Complexité de l'algorithme}
 
 Même si la compléxité pire cas de faire des Dijkstra pour chaque noeud est en $O(n^3 \log n \times t)$, la complexité amortie est bien meilleure.
-La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur nos graphes de villes, nous avons mesurer l'évolution du temps de calcul en fonction du nombre de noeuds, et nous avons obtenu cette courbe :
-\todo{Courbe de la complexité}
-qui peut être modélisée par une fonction BHJREIHJEZEKHZ.
+La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur nos graphes de villes, nous avons mesurer l'évolution du temps de calcul en fonction du nombre de liens, et en fonction du nombre de liens supprimés, et nous avons obtenu cette courbe :
+\newline
+\includegraphics[width=1.0\linewidth]{Complexite.pdf}
+Nous remarquons que l'évolution du temps de calcul suit une courbe qui se situe entre une courbe quadratique et cubique.\footnote{La courbe modélisant le mieux nos données était $n^{2.7}$}
 Par ailleurs, sur toutes les villes de Saints à Melun, l'algorithme de Floyd-Warshall était plus lent que notre algorithme de Dijkstra.
 
 \subsection{Autres optimisations tentées : Invalidation des chemins attaqués}

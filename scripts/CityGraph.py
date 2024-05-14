@@ -58,22 +58,6 @@ class CityGraph :
 		"""Returns the index in the matrix of the node through it's OSmnx numero"""
 		return self.nodes_idx_map[node]
 	
-	# def diameter(self):
-	# 	"""The diameter of the graph"""
-	# 	# Convert the graph to be non oriented else networkx is mad >:(
-	# 	tmp_graph = None
-	# 	if self.graph.is_directed() :
-	# 		tmp_graph = self.graph.to_undirected()
-	# 	else :
-	# 		tmp_graph = self.graph
-
-	# 	# If the graph is not connected, choose the biggest connected component
-	# 	max_diameter = 0
-	# 	for component in nx.connected_components(tmp_graph) :
-	# 		if nx.diameter(tmp_graph.subgraph(component)) > max_diameter :
-	# 			max_diameter = nx.diameter(tmp_graph.subgraph(component))
-	# 	return max_diameter
-
 	def show(self) :
 		"""Opens an image of the graph"""
 		ox.plot_graph(self.graph)
