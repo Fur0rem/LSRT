@@ -228,23 +228,24 @@ def main():
     data = load_data(args.path_ville)
 
 
-    plt.rc('font', size=25)          # controls default text sizes
+    plt.rc('font', size=20)          # controls default text sizes
    
-    plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=10)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize=10)    # fontsize of the tick labels
-    plt.rc('legend', fontsize=20)    # legend fontsize
-    plt.rc('figure', titlesize=20)  # fontsize of the figure title
+    plt.rc('axes', labelsize=18)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=9)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=9)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=18)    # legend fontsize
+    plt.rc('figure', titlesize=18)  # fontsize of the figure title
  
     fig, ((ax1,ax2),(ax3,ax4)) = plt.subplots(2,2)
 
-    fig.suptitle("Attaques sur " + "Créteil" + " à impact fort", fontsize=30)
+    #fig.suptitle("Attaques sur " + + " à impact fort", fontsize=25)
+    
 
-    mk_plot(ax1, data, "efficiency",ytitle="efficacité", xtitle="nombre de liens attaqués", title="efficacité en fonction du nombre de liens attaqués")
-    mk_plot(ax3, data, "reachables",ytitle="accessibilité", xtitle="nombre de liens attaqués", title="accessibilité en fonction du nombre de liens attaqués")
+    mk_plot(ax1, data, "efficiency",ytitle="efficacité", xtitle="Nombre de liens attaqués", title="Efficacité en fonction du nombre de liens attaqués")
+    mk_plot(ax3, data, "reachables",ytitle="accessibilité", xtitle="Nombre de liens attaqués", title="Accessibilité en fonction du nombre de liens attaqués")
 
-    mk_plot_rand(ax2, data, "efficiency", ytitle="efficacité", xtitle="nombre de liens attaqués",title="efficacité en fonction du nombre de liens attaqués")
-    mk_plot_rand(ax4, data, "reachables", ytitle="accessibilité", xtitle="nombre de liens attaqués", title="accessibilité en fonction du nombre de liens attaqués")
+    mk_plot_rand(ax2, data, "efficiency", ytitle="efficacité", xtitle="Nombre de liens attaqués",title="Efficacité en fonction du nombre de liens attaqués")
+    mk_plot_rand(ax4, data, "reachables", ytitle="accessibilité", xtitle="Nombre de liens attaqués", title="Accessibilité en fonction du nombre de liens attaqués")
 
     fig.set_figheight(15)
     fig.set_figwidth(30)

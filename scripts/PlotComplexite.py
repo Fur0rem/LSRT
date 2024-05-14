@@ -55,7 +55,7 @@ for v in Villes :
 ax.set_ylabel('Temps (s)', size=20)
 ax.set_yticks(np.arange(0, 2500, 250))
 ax.tick_params(axis='y', labelsize=15)  # Change fontsize to 15
-ax.set_title('Temps en fonction de la taille de la ville et du pourcentage de liens attaqués', size=25)
+#ax.set_title('Temps en fonction de la taille de la ville et du pourcentage de liens attaqués', size=25)
 index = [f"{Villes_names[i]} \n {v[0]} noeuds, {v[1]} liens" for i, v in enumerate(Villes)]
 ax.set_xticks(ind)
 ax.set_xticklabels(index, size=17)  # Set x-axis labels as indices
