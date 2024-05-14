@@ -1,2 +1,78 @@
 \section{Annexes}\label{sec:annexes}
 \todo{Annexes}
+
+\appendix
+
+\section{Algorithmes d'invalidation des liens}\label{sec:algo_invalidation}
+
+\begin{algorithm}[H]
+	\caption{Intervales à invalider}\label{annexes:intervals_to_invalidate}
+	\begin{algorithmic}
+	\Function{$init\_intervals\_to\_invalidate$}{Path $path$, Attack $attack$}
+		\State $intervals\_to\_invalidate\gets$ Dictionnary<SubPath,Set<Tick>$>$::empty() % Dictionnaires[sous-chemin, ensemble de ticks]
+		\ForAll{$subpath\in path.bricks]$}
+			\If{$subpaths.is\_unvalidated$}
+				\For{$time\in time\_matrix[subpath.start,subpath.end]$}
+					\For{$delta\in [\![0,attack.delta-1]\!]$}
+						\State $tick \gets time\times attack.delta+delta$
+						\If{$tick < attack.max\_time$}
+							\State $interval\_to\_invalidate[subpath].insert(tick)$
+						\EndIf
+					\EndFor
+				\EndFor
+			\EndIf
+		\EndFor
+		\State \Return $intervals\_to\_invalidate$
+	\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{Première invalidation}\label{annexes:premiere_invalidation}
+\begin{algorithmic}
+	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
+	\ForAll{$subpath \in path.subpaths.rev()$}
+		\If{$subpath.has\_left\_parent$}
+			\State $left \gets subpath.left\_parent$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
+			\EndFor
+		\EndIf
+		\If{$subpath.has\_right\_parent$}
+			\State $right \gets subpath.right\_parent$
+			\For{$time \in intervals\_to\_invalidate[subpath]$}
+				\State $intervals\_to\_invalidate[right].insert(time)$
+			\EndFor
+		\EndIf
+		\For{$time \in interval\_to\_invalidate[subpath]$}
+			\State $dma[time][subpath.start][subpath.end] \gets 0$
+		\EndFor
+	\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+    \caption{Seconde invalidation}\label{annexes:deuxieme_invalidation}
+    \begin{algorithmic}
+        \State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
+        \While{$!to\_invalidate.is\_empty$}
+            \State $(start, end) \gets fifo.pop()$
+             \State $subpath \gets path\_matrix[start,end].subpath$
+            \ForAll{$left\_node \in path\_matrix[start,end].left\_neighbours$}
+                \State $left \gets path\_matrix[left\_node, end].subpath$
+                \For{$time \in intervals\_to\_invalidate[subpath]$}
+                    \State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
+                \EndFor
+            \EndFor
+            \ForAll{$right\_node \in path\_matrix[start,end].right\_neighbours$}
+                \State $right \gets path\_matrix[right\_node, end].subpath$
+                \For{$time \in intervals\_to\_invalidate[subpath]$}
+                    \State $intervals\_to\_invalidate[right].insert(time)$
+                \EndFor
+            \EndFor
+            \For{$time \in interval\_to\_invalidate[subpath]$}
+                \State $dma[time][subpath.start][subpath.end] \gets 0$
+            \EndFor
+        \EndWhile
+    \end{algorithmic}
+    \end{algorithm}

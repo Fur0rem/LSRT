@@ -131,7 +131,7 @@ Pour connaître la distance entre le noeud de départ et le noeud d'arrivée, Di
 Donc, pour chaque noeud candidat à une distance $d$ du noeud de départ qu'il sort du tas, on va noter cette distance dans la matrice de distances.
 Cela permet d'éviter de calculer des chemins qui ont déjà été utilisés pour d'autres calculs de chemins plus grands.
 
-\subsubsubsection*{Prise en compte de tous les sous-chemins}
+\subsubsubsection*{Prise en compte de tous les sous-chemins}\label{subsub:subchemins}
 
 Soit un chemin calculé 0 \weightedlinkright{1} 1 \weightedlinkright{1} 2 \weightedlinkright{1} 3.
 Nous avons un chemin trivial à noter entre 0 et 3, mais on a aussi beaucoup de sous-chemins qui sont calculés.
@@ -220,86 +220,16 @@ Afin de réduire le nombre de chemins à calculer, nous avons tenté de calculer
 
 \subsubsection*{Première invalidation}
 
-Nous avons dans un premier temps invalidé les chemins en utilisant les pyramides définies dans \todo{label}. Pour cela nous associons à chaque sous-chemin des ticks pendant lesquels ils seront invalidés, vide au début, sauf pour le dernier niveau (correspondant aux liens) où cela corresponds aux ticks où le lien est attaqué. Puis, en partant du bas, on propage aux deux sous-chemins au-dessus. \todo{expliquer la méthode}\todo{mettre algo ?}
-
-\begin{algorithm}[H]
-	\caption{Intervales à invalider}\label{algo:intervals_to_invalidate}
-	\begin{algorithmic}
-	\Function{$init\_intervals\_to\_invalidate$}{Path $path$, Attack $attack$}
-		\State $intervals\_to\_invalidate\gets$ Dictionnary<SubPath,Set<Tick>$>$::empty() % Dictionnaires[sous-chemin, ensemble de ticks]
-		\ForAll{$subpath\in path.bricks]$}
-			\If{$subpaths.is\_unvalidated$}
-				\For{$time\in time\_matrix[subpath.start,subpath.end]$}
-					\For{$delta\in [\![0,attack.delta-1]\!]$}
-						\State $tick \gets time\times attack.delta+delta$
-						\If{$tick < attack.max\_time$}
-							\State $interval\_to\_invalidate[subpath].insert(tick)$
-						\EndIf
-					\EndFor
-				\EndFor
-			\EndIf
-		\EndFor
-		\State \Return $intervals\_to\_invalidate$
-	\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}[H]
-\caption{Première invalidation}\label{algo:premiere_invalidation}
-\begin{algorithmic}
-	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
-	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
-	\ForAll{$subpath \in path.subpaths.rev()$}
-		\If{$subpath.has\_left\_parent$}
-			\State $left \gets subpath.left\_parent$
-			\For{$time \in intervals\_to\_invalidate[subpath]$}
-				\State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
-			\EndFor
-		\EndIf
-		\If{$subpath.has\_right\_parent$}
-			\State $right \gets subpath.right\_parent$
-			\For{$time \in intervals\_to\_invalidate[subpath]$}
-				\State $intervals\_to\_invalidate[right].insert(time)$
-			\EndFor
-		\EndIf
-		\For{$time \in interval\_to\_invalidate[subpath]$}
-			\State $dma[time][subpath.start][subpath.end] \gets 0$
-		\EndFor
-	\EndFor
-\end{algorithmic}
-\end{algorithm}
+Nous avons dans un premier temps invalidé les chemins en utilisant les {pyramides de sous-chemins}~\ref{subsub:subchemins}.
+Pour cela nous commençons par faire une initialisation~\ref{annexes:intervals_to_invalidate} qui associe à chaque sous-chemin des pas de temps pendant lesquels ils seront invalidés. Ils seront vides au début, sauf pour le dernier niveau (correspondant aux liens) où cela corresponds aux pas de temps où le lien est attaqué.
+Ensuite, nous propageons~\ref{annexes:premiere_invalidation}, en allant de bas en haut, aux deux sous-chemins au-dessus les pas de temps où ils seront invalidés, en prenant en compte le temps nécessaire pour arriver au noeud de départ.
 
 \subsubsection*{Deuxième invalidation}
 
 Cette première méthode c'est avérée peu efficace. En effet, dans le cas où deux chemins partagent un même sous-chemin, le calcul et la propagation des temps où le sous-chemin sera invalidé sera fait deux fois. Nous avons donc choisis d'utiliser un tableau en 2 dimensions indexé par un couple $(u,v)$, correspondant au chemin allant de $u$ à $v$. Chaque case de ce tableau contient la distance de $u$ à $v$, les sommets sources et de destinations, ainsi que les sommets $x$ tels que $(x, u, ..., v)$ soit le plus court chemin de $x$ à $v$ et $y$ tels que $(u, ..., v, y)$ soit le plus court chemin de $u$ à $y$.
 
-L'invalidation \todo{mettre algo ?} reprends l'algorithme de l'invalidation précédente, à la différence que l'on utilise une file contenant initialement que les liens du graphe au lieu d'itérer sur un tableau, et que l'on ne traite un chemin qu'une seule fois, puis on ajoute les chemins à traiter dans la file.
+Notre deuxième méthode~\ref{annexes:deuxieme_invalidation} reprends l'algorithme de l'invalidation précédente, à la différence que l'on utilise une file contenant initialement que les liens du graphe au lieu d'itérer sur un tableau, et que l'on ne traite un chemin qu'une seule fois, puis on ajoute les chemins à traiter dans la file.
 
-\begin{algorithm}[H]
-\caption{Seconde invalidation}\label{algo:premiere_invalidation}
-\begin{algorithmic}
-	% \Require{$G :$ multi-graphe$, ROW\_INDEX, COL\_INDEX$}
-	\State $intervals\_to\_invalidate \gets init\_intervals\_to\_invalidate(path,\ attack)$
-	\While{$!to\_invalidate.is\_empty$}
-		\State $(start, end) \gets fifo.pop()$
- 		\State $subpath \gets path\_matrix[start,end].subpath$
-		\ForAll{$left\_node \in path\_matrix[start,end].left\_neighbours$}
-			\State $left \gets path\_matrix[left\_node, end].subpath$
-			\For{$time \in intervals\_to\_invalidate[subpath]$}
-				\State $intervals\_to\_invalidate[left].insert(time-(subpath.time\_taken-left.time\_taken))$
-			\EndFor
-		\EndFor
-		\ForAll{$right\_node \in path\_matrix[start,end].right\_neighbours$}
-			\State $right \gets path\_matrix[right\_node, end].subpath$
-			\For{$time \in intervals\_to\_invalidate[subpath]$}
-				\State $intervals\_to\_invalidate[right].insert(time)$
-			\EndFor
-		\EndFor
-		\For{$time \in interval\_to\_invalidate[subpath]$}
-			\State $dma[time][subpath.start][subpath.end] \gets 0$
-		\EndFor
-	\EndWhile
-\end{algorithmic}
-\end{algorithm}
-
-\todo{expliquer pourquoi on ne l'a pas gardé}
+Cependant, cette méthode ne s'est pas non plus avérée efficace, malgré devoir calculer environ ${\frac{1}{4}}$ des distances à la place de ${\frac{3}{4}}$ des distances.
+Cela est dû au fait que l'algorithme de Dijkstra~\ref{sec:calcul_mesure} optimisé écrit beaucoup de distances en même temps, et que devoir réécrire ${\frac{1}{4}}$ ou ${\frac{3}{4}}$ des distances ne change pas grand chose en terme de temps de calcul.
+Donc, même si l'algorithme d'invalidation en lui même est efficace, la différence sur la partie de recalcule des distances est trop faible pour que l'invaldation en vaille la peine.
