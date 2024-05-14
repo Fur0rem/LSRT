@@ -2,8 +2,53 @@
 
 Après avoir lancer le programme de simulation, nous avons obtenu des résultats sur différentes villes comme Créteil, Melun, Verzuolo\dots
 Toutes les figures sont en annexe~\ref{sec:annexes_plots}.
-Nous allons ici nous concentrer sur les résultats obtenus sur Créteil, car les résultats obtenus sur les autres villes sont similaires.
+Nous allons ici nous concentrer sur les résultats obtenus sur Créteil et Melun, car les résultats obtenus sur les autres villes sont similaires.
 
+\subsection{Analyse des villes}
+
+\subsubsection*{Melun}
+
+Melun est une ville typique de taille moyenne~\ref{fig:Melun}.
+Le graphe que nous avons extrait d'OSMnx possède 662 noeuds avec un degré moyen de 4.14, et 1370 liens de temps de traversée moyen de 98.5 pas de temps. 
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{histogramme_degres_Melun.pdf}
+        \caption{Histogramme des degrés de Melun}
+        \label{fig:melun_deg}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{histogramme_longueurs_Melun.pdf}
+        \caption{Histogramme des temps de traversée de Melun}
+        \label{fig:melun_temps}
+    \end{minipage}
+\end{figure}
+
+\subsubsection*{Créteil}
+
+Créteil est une ville déjà plus grande que Melun~\ref{fig:Creteil}.
+Le graphe que nous avons extrait d'OSMnx possède 1089 noeuds avec un degré moyen de 4.25, et 2317 liens de temps de traversée moyen de 102.4 pas de temps.
+\begin{figure}[H]
+    \centering
+    \begin{minipage}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{histogramme_degres_Créteil.pdf}
+        \caption{Histogramme des degrés de Créteil}
+        \label{fig:creteil_deg}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{histogramme_longueurs_Créteil.pdf}
+        \caption{Histogramme des temps de traversée de Créteil}
+        \label{fig:creteil_temps}
+    \end{minipage}
+\end{figure}
+
+Nous pouvons observer que la distribution et les moyennes des degrés et des temps de traversée sont similaires pour les deux villes.
+
+\subsection{Analyse des résultats}
 \begin{figure}[H]
 	\center {
 		\includegraphics[width=\linewidth]{plot_Créteil.pdf}
@@ -69,12 +114,36 @@ Nous pouvons observer que l'impact des attaques dynamiques dépend fortement de 
 Notamment, la modélisation à impact bas affaiblit fortement l'impact des attaques dynamiques, alors que la modélisation à impact haut les renforce.
 Nous en concluons que la modélisation de l'impact d'un blocage d'un lien est un élément crucial pour l'interprétation des résultats, il qu'il est important de bien choisir cette modélisation.
 
-\todo{courbe delta agressive et pas agressive melun ici}
+\subsection{Variation du delta}
 
-Ces figures montrent l'évolution de l'impact des attaques dynamiques sur l'efficacité en fonction de la fréquence d'attaque. 
-avant le changement de liens attaqués. Le but de ces figures était de déterminer l'impact du nombre de "ticks" sur
-l'efficacité des attaques. 
-Ces figures nous montre qu'un nombre de tick trop bas à un impact plus faible. Cela rejoint le problème de l'interprétation des modélisations modérées/agressives.
- sur l'efficacité car les chemins supprimés sont souvent rétablis
-rapidement.
+Nous avons aussi expérimenté avec la variation du delta, qui est la fréquence d'attaque.
+Nous avons choisi Melun comme ville pour cette expérience, avec un budget de 33\% des liens à bloquer, c'est-à-dire 456 liens.
 
+\begin{figure}[H]
+    \center {
+        \includegraphics[width=\linewidth]{plot_Melun_deltvar.pdf}
+    }
+    \caption{Variation de l'impact des attaques dynamiques en fonction de la fréquence d'attaque sur Melun en impact bas}
+    \label{fig:melun_deltvar}
+\end{figure}
+
+\begin{figure}[H]
+    \center {
+        \includegraphics[width=\linewidth]{plot_Melun_deltvar_aggressive.pdf}
+    }
+    \caption{Variation de l'impact des attaques dynamiques en fonction de la fréquence d'attaque sur Melun en impact haut}
+    \label{fig:melun_deltvar_agg}
+\end{figure}
+
+Ces 2 figures montrent l'évolution de l'impact des attaques dynamiques sur l'efficacité en fonction de la fréquence d'attaque. 
+avant le changement de liens attaqués. Le but de ces figures était de déterminer l'impact de la fréquence d'attaque sur l'efficacité des attaques.
+
+Nous pouvons observer que pour un impact bas, l'efficacité des attaques dynamiques est décroissante en fonction de la fréquence d'attaque.
+Donc avoir une fréquence d'attaque élevée jusqu'à arriver à une attaque statique est la meilleure des choses dans ce cas.
+
+Pour un impact haut, nous observons un rapide pic d'efficacité au début, puis une décroissance de l'efficacité.
+Cela montre que pour un impact haut, il est préférable d'avoir une fréquence d'attaque soit minimale, soit maximale.
+Dans le premier cas, cela signifie que les blocages changent tellement souvent que seul un lien très petit peut être traversé.
+Dans le second, on se ramène en fait à une attaque statique, qui sont très efficaces. Nous notons tout de même que le delta de 1 est plus efficace que le delta maximal pour l'attaque par centralité intermédiaire dynamique.
+
+Ces courbes nous montre que la fréquence d'attaque est aussi un élément crucial pour calculer l'efficacité des attaques dynamiques, et qu'elle va de pair avec la modélisation de l'impact d'un blocage d'un lien.

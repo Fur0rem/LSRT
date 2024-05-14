@@ -47,3 +47,6 @@ clean_data:
 rust_debug:
 	rm -f lsrt
 	cargo build && mv target/debug/lsrt_new lsrt
+
+cr_final:
+	cd docs/compte_rendus/cr_final && tectonic main.tex

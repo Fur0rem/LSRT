@@ -52,6 +52,7 @@ Nous avons donc décidé de changer d'approche et de chercher un algorithme plus
 
 \subsubsection{Création d'une structure de données adaptée}
 Le problème des autres algorithmes classiques de graphes est qu'ils assument que le graphe est statique, et donc ne peuvent pas prendre en compte les liens bloqués puis débloqués.
+Dans la plupart de la littérature, les algorithmes de plus courts chemins dans les graphes temporels sont adaptés pour des changements en temps réel.\cite{lks_metrics}
 Cependant, nous avons connaissance du graphe à tout instant, et nous avons donc pensé à créer des liens qui remplacent les liens supprimés,
 équivalents à la distance du lien d'origine plus l'attente nécessaire pour que le lien soit à nouveau disponible, que nous appelerons liens fantômes.
 Un lien fantôme est donc un triplet ($u$,~$v$,~$w$) avec $u, v \in V$, $w$ une liste de poids où $w_{i}$ est le temps pour aller de $u$ à $v$ en passant par ce lien si on part du temps $i$. 
@@ -88,7 +89,7 @@ Nous avons ensuite définit un deuxième impact, haut cette fois, où pour trave
 
 \subsubsection{Algorithme de calcul de la mesure}
 
-Comme dit précédemment, nous avons adapté l'algorithme de Dijkstra pour les graphes temporels.
+Comme dit précédemment, nous avons adapté l'algorithme de Dijkstra~\cite{dijkstra} pour les graphes temporels.
 L'algorithme de Dijkstra est un algorithme qui permet de déterminer le plus court chemin entre 2 noeuds dans un graphe sans poids négatifs.
 Cet algorithme consiste à classer les noeuds selon leur distance à la source, et explorer les voisins des noeuds les plus proches itérativement, jusqu'à arriver à la destination. \todo{ref dijkstra}
 Avec la nouvelle structure de données, la seule différence avec le dijkstra classique est qu'au lieu de regarder la distance avec le noeud actuel, on regarde la distance avec le noeud voisin au temps déjà parcouru.
@@ -152,7 +153,7 @@ Ici, on a les chemins 0~\weightedlinkright{1}~1~\weightedlinkright{1}~2, 1~\weig
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
 
 Nous avons donc implémenté une structure de données qui va permettre de stocker tous les sous-chemins calculés de manière efficace à partir des liens traversés.
-Elle est inspirée des arbres de segments, mais avec une structure pyramidale.
+Elle est inspirée des arbres de segments\cite{segment_tree}, mais avec une structure pyramidale.
 
 Les éléments \link{0}{1}{1}, \link{1}{1}{2}, \link{2}{1}{3} 
 sont les briques de base de la pyramide, qui sont l'équivalent des feuilles dans un arbre.
