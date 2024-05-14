@@ -1,72 +1,72 @@
 \section{Résultats et interprétation}\label{sec:resultats}
-\todo{Résultats et interprétation}
+
+Après avoir lancer le programme de simulation, nous avons obtenu des résultats sur les villes de Melun et Créteil.
 
 \begin{figure}[H]
 	\center {
-		% \includegraphics[scale=0.5]{5th.pdf}
 		\includegraphics[width=\linewidth]{plot_Créteil.pdf}
 	}
-	\caption{Attaques à impact faible sur Créteil}
+	\caption{Attaques à impact bas sur Créteil}
 	\label{fig:creteil_nice}
-
 \end{figure}
 
 \begin{figure}[H]
 	\center {
-		% \includegraphics[scale=0.5]{5th.pdf}
 		\includegraphics[width=\linewidth]{plot_Créteil__Aggressive.pdf}
 	}
-	\caption{Attaques à impact fort sur Créteil}
+	\caption{Attaques à impact haut sur Créteil}
 	\label{fig:creteil_agg}
 
 \end{figure}
 
-La figure n°3, consiste en une série de courbes mesurant différentes métriques sur Créteil. Ces 
-figures ont été obtenues avec des attaques à impact faible.
+Dans ces figures, la courbe supérieure gauche montre l'évolution de l'efficacité en fonction du nombre de liens retirés pour différentes stratégies d'attaque.
+La courbe inférieure gauche montre l'évolution de l'accessibilité en fonction du nombre de liens retirés.
+Les courbes de droite montrent la variation de l'efficacité et de l'accessibilité pour les stratégies aléatoires, les courbes aléatoires sur les figures de gauche sont obtenues en faisant la moyenne des courbes aléatoires de droite.
+Nous allons étudier les différences entre les courbes à impact bas et les courbes à impact haut.\ref{sec:impact_bas_haut}
 
-La courbe supérieure gauche, montre l'évolution de l'efficacité en fonction du nombre de liens retirés pour
-différentes stratégies d'attaque. On peut voir que les attaques dynamiques sont très 
-peu efficaces par rapport aux attaques statiques. 
+ ~\newline
+La première figure~\ref{fig:creteil_nice}, consiste en une série de courbes mesurant nos différentes métriques sur Créteil. Ces
+figures ont été obtenues avec une modélisation à impact bas.
+
 Surprenamment, la stratégie d'attaquque par centralité dynamique est la moins efficace.
+Le faible impact des attaques dynamiques comparé aux attaques statiques est probablement dû au fait que les chemins bloqués par cette stratégie
+sont souvent rétablis rapidement. Cela va de pair avec le fait qu'il suffit d'atteindre un lien pour pouvoir le traverser de la modélisation à impact bas.
+Cela ne fait que ralentir le temps de trajet, mais ne l'empêche pas.
 
-Le faible impact des attaques à impact faible dynamiques sur l'efficacité est probablement dû au fait que les chemins bloqués par cette stratégie
-sont souvent rétablis rapidement. En effet, lorsqu'un lien est bloqué, il est généralement rétabli au 
-temps suivant, ainsi un chemin bloqué au temps T sera souvent rétabli au temps T+1.
-Cela fait que l'impact des attaques dynamiques est faible par rapport aux attaques statiques, qui 
-bloquent des chemins de manière permanente.
+Nous remarquons à la similarité des courbes d'efficacité et d'accessibilité pour les attaques par centralité statique et dynamique.
+Cela montre que les deux mesures sont assez proches.
+Pour les attaques aléatoires, nous remarquons que la courbe de l'attaque statique est celle avec la plus grande distribution.
+Cela est probablement dû au faible impact global des attaques dynamiques, et donc la variance des résultats est aussi faible.
+Nous remarquons aussi que la variance des attaques aléatoires est plus grande autour de 40\% de liens retirés, 
+nous supposons que c'est dû aux nombre de combinaisons possibles ${\binom{N}{k}}$ qui est maximal à ce point.
 
-La courbe infèrieure gauche, montre l'évolution de l'accessibilité en fonction du nombre de liens retirés, 
-les courbes ont une allure similaire à celles de l'efficacité.  Cela montre que les deux mesures sont assez proches.
+~\newline
+La seconde figure~\ref{fig:creteil_agg}, consiste en la même série de courbes, mais cette fois-ci avec une modélisation à impact haut.
 
-Enfin, les courbes de droite montrent la variation de l'efficacité et de l'accessibilité pour les stratégies aléatoires. Pour 
-obtenir les courbes aléatoires de gauche, nous avons fait les moyennes des courbes aléatoires de droite.
-Ces courbes montrent qu'il y a beaucoup de variance dans les résultats des attaques aléatoires. 
-
-La figure n°4, consiste en une série de courbes mesurant différentes métriques sur Créteil. Ces 
-figures ont été obtenues avec des attaques à impact fort.
-
-Les courbes de gauche montrent l'évolution de l'efficacité (haut) et de l'accessibilité (bas) en fonction du nombre 
-de liens retirés.
-L'évolution de ces figures est très différente de celles obtenues avec des attaques à impact faible (figure 3). 
-
-On remarquera principalement que l'efficacité de l'attaque par centralité dynamique est similaire à l'efficacité de 
+Nous remarquons immédiatement que l'évolution de ces figures est très différente de celles obtenues avec des attaques à impact faible~\ref{fig:creteil_nice}.
+Nous pouvons principalement observer que l'efficacité de l'attaque par centralité dynamique est similaire à l'efficacité de 
 l'attaque par centralité statique. C'est un résultat très intéressant, il montre en effet que l'on peut créer une 
 attaque dynamique au moins aussi efficace que la meilleure attaque statique selon la mesure de l'efficacité. 
 D'après la mesure d'accessibilité, l'attaque par centralité dynamique est légèrement meilleure que l'attaque par centralité 
 statique. Ce résultat montre que la mesure de l'impact des attaques est importante, toutes les attaques n'étant pas 
 équivalentes selon la mesure utilisée.
 
-On remarquera cepenendant que les attaques aléatoires dynamiques sont toujours moins efficaces que les attaques aléatoires statiques. 
+Nous remarquons cepenendant que les attaques aléatoires dynamiques sont toujours moins efficaces que les attaques aléatoires statiques. 
 Cela est sans doute dû au même phénomène que pour les attaques à impact faible, les chemins bloqués sont souvent rétablis
 rapidement.
+Nous observons aussi que la variance des attaques aléatoires dynamiques est plus grande qu'avec la modélisation à impact faible,
+ce qui confirme que le faible impact des attaques dynamiques avec un impact bas est la cause de la faible variance des résultats.
 
 Les courbes d'efficacité et l'accessibilité de l'attaque par centralité dynamique à impact 
-fort, montrent qu'il est possible de créer des attaques dynamiques de réseaux urbains qui ont un 
+haut montrent qu'il est possible de créer des attaques dynamiques de réseaux urbains qui ont un 
 impact équivalent, voir supérieur, aux meilleures attaques statiques. C'est un résultat encourageant,
- 
-Cela montre qu'il est utile de continuer à travailler sur une mesure de l'efficacité conçue pour les graphes dynamiques 
+car cela montre qu'il est utile de continuer à travailler sur une mesure de l'efficacité conçue pour les graphes dynamiques 
 et possiblement sur une modélisation plus fine des attaques sur un réseau urbain.
 
+~\newline
+Nous pouvons observer que l'impact des attaques dynamiques dépend fortement de la modélisation de l'impact d'un blocage d'un lien.
+Notamment, la modélisation à impact bas affaiblit fortement l'impact des attaques dynamiques, alors que la modélisation à impact haut les renforce.
+Nous en concluons que la modélisation de l'impact d'un blocage d'un lien est un élément crucial pour l'interprétation des résultats, il qu'il est important de bien choisir cette modélisation.
 
 \todo{courbe delta agressive et pas agressive melun ici}
 
