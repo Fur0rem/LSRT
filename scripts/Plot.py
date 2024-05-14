@@ -118,6 +118,7 @@ def plot_data(ax, data : dict[list[Data]], attribute) :
             z = [a for a in range(len(x))]
             ax.plot(z, y, color=[c/255 for c in colour], label=name, linewidth=2)
             
+            
             z = [a for a in range(len(x))]
 
             # TODO : fix ticks
@@ -206,13 +207,14 @@ def plot_rand(ax, data, attribute) :
 
     ax.legend()
 
-def mk_plot_rand(ax, data, attribute, title="") :
+def mk_plot_rand(ax, data, attribute, xtitle="", ytitle="",title="") :
     """
     string(directory path) -> None 
     plots from the dir passed
     """
-    ax.set_xlabel("Number of attacked links")
-    ax.set_ylabel(attribute.capitalize())
+    ax.set_title(title)
+    ax.set_xlabel(xtitle.capitalize())
+    ax.set_ylabel(ytitle.capitalize())
 
     data_rand = {k: v for k, v in data.items() if "random" in k or "none" in k}
     plot_rand(ax, data_rand, attribute)
@@ -225,14 +227,24 @@ def main():
 
     data = load_data(args.path_ville)
 
+
+    plt.rc('font', size=25)          # controls default text sizes
+   
+    plt.rc('axes', labelsize=20)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=10)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=10)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=20)    # legend fontsize
+    plt.rc('figure', titlesize=20)  # fontsize of the figure title
+ 
     fig, ((ax1,ax2),(ax3,ax4)) = plt.subplots(2,2)
-    fig.suptitle("Attaques sur " + args.path_ville + "à impact")
 
-    mk_plot(ax1, data, "efficiency",ytitle="efficacité", xtitle="nombre de liens attaqués", title="évolution de l'efficacité en fonction du nombre de liens attaqués")
-    mk_plot(ax3, data, "reachables", title="évolution de l'accessibilité en fonction du nombre de liens attaqués")
+    fig.suptitle("Attaques sur " + "Créteil" + " à impact fort", fontsize=30)
 
-    mk_plot_rand(ax2, data, "efficiency", title="évolution de l'efficacité en fonction du nombre de liens attaqués")
-    mk_plot_rand(ax4, data, "reachables", title="évolution de l'accessibilité en fonction du nombre de liens attaqués")
+    mk_plot(ax1, data, "efficiency",ytitle="efficacité", xtitle="nombre de liens attaqués", title="efficacité en fonction du nombre de liens attaqués")
+    mk_plot(ax3, data, "reachables",ytitle="accessibilité", xtitle="nombre de liens attaqués", title="accessibilité en fonction du nombre de liens attaqués")
+
+    mk_plot_rand(ax2, data, "efficiency", ytitle="efficacité", xtitle="nombre de liens attaqués",title="efficacité en fonction du nombre de liens attaqués")
+    mk_plot_rand(ax4, data, "reachables", ytitle="accessibilité", xtitle="nombre de liens attaqués", title="accessibilité en fonction du nombre de liens attaqués")
 
     fig.set_figheight(15)
     fig.set_figwidth(30)
@@ -241,7 +253,9 @@ def main():
     # If plots subdirectory does not exist, create it
     if not os.path.exists("plots"):
         os.makedirs("plots")
-    fig.savefig("plots/plot_"+args.path_ville)
+    plt.margins(0.1, 0.1)
+    fig.savefig("plots/plot_"+args.path_ville+".pdf", format="pdf", dpi=1200, bbox_inches='tight')
+    
     
 if __name__ == "__main__" : 
     main()

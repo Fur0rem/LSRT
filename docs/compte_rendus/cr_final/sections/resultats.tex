@@ -1,43 +1,79 @@
 \section{Résultats et interprétation}\label{sec:resultats}
 \todo{Résultats et interprétation}
 
-\todo{courbe pas agressive et agressive melun ici} 
+\begin{figure}[H]
+	\center {
+		% \includegraphics[scale=0.5]{5th.pdf}
+		\includegraphics[width=\linewidth]{plot_Créteil.pdf}
+	}
+	\caption{Attaques à impact faible sur Créteil}
+	\label{fig:creteil_nice}
 
-La figure de gauche, montrant l'évolution de l'efficacité en fonction du nombre de liens retirés pour 
-différentes stratégie d'attaque montre que la modélisation "modérée" de l'attaque est peu efficace. 
-En effet, les stratégies profitant du dynamisme du graphe sont bien moins efficace que des 
-stratégies d'attaque statiques. Le fait que les stratégies d'attaque dynamiques soient moins efficaces
-dans la modélisation "modérée" de l'attaque est probablement dû au fait que peu de chemins sont vraiment 
-bloqués par les attaques, en effet, les chemins supprimés au temps T sont souvent rétablis au temps T+1.
+\end{figure}
+
+\begin{figure}[H]
+	\center {
+		% \includegraphics[scale=0.5]{5th.pdf}
+		\includegraphics[width=\linewidth]{plot_Créteil__Aggressive.pdf}
+	}
+	\caption{Attaques à impact fort sur Créteil}
+	\label{fig:creteil_agg}
+
+\end{figure}
+
+La figure n°3, consiste en une série de courbes mesurant différentes métriques sur Créteil. Ces 
+figures ont été obtenues avec des attaques à impact faible.
+
+La courbe supérieure gauche, montre l'évolution de l'efficacité en fonction du nombre de liens retirés pour
+différentes stratégies d'attaque. On peut voir que les attaques dynamiques sont très 
+peu efficaces par rapport aux attaques statiques. 
+Surprenamment, la stratégie d'attaquque par centralité dynamique est la moins efficace.
+
+Le faible impact des attaques à impact faible dynamiques sur l'efficacité est probablement dû au fait que les chemins bloqués par cette stratégie
+sont souvent rétablis rapidement. En effet, lorsqu'un lien est bloqué, il est généralement rétabli au 
+temps suivant, ainsi un chemin bloqué au temps T sera souvent rétabli au temps T+1.
 Cela fait que l'impact des attaques dynamiques est faible par rapport aux attaques statiques, qui 
 bloquent des chemins de manière permanente.
 
-La figure de droite, montrant l'évolution de l'efficacité en fonction du nombre de liens retirés pour 
-différentes stratégie d'attaque montre que la modélisation "agressive", bien que toujours moins efficace
-que les attaques statiques, est bien plus efficace que la modélisation "modérée".
-Chaque lien supprimé lors d'une attaque agressive bloquera les chemins dont il fait partie pendant un 
-temps égal au poids du lien. Les attaques agressives ont un impact plus fort sur l'efficacité. 
+La courbe infèrieure gauche, montre l'évolution de l'accessibilité en fonction du nombre de liens retirés, 
+les courbes ont une allure similaire à celles de l'efficacité.  Cela montre que les deux mesures sont assez proches.
 
-On en conclut donc qu'avec un changement mineur dans la modélisation des attaques, on a des résultats
-très différents. Avec notre modélisation actuelle de l'efficacité sur un graphe dynamique et notre modélisation
-des attaques, les attaques dynamiques restent moins impactantes que les attaques statiques. 
-Cependant, la différence d'impact entre la modélisation "modérée" et "agressive" est très importante.
+Enfin, les courbes de droite montrent la variation de l'efficacité et de l'accessibilité pour les stratégies aléatoires. Pour 
+obtenir les courbes aléatoires de gauche, nous avons fait les moyennes des courbes aléatoires de droite.
+Ces courbes montrent qu'il y a beaucoup de variance dans les résultats des attaques aléatoires. 
+
+La figure n°4, consiste en une série de courbes mesurant différentes métriques sur Créteil. Ces 
+figures ont été obtenues avec des attaques à impact fort.
+
+Les courbes de gauche montrent l'évolution de l'efficacité (haut) et de l'accessibilité (bas) en fonction du nombre 
+de liens retirés.
+L'évolution de ces figures est très différente de celles obtenues avec des attaques à impact faible (figure 3). 
+
+On remarquera principalement que l'efficacité de l'attaque par centralité dynamique est similaire à l'efficacité de 
+l'attaque par centralité statique. C'est un résultat très intéressant, il montre en effet que l'on peut créer une 
+attaque dynamique au moins aussi efficace que la meilleure attaque statique selon la mesure de l'efficacité. 
+D'après la mesure d'accessibilité, l'attaque par centralité dynamique est légèrement meilleure que l'attaque par centralité 
+statique. Ce résultat montre que la mesure de l'impact des attaques est importante, toutes les attaques n'étant pas 
+équivalentes selon la mesure utilisée.
+
+On remarquera cepenendant que les attaques aléatoires dynamiques sont toujours moins efficaces que les attaques aléatoires statiques. 
+Cela est sans doute dû au même phénomène que pour les attaques à impact faible, les chemins bloqués sont souvent rétablis
+rapidement.
+
+Les courbes d'efficacité et l'accessibilité de l'attaque par centralité dynamique à impact 
+fort, montrent qu'il est possible de créer des attaques dynamiques de réseaux urbains qui ont un 
+impact équivalent, voir supérieur, aux meilleures attaques statiques. C'est un résultat encourageant,
  
 Cela montre qu'il est utile de continuer à travailler sur une mesure de l'efficacité conçue pour les graphes dynamiques 
 et possiblement sur une modélisation plus fine des attaques sur un réseau urbain.
 
-\todo{définir attaque dynamique / statique si pas fait plus haut}
-
 
 \todo{courbe delta agressive et pas agressive melun ici}
 
-Ces figures montrent l'évolution de l'impact des attaques dynamiques sur l'efficacité en fonction du nombre de "ticks" 
+Ces figures montrent l'évolution de l'impact des attaques dynamiques sur l'efficacité en fonction de la fréquence d'attaque. 
 avant le changement de liens attaqués. Le but de ces figures était de déterminer l'impact du nombre de "ticks" sur
 l'efficacité des attaques. 
 Ces figures nous montre qu'un nombre de tick trop bas à un impact plus faible. Cela rejoint le problème de l'interprétation des modélisations modérées/agressives.
  sur l'efficacité car les chemins supprimés sont souvent rétablis
 rapidement.
 
-\todo{utiliser plot pr décrire des trucs j'ai pas le plot encore :/}
-
-\todo{définir tick si pas fait ailleurs}

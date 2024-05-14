@@ -33,26 +33,22 @@ en un graphe dynamique\cite{dynamic_graphs}, où les liens supprimées représen
 
 Un graphe dynamique est un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
 Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
-où T={(t1,v1), (t1,v2), ... (tn,vn)} est l'ensemble des instants auxquelles des liens 
+où T=\{(t1,v1), (t1,v2), ... (tn,vn)\} est l'ensemble des instants auxquelles des liens 
 entre les sommets sont supprimés.
-\todo{référence pour graphe dynamique}
+
 
 La mesure classique pour déterminer à quel point il est facile de se déplacer dans un réseau est l'efficacité.
 Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité\cite{efficiency}.
 L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
-\begin{equation}
+\begin{equation*}
     E(G) = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
     \varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
-\end{equation}
+\end{equation*}
 avec d(vi, vj) la distance entre deux sommets vi et vj, N le nombre de sommets du graphe.
-
-\todo{référence pour efficacité}  
 
 Notre travail est alors de déterminer une mesure de l'efficacité dans un graphe dynamique et de 
 trouver des stratégies pour attaquer ce graphe et réduire cette efficacité en prenant en compte
 que le graphe est dynamique et va évoluer dans le temps.
-
-
 
 Nous définissons alors une mesure de l'efficacité dans un graphe dynamique :
 \begin{equation*}
