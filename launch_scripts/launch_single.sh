@@ -117,7 +117,7 @@ function max_n {
 
 i=0
 while [[ $cur_budg -le $BUDGET_MAX ]]; do
-    #max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"/$cur_budg &
+    max_n; python3 scripts/Strategies.py "$CITY" "$ATTACK" "$TIMES" "$cur_budg" "$DELTA" "$FILE_FORMAT"/$cur_budg &
 
     old_budg=$cur_budg
     attack_string="$attack_string $cur_budg"

@@ -1,0 +1,307 @@
+City: Saints
+Number of edges: 183
+Number of nodes: 83
+3
+Loading graph of Saints
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Saints/full_random__x49EMM/1
+Args: ["./lsrt", "Saints", "full_random__x49EMM", " 1"]
+Time elapsed in (Dynamic) Recomputing distances for 1() is: 608.059306ms
+Time elapsed in Series of attack() is: 612.389777ms
+67
+Loading graph of Saints
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Saints/full_random__sZ8Gw6/45
+Args: ["./lsrt", "Saints", "full_random__sZ8Gw6", " 45"]
+Time elapsed in (Dynamic) Recomputing distances for 45() is: 709.381167ms
+Time elapsed in Series of attack() is: 713.68702ms
+136
+Loading graph of Saints
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Saints/full_random__6JmGez/91
+Args: ["./lsrt", "Saints", "full_random__6JmGez", " 91"]
+Time elapsed in (Dynamic) Recomputing distances for 91() is: 769.207274ms
+Time elapsed in Series of attack() is: 773.834452ms
+205
+Loading graph of Saints
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Saints/full_random__bcVmdg/137
+Args: ["./lsrt", "Saints", "full_random__bcVmdg", " 137"]
+Time elapsed in (Dynamic) Recomputing distances for 137() is: 854.265076ms
+Time elapsed in Series of attack() is: 858.763473ms
+273
+Loading graph of Saints
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Saints/full_random__sV5Gsn/182
+Args: ["./lsrt", "Saints", "full_random__sV5Gsn", " 182"]
+Time elapsed in (Dynamic) Recomputing distances for 182() is: 420.318129ms
+Time elapsed in Series of attack() is: 424.889843ms
+City: Verzuolo
+Number of edges: 555
+Number of nodes: 251
+3
+Loading graph of Verzuolo
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Verzuolo/full_random__YtJoWV/1
+Args: ["./lsrt", "Verzuolo", "full_random__YtJoWV", " 1"]
+Time elapsed in (Dynamic) Recomputing distances for 1() is: 10.746285043s
+Time elapsed in Series of attack() is: 10.752316144s
+207
+Loading graph of Verzuolo
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Verzuolo/full_random__86PChi/138
+Args: ["./lsrt", "Verzuolo", "full_random__86PChi", " 138"]
+Time elapsed in (Dynamic) Recomputing distances for 138() is: 12.116739833s
+Time elapsed in Series of attack() is: 12.122285892s
+415
+Loading graph of Verzuolo
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Verzuolo/full_random__BmqaTB/277
+Args: ["./lsrt", "Verzuolo", "full_random__BmqaTB", " 277"]
+Time elapsed in (Dynamic) Recomputing distances for 277() is: 14.1351714s
+Time elapsed in Series of attack() is: 14.141576698s
+624
+Loading graph of Verzuolo
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Verzuolo/full_random__mtStQi/416
+Args: ["./lsrt", "Verzuolo", "full_random__mtStQi", " 416"]
+Time elapsed in (Dynamic) Recomputing distances for 416() is: 20.521802189s
+Time elapsed in Series of attack() is: 20.528062294s
+831
+Loading graph of Verzuolo
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Verzuolo/full_random__vfkPWf/554
+Args: ["./lsrt", "Verzuolo", "full_random__vfkPWf", " 554"]
+Time elapsed in (Dynamic) Recomputing distances for 554() is: 5.134612924s
+Time elapsed in Series of attack() is: 5.141734053s
+City: Coulommiers
+Number of edges: 1236
+Number of nodes: 580
+3
+Loading graph of Coulommiers
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Coulommiers/full_random__NBSeYw/1
+Args: ["./lsrt", "Coulommiers", "full_random__NBSeYw", " 1"]
+Time elapsed in (Dynamic) Recomputing distances for 1() is: 117.046165783s
+Time elapsed in Series of attack() is: 117.081248786s
+463
+Loading graph of Coulommiers
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Coulommiers/full_random__Wht3s0/309
+Args: ["./lsrt", "Coulommiers", "full_random__Wht3s0", " 309"]
+Time elapsed in (Dynamic) Recomputing distances for 309() is: 152.621755455s
+Time elapsed in Series of attack() is: 152.658178334s
+927
+Loading graph of Coulommiers
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Coulommiers/full_random__rKHwFe/618
+Args: ["./lsrt", "Coulommiers", "full_random__rKHwFe", " 618"]
+Time elapsed in (Dynamic) Recomputing distances for 618() is: 210.71840313s
+Time elapsed in Series of attack() is: 210.755117923s
+1390
+Loading graph of Coulommiers
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Coulommiers/full_random__93oYtb/927
+Args: ["./lsrt", "Coulommiers", "full_random__93oYtb", " 927"]
+Time elapsed in (Dynamic) Recomputing distances for 927() is: 315.152206483s
+Time elapsed in Series of attack() is: 315.189811503s
+1852
+Loading graph of Coulommiers
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Coulommiers/full_random__urgUgf/1235
+Args: ["./lsrt", "Coulommiers", "full_random__urgUgf", " 1235"]
+Time elapsed in (Dynamic) Recomputing distances for 1235() is: 37.480971406s
+Time elapsed in Series of attack() is: 37.519948332s
+City: Melun
+Number of edges: 1370
+Number of nodes: 662
+3
+Loading graph of Melun
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Melun/full_random__BQI2W3/1
+Args: ["./lsrt", "Melun", "full_random__BQI2W3", " 1"]
+Time elapsed in (Dynamic) Recomputing distances for 1() is: 154.285910679s
+Time elapsed in Series of attack() is: 154.413603898s
+513
+Loading graph of Melun
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Melun/full_random__3m6xLO/342
+Args: ["./lsrt", "Melun", "full_random__3m6xLO", " 342"]
+Time elapsed in (Dynamic) Recomputing distances for 342() is: 205.117581257s
+Time elapsed in Series of attack() is: 205.24765296s
+1027
+Loading graph of Melun
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Melun/full_random__SfyFQq/685
+Args: ["./lsrt", "Melun", "full_random__SfyFQq", " 685"]
+Time elapsed in (Dynamic) Recomputing distances for 685() is: 305.731736823s
+Time elapsed in Series of attack() is: 305.861782757s
+1540
+Loading graph of Melun
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Melun/full_random__CxfaT1/1027
+Args: ["./lsrt", "Melun", "full_random__CxfaT1", " 1027"]
+Time elapsed in (Dynamic) Recomputing distances for 1027() is: 517.251893371s
+Time elapsed in Series of attack() is: 517.383407636s
+2053
+Loading graph of Melun
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Melun/full_random__vZCbIz/1369
+Args: ["./lsrt", "Melun", "full_random__vZCbIz", " 1369"]
+Time elapsed in (Dynamic) Recomputing distances for 1369() is: 48.407718879s
+Time elapsed in Series of attack() is: 48.540783117s
+City: Créteil
+Number of edges: 2317
+Number of nodes: 1089
+3
+Loading graph of Créteil
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Créteil/full_random__FozYWF/1
+Args: ["./lsrt", "Créteil", "full_random__FozYWF", " 1"]
+Time elapsed in (Dynamic) Recomputing distances for 1() is: 510.34266025s
+Time elapsed in Series of attack() is: 511.346744533s
+868
+Loading graph of Créteil
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Créteil/full_random__6yLox7/579
+Args: ["./lsrt", "Créteil", "full_random__6yLox7", " 579"]
+Time elapsed in (Dynamic) Recomputing distances for 579() is: 728.329141393s
+Time elapsed in Series of attack() is: 729.33448547s
+1737
+Loading graph of Créteil
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Créteil/full_random__wLHwwi/1158
+Args: ["./lsrt", "Créteil", "full_random__wLHwwi", " 1158"]
+Time elapsed in (Dynamic) Recomputing distances for 1158() is: 1222.044850735s
+Time elapsed in Series of attack() is: 1223.052352046s
+2605
+Loading graph of Créteil
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Créteil/full_random__5utTer/1737
+Args: ["./lsrt", "Créteil", "full_random__5utTer", " 1737"]
+Time elapsed in (Dynamic) Recomputing distances for 1737() is: 2129.226823411s
+Time elapsed in Series of attack() is: 2130.234472694s
+3474
+Loading graph of Créteil
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Créteil/full_random__rt5FAU/2316
+Args: ["./lsrt", "Créteil", "full_random__rt5FAU", " 2316"]
+Time elapsed in (Dynamic) Recomputing distances for 2316() is: 185.871265121s
+Time elapsed in Series of attack() is: 186.878719976s
+City: Lyon
+Number of edges: 8360
+Number of nodes: 4211
+3
+Loading graph of Lyon
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Lyon/full_random__ivZ5jt/1
+Args: ["./lsrt", "Lyon", "full_random__ivZ5jt", " 1"]
+3135
+Loading graph of Lyon
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Lyon/full_random__AlM7sK/2090
+Args: ["./lsrt", "Lyon", "full_random__AlM7sK", " 2090"]
+6270
+Loading graph of Lyon
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Lyon/full_random__MVrfaU/4180
+Args: ["./lsrt", "Lyon", "full_random__MVrfaU", " 4180"]
+9405
+Loading graph of Lyon
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Lyon/full_random__ZNIUfE/6270
+Args: ["./lsrt", "Lyon", "full_random__ZNIUfE", " 6270"]
+12538
+Loading graph of Lyon
+Graph loaded
+Map created
+Normalised the data
+Graph fully done
+Attacks have been written to ./data/Lyon/full_random__57dfRZ/8359

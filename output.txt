@@ -1,0 +1,10 @@
+City: Saints
+Number of edges: 183
+Number of nodes: 83
+Args: ["./lsrt", "Saints", "full_random__zSEkmg", ""]
+91
+Args: ["./lsrt", "Saints", "full_random__dtTExs", " 61"]
+183
+Args: ["./lsrt", "Saints", "full_random__iWUBW2", " 122"]
+273
+Args: ["./lsrt", "Saints", "full_random__7mJYaN", " 182"]

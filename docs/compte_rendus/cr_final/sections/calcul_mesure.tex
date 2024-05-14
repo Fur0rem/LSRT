@@ -42,14 +42,17 @@ Nous avons donc décidé de changer d'approche et de chercher algorithme plus ef
 Le problème des autres algorithmes classiques de graphes est qu'ils assument que le graphe est statique, et donc ne peuvent pas prendre en compte les liens bloqués puis débloqués.
 Cependant, nous avons connaissance du graphe à tout instant, et nous avons donc pensé à créer des liens qui remplacent les liens supprimés,
 équivalents à la distance du lien d'origine plus l'attente nécessaire pour que le lien soit à nouveau disponible, que nous appelerons liens fantômes.
+Un lien fantôme est donc un triplet ($u$,~$v$,~$w$) avec $u, v \in V$, $w$ une liste de poids où $w_{i}$ est le temps pour aller de $u$ à $v$ en passant par ce lien si on part du temps $i$. 
+
 Cela va permettre aux algorithmes de ne pas avoir à prendre en compte l'évolution du graphe pour calculer les chemins, tout en calculant quand même la vraie distance minimale,
 car le cas où attendre est bénéfique a été pris en compte par le lien fantôme.
 Ainsi, nous avons pu rendre beaucoup plus de parcours de graphes adaptables temporellement, notamment Dijkstra, que nous avons utilisé pour notre implémentation.
 
-Cependant, calculer ces liens fantômes relève de l'interprétation de l'impact qu'à le blocage d'un lien.
-Ici nous définissons deux modélisations possibles pour le blocage lien de poids $p$ bloqué à un temps $t$:
-Une modélisation modérée signifie que pour traverser le lien, il faut juste l'atteindre, c'est-à-dire que si le lien existe au temps $t$, alors on peut le traverser.
-Une modélisation agressive signifie que pour traverser le lien, il faut qu'il soit disponible à chaque instant où on le traverse, c'est-à-dire que le lien doit être disponible $\forall t_{i} \in [\![t,t + p]\!]$.\label{modere_agressif}
+Pour calculer ces liens fantômes, nous avons d'abord eu une approche naïve où pour traverser un lien de poids $p$ au temps $t$, il faut qu'il ne soit pas bloqué au temps $t$.
+Cependant, nous nous sommes rendu compte que cela causait les attaques à avoir un impact bas sur l'efficacité du graphe.
+Puis nous nous sommes posés la question de ce qu'il devrait se passer lorsqu'un lien est bloqué pendant qu'on le traverse, et qu'en fait calculer ces liens fantômes relève de l'interprétation de l'impact qu'à le blocage d'un lien.
+Nous avons ensuite définit un deuxième impact, haut cette fois, où pour traverser ce lien, il faut qu'il soit disponible à chaque instant où on le traverse, c'est-à-dire que le lien doit être disponible $\forall t_{i} \in [\![t,t + p]\!]$.
+\label{impact_haut_bas}
 \begin{figure}[H]
     \begin{minipage}{\textwidth}
         \centering
@@ -60,20 +63,22 @@ Une modélisation agressive signifie que pour traverser le lien, il faut qu'il s
 
     \begin{minipage}{\textwidth}
         \centering
-        \evolvinglink{GTModerate}{2, 3, 2, 2}{Impact Modéré}
+        \evolvinglink{GTLow}{2, 3, 2, 2}{Impact Bas}
     \end{minipage}
 
     \vspace{1cm} % Add vertical space
 
     \begin{minipage}{\textwidth}
         \centering
-        \evolvinglink{GTAgressive}{4, 3, 2, 2}{Impact Agressif}
+        \evolvinglink{GTHigh}{4, 3, 2, 2}{Impact Haut}
     \end{minipage}
 \end{figure}
 
 \subsubsection{Algorithme de calcul de la mesure}
 
 Comme dit précédemment, nous avons adapté l'algorithme de Dijkstra pour les graphes temporels.
+L'algorithme de Dijkstra est un algorithme qui permet de déterminer le plus court chemin entre 2 noeuds dans un graphe sans poids négatifs.
+Cet algorithme consiste à classer les noeuds selon leur distance à la source, et explorer les voisins des noeuds les plus proches itérativement, jusqu'à arriver à la destination. \todo{ref dijkstra}
 Avec la nouvelle structure de données, la seule différence avec le dijkstra classique est qu'au lieu de regarder la distance avec le noeud actuel, on regarde la distance avec le noeud voisin au temps déjà parcouru.
 
 \begin{algorithm}[H]
@@ -101,7 +106,7 @@ Avec la nouvelle structure de données, la seule différence avec le dijkstra cl
 \end{algorithm}
 \footnote{L'algorithme est simplifié et renvoie une distance et non un chemin, mais il est facile de le modifier pour qu'il renvoie un chemin.}
 
-A noter que cet algorithme reste correct pour tout type de graphe temporel (discret) ou flot de liens (continu), 
+Par ailleurs, cet algorithme reste correct pour tout type de graphe temporel (discret) ou flot de liens (continu), 
 multi-graphe\footnote{Graphe ayant plusieurs liens entre 2 noeuds} ou non, 
 orienté ou non, tant qu'il vérifie ces 2 propriétés:
 Pour tout noeud $u$, $v$, ayant pour poids au cours du temps $p_{u,v}(t)$,
@@ -110,20 +115,21 @@ Pour tout noeud $u$, $v$, ayant pour poids au cours du temps $p_{u,v}(t)$,
     \item $\frac{p_{u,v}(t)}{p_{u,v}(t')} \geq -1 \ \forall t, t' \in \mathbb{R} | t > t'$, car notre algorithme suppose qu'une attente n'est jamais bénéfique.
 \end{itemize}
 
-\todo{Mettre au propre temporal dijkstra} 
-
 \subsubsection{Optimisations faites}
 
-L'algorithme de Dijkstra est donc mis en place et adapté pour les graphes temporels, mais il reste encore des optimisations à faire.
-En effet, l'algorithme de Dijkstra est souvent utilisé pour calculer le plus court chemin entre deux noeuds, mais il calcule en réalité beaucoup plus de plus courts chemins.
-Donc nous avons modifié l'algorithme pour qu'il écrive directement dans la matrice de distances, puis le but va être d'écrire le plus de distances possibles en une seule fois.
+Nous avons donc mit en place cette adaptation temporelle de l'algorithme de Dijkstra, mais nous pouvons encore l'optimiser.
 
-Nous avons prit parti d'optimiser pour le temps et non la mémoire, le projet étant fait pour tourner sur des supercalculateurs avec des centaines de Go de RAM.
-Ainsi que le temps global de plusieurs attaques plutôt que le temps d'une seule attaque, le but du projet étant de regarder une évolution de l'efficacité des attaques.
+Pour le projet, nous avons accès à des clusters de calculs fait pour travailler sur des graphes bien plus grands que nos graphes de villes.
+De plus, dans un but de recherche expérimentalle, nous devons faire beaucoup de simulations séparées pour voir l'évolution de l'efficacité.
+Nous avons donc prit parti d'optimiser pour le temps, la mémoire n'étant virtuellement pas une contrainte.
+
+L'algorithme de Dijkstra est souvent utilisé pour calculer le plus court chemin entre deux noeuds, mais il calcule en réalité beaucoup plus de plus courts chemins.
+Donc nous avons modifié l'algorithme pour écrire directement dans la matrice de distances, puis le but va être d'écrire le plus de distances possibles en une seule fois.
 
 \subsubsubsection*{Calcul de la distance entre le noeud de départ et tous les autres noeuds}
 Pour connaître la distance entre le noeud de départ et le noeud d'arrivée, Dijkstra va explorer beaucoup de noeuds candidats.
 Donc, pour chaque noeud candidat à une distance $d$ du noeud de départ qu'il sort du tas, on va noter cette distance dans la matrice de distances.
+Cela permet d'éviter de calculer des chemins qui ont déjà été utilisés pour d'autres calculs de chemins plus grands.
 
 \subsubsubsection*{Prise en compte de tous les sous-chemins}
 
@@ -133,8 +139,8 @@ Ici, on a les chemins 0~\weightedlinkright{1}~1~\weightedlinkright{1}~2, 1~\weig
 
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
 
-Nous avons donc créer une structure de données qui va permettre de rapidement stocker tous les sous-chemins à partir des pas faits dans le chemin.
-Cette structure ressemble à un arbre de segments, mais en structure pyramidale.
+Nous avons donc implémenté une structure de données qui va permettre de stocker tous les sous-chemins calculés de manière efficace à partir des liens traversés.
+Elle est inspirée des arbres de segments, mais avec une structure pyramidale.
 
 Les éléments \link{0}{1}{1}, \link{1}{1}{2}, \link{2}{1}{3} 
 sont les briques de base de la pyramide, qui sont l'équivalent des feuilles dans un arbre.
@@ -142,7 +148,6 @@ Dans notre pyramide, chaque élément va stocker le noeud de départ, le noeud d
 Ensuite, pour chaque étage de la pyramide, on va regarder notre fils gauche et notre fils droit, ainsi que notre petit-fils commun.
 Le noeud de départ sera celui du fils gauche, le noeud d'arrivée celui du fils droit, la distance sera la somme des distances des deux fils moins la distance du petit-fils (partie commune comptée deux fois sinon), et le temps nécessaire pour arriver au noeud de départ sera celui du fils gauche.
 S'il n'y a pas de petit-fils, alors il n'y a pas de distance commune, et donc la distance sera la somme des distances des deux fils.
-
 Pour l'exemple précédent, notre pyramide ressemblerait à ça:
 Avec la notation \link{A}{x}{B} @ t pour dire que le lien va de A à B, a une distance de x, et qu'il faut t ticks pour arriver à A.
 \usetikzlibrary{calc, positioning}
@@ -165,23 +170,16 @@ Avec la notation \link{A}{x}{B} @ t pour dire que le lien va de A à B, a une di
 \end{tikzpicture}
 \end{center}
 
-\subsubsubsection*{Prédiction des chemins avec le plus d'étapes}
-
-Cette optimisation va de pair avec la précédente, en faisant des benchmarks, nous avons remarqué que parcourir la boucle j à l'envers permettait de gagner du temps.
-On suppose que c'est dû au fait que les noeuds avec des indices éloignés soient aussi éloignés dans le graphe,
-donc que le chemin entre ces deux noeuds ai plus d'étapes, et que donc on va écrire plus de sous-chemins dans la matrice de distances qui seraint écrasés plus tard si on avait parcouru la boucle dans le sens normal.
-
 \subsubsubsection*{Regarder ses voisins}
 
-La distance de $u$ à $v$ est le minimum entre la distance de $u$ à $k$ plus la distance de $k$ à $v$ pour chaque noeud $k$ tel que l'arête $u -> k$ et l'arête $k -> v$ existent.
-Donc si nous connaissons toutes ces distances $u -> k$, alors nous pouvons calculer la distance $u -> v$ sans avoir besoin de reparcourir le graphe.
-
+La distance de $u$ à $v$ est le minimum entre la distance de $u$ à $k$ plus la distance de $k$ à $v$ pour chaque noeud $k$ tel que l'arête $u$\linkright$k$ et l'arête $k$\linkright$v$ existent.
+Donc si nous connaissons toutes ces distances $u$\linkright$k$, alors nous pouvons calculer la distance $u$\linkright$v$ sans avoir besoin de reparcourir le graphe.
 Nous avons utilisé cette propriété pour optimiser notre algorithme.
-Tout d'abord, nous créons le graphe inverse, qui pour chaque arête $u -> v$ du graphe original va créer une arête $v -> u$.
+Tout d'abord, nous créons le graphe inverse, qui pour chaque arête $u$\linkright$v$ du graphe original va créer une arête $v$\linkright$u$.
 
-Ensuite, pour avoir la distance entre $u$ et $v$, nous cherchons tous les noeuds $k$ tels que l'arête $k -> v$ existe grâce au graphe inverse.
+Ensuite, pour avoir la distance entre $u$ et $v$, nous cherchons tous les noeuds $k$ tels que l'arête $k$\linkright$v$ existe grâce au graphe inverse.
 Pour chaque noeud $k$, si la distance est calculée, alors nous pouvons directement la récupérer, sinon nous la calculons.
-Ensuite, nous prenons le minimum de toutes ces distances ($u -> k$ + $k -> v$) pour avoir la distance $u -> v$.
+Ensuite, nous prenons le minimum de toutes ces distances ($u$\linkright$k$ + $k$\linkright$v$) pour avoir la distance $u$\linkright$v$.
 C'est très utile pour les noeuds qu'on ne peut atteindre que par un seul autre noeud, car ça évite de refaire un parcours avec juste un noeud en plus.
 
 \subsubsubsection*{Se rapporter à un parcours de graphe classique quand c'est possible}
@@ -201,10 +199,11 @@ Donc, on commence par calculer les distances sur le graphe non-attaqué, grâce 
 
 \subsubsection{Complexité de l'algorithme}
 
-Donc même si la compléxité pire cas de faire des Dijkstra pour chaque noeud est en $O(n^3 \log n \times t)$, la complexité amortie est bien meilleure.
-La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur des villes réelles, nous avons mesurer l'évolution du temps de calcul en fonction du nombre de noeuds, et nous avons obtenu cette courbe :
+Même si la compléxité pire cas de faire des Dijkstra pour chaque noeud est en $O(n^3 \log n \times t)$, la complexité amortie est bien meilleure.
+La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur nos graphes de villes, nous avons mesurer l'évolution du temps de calcul en fonction du nombre de noeuds, et nous avons obtenu cette courbe :
 \todo{Courbe de la complexité}
-qui peut être modélisée par une fonction en $O(???????)$.
+qui peut être modélisée par une fonction BHJREIHJEZEKHZ.
+Par ailleurs, sur toutes les villes de Saints à Melun, l'algorithme de Floyd-Warshall était plus lent que notre algorithme de Dijkstra.
 
 \subsection{Autres optimisations tentées : Invalidation des chemins attaqués}
 
