@@ -1,51 +1,46 @@
-\newpage
-\section{Introduction} \label{sec:introduction}
 
 Le but de ce projet est de trouver un moyen de modéliser et évaluer l'impact d'une manifestation 
 sur le trafic routier dans une ville. Les manifestations sont l'une des formes les plus communes
 de protestation. Il est cependant difficile de mesurer l'impact d'une manifestation sur le réseau routier. 
 \footnote{Nous cherchons à modéliser des manifestations non-déclarées, sans parcours prédéfini. Dans
-lesquelles les rues ne seraient donc pas bloquées à l'avance par les forces de l'ordre.}
+de telles manifestations, les rues ne sont pas bloquées à l'avance par les forces de l'ordre.}
 En effet, les manifestations sont généralement mobiles, il est donc plus difficile de les 
-modéliser comme un problème de congestion classique. Les problèmes de congestion classiques étudiant 
-plutôt des phénomènes 
+modéliser comme un problème de congestion classique. Les problèmes de congestion classiques de réseaux urbains étudiant plutôt des phénomènes statiques.
 
 En plus de cela, les études existantes sur les réseaux dynamiques se font généralement sur des réseaux 
-dont la structure est très différente des réseaux routiers. Par exemple des réseaux d'appels téléphoniques 
+dont la structure est très différente de celle des réseaux routiers. Par exemple des réseaux d'appels téléphoniques
 qui sont des réseaux extrêmement clairsemés où très peu de nœuds sont connectés entre eux.
 
 Le but de notre projet était alors de modéliser l'évolution d'un réseau urbain pendant une manifestation comme 
-un graphe, d'implémenter un programme efficace permettant de simuler l'évolution du réseau pendant une manifestation et 
-de mesurer l'impact de cette manifestation sur le réseau.
+un graphe, d'implémenter un programme efficace permettant de simuler l'évolution du réseau pendant une manifestation et de mesurer l'impact de cette manifestation sur le réseau.
 
-Pour modéliser un réseau urbain comme un graphe, nous représenterons les rues de la ville comme les arrêtes du graphes
-et les intersections des rues comme ses sommets.
+Pour modéliser un réseau urbain comme un graphe, nous représenterons les rues de la ville comme les arrêtes du graphes et les intersections des rues comme ses sommets.
 
-Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. C'est un couple $G=(V,E)$ où $V$ est l'ensemble des sommets et $E$ l'ensemble des arrêtes.
-avec $V=\{v_1, v_2, ..., v_n\}$ et $E$ est l'ensemble des arrêtes \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération de l'arrête de $u$ à $v$}.
+Un graphe est un objet informatique constitué de sommets reliés par des arêtes. C'est un couple $G=(V,E)$ où $V$ est l'ensemble des sommets et $E$ l'ensemble des arêtes.
+avec $V=\{v_1, v_2, ..., v_n\}$ et $E$ est l'ensemble des arête \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération de l'arrête de $u$ à $v$}.
 
-% Nous définissons les graphes comme $G=(V,E)$ où $V$ est l'ensemble des sommets et \mbox{$E\subseteq V^2\times\mathbb{N}$} est l'ensemble des liens \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération du lien de $u$ à $v$}, noté \link{u}{w}{v}. Les graphes seront également orienté, i.e si \mbox{$(u,v,w) \in E$} alors il est possible d'accéder à $v$ depuis $u$ mais pas forcément d'accéder à $u$ depuis $v$, à moins que $\exists\ (v,u,w') \in E$.
+% Nous définissons les graphes comme $G=(V,E)$ où $V$ est l'ensemble des sommets et \mbox{$E\subseteq V^2\times\mathbb{N}$} est l'ensemble des liens \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération du lien de $u$ à $v$}, noté \link{u}{w}{v}. Les graphes seront également orientés, i.e si \mbox{$(u,v,w) \in E$} alors il est possible d'accéder à $v$ depuis $u$ mais pas forcément d'accéder à $u$ depuis $v$, à moins que $\exists\ (v,u,w') \in E$.
 
 
-Afin de tenir compte de l'évolution du réseau au cours de la manifestation, nous transformerons le graphe du réseau urbain 
-en un graphe dynamique \cite{dynamic_graphs}, où les liens supprimées représentent les rues bloquées par la manifestation.
+Afin de tenir compte de l'évolution du réseau au cours de la manifestation, nous transformerons le graphe du réseau urbain.
+en un graphe dynamique \cite{dynamic_graphs}, où les liens supprimés représentent les rues bloquées par la manifestation.
 
 Un graphe dynamique est un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
-Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
-où $T={(t_1,e_1), (t1,e_2), ... (t_n,e_n)}$ est l'ensemble des instants auxquelles des liens 
-entre les sommets sont supprimés, avec $t_i$ l'indice de temps et
-$e_i$ une arrête du graphe supprimée à cet indice de temps.
+Le modèle de graphe dynamique que nous utilisons peut-être décrit comme un triplet G=(V, E, T) 
+où $T={(t_1,e_1), (t1,e_2), ... (t_n,e_n)}$ est l'ensemble des instants auxquels des liens 
+entre les sommets, sont supprimés, avec $t_i$ l'indice de temps et
+$e_i$ une arête du graphe supprimée à cet indice de temps.
 
 Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité \cite{efficiency}.
 L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
 \begin{equation}
-    \varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(v_i, v_j)}
+\varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(v_i, v_j)}
 \end{equation}
 avec $d(v_i, v_j)$ la distance entre deux sommets $v_i$ et $v_j$, $N$ le nombre de sommets du graphe.
 
 Nous définissons alors une mesure de l'efficacité dans un graphe dynamique :
 \begin{equation*}
-    \varepsilon = \frac{1}{T \times N(N-1)} \sum_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
+\varepsilon = \frac{1}{T \times N(N-1)} \sum_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
 \end{equation*}
 
 Notre travail est alors de générer des graphes à partir de données de réseaux urbains, 

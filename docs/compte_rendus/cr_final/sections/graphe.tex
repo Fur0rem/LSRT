@@ -2,37 +2,37 @@
 Nous représentons les villes sous la forme d'un graphe, où une arête correspond à une rue et un sommet à une intersection.
 Les données sont importées depuis une base de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}. Pour cela, nous utilisons la librairie Python OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} qui les convertis sous la forme d'un graphe.
 \begin{figure}[H]
-	\centering
-	\includegraphics[scale=0.5]{Melun.pdf}
-	\caption{Graphe de la ville de Melun}
-	\label{fig:Melun}
+\centering
+\includegraphics[scale=0.5]{Melun.pdf}
+\caption{Graphe de la ville de Melun}
+\label{fig:Melun}
 \end{figure}
 Lors de la récupération des données, OSMnx renvoie un multi-graphe orienté, cependant, il n'est pas encore utilisable.
 Nous devons transformer le graphe car~: \begin{itemize}
-	\item Nous utilisons des distances temporels et non la distance physique entre les deux noeuds.
-	\item La ville est représentée sous la forme d'un multigraphe alors que les simulations sont faites sur un graphe avec au plus un lien d'un sommet $u$ à $v$.
-	\item Certaines données sont manquantes, comme la longueur de la rue, la vitesse, \dots
-	\item Les données sont dans des mesures différentes, comme les miles/h en Angleterre et les km/h en France.
+\item Nous utilisons des distances temporels et non la distance physique entre les deux noeuds.
+\item La ville est représentée sous la forme d'un multigraphe alors que les simulations sont faites sur un graphe avec au plus un lien d'un sommet $u$ à $v$.
+\item Certaines données sont manquantes, comme la longueur de la rue, la vitesse, \dots
+\item Les données sont dans des mesures différentes, comme les miles/h en Angleterre et les km/h en France.
 \end{itemize}
 Pour harmonsier ces données, nous parcourons l'ensemble des couples $(u,v)\in V^2$ tels qu'il existe au moins un lien de $u$ à $v$ dans $E$. % $k,w\in\mathbb{N}$ tels que $(u,v,k,w)\in E$.
 Après, nous parcourons tous les liens de $u$ à $v$ et nous calculons le minimum des distances temporelles, donnés par la formule
-	\[\Delta t=\frac{d}{v}\]
+\[\Delta t=\frac{d}{v}\]
 Où la durée $\Delta t$ est la distance temporelle, $d$ la longueur du lien et $v$ la vitesse maximale.
-Dans le cas où il y a plusieurs liens entre deux sommets $u$ et $v$, nous gardons le lien de poids le plus petit car c'est celui-ci qui sera emprunter lors d'un plus court chemin.	
-Certaines données nécessaires aux calculs peuvent êtres manquantes et sont remplacées par des valeurs par défaut pour la limite de vitesse, ou des interpolations comme la distance euclidienne de $u$ à $v$ pour la longueur du lien.
-De plus, certaines données sont dans d'autres unités que celles utilisées en France, comme les miles/h en Angleterre, où des vitesses dépendantes de la météo en Allemagne.
+Dans le cas où il y a plusieurs liens entre deux sommets $u$ et $v$, nous gardons le lien de poids le plus petit, car c'est celui-ci qui sera emprunté lors d'un plus court chemin.	
+Certaines données nécessaires aux calculs peuvent être manquantes et sont remplacées par des valeurs par défaut pour la limite de vitesse, ou des interpolations comme la distance euclidienne de $u$ à $v$ pour la longueur du lien.
+De plus, certaines données sont dans d'autres unités que celles utilisées en France, comme les miles/h en Angleterre, ou des vitesses dépendantes de la météo en Allemagne.
 
 La figure~\ref{fig:temporal} montre le graphe résultant de cette transformation sur un sous-ensemble du graphe de Paris correspondant au cinquième arrondissement.
 
 \begin{figure}[H]
-	\centering {
-		% \includegraphics[scale=0.5]{5th.pdf}
-		\includegraphics[scale=1]{temporal_graph_Melun.pdf}
-	}
-	\caption{Transformation en graphe temporel du sud de Melun}
-	\label{fig:temporal}
+\centering {
+% \includegraphics[scale=0.5]{5th.pdf}
+\includegraphics[scale=1]{temporal_graph_Melun.pdf}
+}
+\caption{Transformation en graphe temporel du sud de Melun}
+\label{fig:temporal}
 
 \end{figure}
 
-Une fois ces données récupérées, nous les passons sous forme de listes d'adjacence pour le programme de calcul de l'efficacité.
-Nous utilisons les listes d'adjacences car elles sont peu coûteuses en mémoire, simples à manipuler, et très utilisées pour les graphes peu denses, comme les graphes de villes.
+Une fois ces données récupérées, nous les passons sous forme de listes d'adjacences pour le programme de calcul de l'efficacité.
+Nous utilisons les listes d'adjacences, car elles sont peu coûteuses en mémoire, simples à manipuler, et très utilisées pour les graphes peu denses, comme les graphes de villes.
