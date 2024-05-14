@@ -139,7 +139,7 @@ class CityGraph :
 		max_diameter = 0
 		for component in nx.connected_components(tmp_graph) :
 			if nx.diameter(tmp_graph.subgraph(component)) > max_diameter :
-				max_diameter = nx.diameter(tmp_graph.subgraph(component), weight="weight")
+				max_diameter = nx.diameter(tmp_graph.subgraph(component))
 
 		return max_diameter
 	
