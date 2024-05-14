@@ -17,12 +17,12 @@ class Data :
     
 
 COLOURS_AND_NAMES = [
-    ("none", ((0,0,0), "Unattacked")),
-    ("random", ((0,0,250), "Random static")),
-    ("full_random", ((50,0,150), "Random dynamic")),
-    ("random_moving", ((0,150,250), "Random moving")),
-    ("betweenness", ((0,200,0), "Betweenness centrality")),
-    ("betweenness_moving", ((0,150,0), "Betweenness centrality moving")),
+    ("none", ((0,0,0), "Non attaqué")),
+    ("random", ((0,0,250), "Statique Aléatoie")),
+    ("full_random", ((50,0,150), "Aléatoire complet")),
+    ("random_moving", ((0,150,250), "Aléatoire marche")),
+    ("betweenness", ((0,200,0), "Centralité statique")),
+    ("betweenness_moving", ((0,150,0), "Centralité dynamique")),
     ("longitude", ((200,0,0), "Longitude")),
     ("longitude_moving", ((150,0,0), "Longitude moving")),
     ("latitude", ((250,0,0), "Latitude")),
@@ -64,8 +64,9 @@ def load_data(dir_path):
     # Initialize the results dictionary and get the list of strategies
     results = dict()
     dir_path = "data/" + dir_path
-    attacks = [a for a in os.listdir(dir_path) if not a == "graph"]
+    attacks = [a for a in os.listdir(dir_path) if not (a == "graph" or  "longitude" in a or  "max_lanes" in a or "identifier" in a)]
     # Read the number of links from the graph file
+    print(attacks)
     with open(dir_path + "/graph") as f:
         num_links = int(f.readline().split()[0])
     clean_names = set(a.split("__")[0] for a in attacks)
@@ -120,8 +121,8 @@ def plot_data(ax, data : dict[list[Data]], attribute) :
             z = [a for a in range(len(x))]
 
             # TODO : fix ticks
-            xticks = [str(int(a)) for (i,a) in enumerate(x) if i%1 == 0]
-            ax.set_xticks([i for i in range(len(x)) if i%1 == 0])  # set x-ticks on the Axes object
+            xticks = [str(int(a)) for (i,a) in enumerate(x) if i%5 == 0]
+            ax.set_xticks([i for i in range(len(x)) if i%5 == 0])  # set x-ticks on the Axes object
             ax.set_xticklabels(xticks)  # set x-tick labels on the Axes object
         else :
             print(f"Attack type {attack_type} not found in data")
@@ -129,14 +130,14 @@ def plot_data(ax, data : dict[list[Data]], attribute) :
     ax.legend()
 
 
-def mk_plot(ax, data, attribute) :
+def mk_plot(ax, data, attribute, title="Ville", xtitle="", ytitle="") :
     """
     string(directory path) -> None 
     plots from the dir passed
     """
-    ax.set_title("Ville")
-    ax.set_xlabel("Number of attacked links")
-    ax.set_ylabel(attribute.capitalize())
+    ax.set_title(title)
+    ax.set_xlabel(xtitle.capitalize())
+    ax.set_ylabel(ytitle.capitalize())
     
     # Make a copy of the data and average them if they have multiple instances
     data_averaged = dict()
@@ -197,15 +198,15 @@ def plot_rand(ax, data, attribute) :
                     ax.plot(z, y, color=[c/255 for c in colour], linewidth=2)
                 
                 z = [a for a in range(len(x))]
-                xticks = [str(int(a)) for (i,a) in enumerate(x) if i%1 == 0]
-                ax.set_xticks([i for i in range(len(x)) if i%1 == 0])  # set x-ticks on the Axes object
+                xticks = [str(int(a)) for (i,a) in enumerate(x) if i%5 == 0]
+                ax.set_xticks([i for i in range(len(x)) if i%5 == 0])  # set x-ticks on the Axes object
                 ax.set_xticklabels(xticks)  # set x-tick labels on the Axes object
         else :
             print(f"Attack type {attack_type} not found in data")
 
     ax.legend()
 
-def mk_plot_rand(ax, data, attribute) :
+def mk_plot_rand(ax, data, attribute, title="") :
     """
     string(directory path) -> None 
     plots from the dir passed
@@ -225,13 +226,13 @@ def main():
     data = load_data(args.path_ville)
 
     fig, ((ax1,ax2),(ax3,ax4)) = plt.subplots(2,2)
-    fig.suptitle("Attaques sur " + args.path_ville)
+    fig.suptitle("Attaques sur " + args.path_ville + "à impact")
 
-    mk_plot(ax1, data, "efficiency")
-    mk_plot(ax3, data, "reachables")
+    mk_plot(ax1, data, "efficiency",ytitle="efficacité", xtitle="nombre de liens attaqués", title="évolution de l'efficacité en fonction du nombre de liens attaqués")
+    mk_plot(ax3, data, "reachables", title="évolution de l'accessibilité en fonction du nombre de liens attaqués")
 
-    mk_plot_rand(ax2, data, "efficiency")
-    mk_plot_rand(ax4, data, "reachables")
+    mk_plot_rand(ax2, data, "efficiency", title="évolution de l'efficacité en fonction du nombre de liens attaqués")
+    mk_plot_rand(ax4, data, "reachables", title="évolution de l'accessibilité en fonction du nombre de liens attaqués")
 
     fig.set_figheight(15)
     fig.set_figwidth(30)
