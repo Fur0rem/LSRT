@@ -21,9 +21,11 @@ de mesurer l'impact de cette manifestation sur le réseau.
 Pour modéliser un réseau urbain comme un graphe, nous représenterons les rues de la ville comme les arrêtes du graphes
 et les intersections des rues comme ses sommets.
 
-Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. 
-C'est un couple $G=(V,E)$ où $V$ est l'ensemble des sommets et $E$ l'ensemble des arrêtes.
-avec $V=\{v_1, v_2, ..., v_n\}$ et $E=\{(v_1, v_2), (v_2, v_3), ...\}$.
+Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. C'est un couple $G=(V,E)$ où $V$ est l'ensemble des sommets et $E$ l'ensemble des arrêtes.
+avec $V=\{v_1, v_2, ..., v_n\}$ et $E$ est l'ensemble des arrêtes \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération de l'arrête de $u$ à $v$}.
+
+% Nous définissons les graphes comme $G=(V,E)$ où $V$ est l'ensemble des sommets et \mbox{$E\subseteq V^2\times\mathbb{N}$} est l'ensemble des liens \mbox{$e = (u,v,w)$ avec $u,v \in V$} et \mbox{$w \in \mathbb{N}$ la pondération du lien de $u$ à $v$}, noté \link{u}{w}{v}. Les graphes seront également orienté, i.e si \mbox{$(u,v,w) \in E$} alors il est possible d'accéder à $v$ depuis $u$ mais pas forcément d'accéder à $u$ depuis $v$, à moins que $\exists\ (v,u,w') \in E$.
+
 
 Afin de tenir compte de l'évolution du réseau au cours de la manifestation, nous transformerons le graphe du réseau urbain 
 en un graphe dynamique \cite{dynamic_graphs}, où les liens supprimées représentent les rues bloquées par la manifestation.
