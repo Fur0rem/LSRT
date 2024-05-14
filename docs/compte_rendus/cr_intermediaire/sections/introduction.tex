@@ -1,34 +1,66 @@
-\section{Introduction}
-Les réseaux sont des concepts primordiaux dans le monde moderne, le réseau routier, les réseaux sociaux, les réseaux de neurones, internet, ect\dots
-Ces réseaux peuvent être modélisés par des graphes orientés pondérés $G = (V,E)$ où $V$ est l'ensemble des sommets, \mbox{$E$ est l'ensemble des liens} \mbox{$e = (u,v,w)$ $u,v \in V, w \in \mathbb{N}$ qui est la pondération du lien de $u$ à $v$},
-noté \link{u}{w}{v}.
-De nombreux outils mathématiques et informatiques ont été développés pour trouver les manières les plus efficaces de les concevoir.
+\newpage
+\section{Introduction} \label{sec:introduction}
 
-Cependant, ces objets sont bien réels, et peuvent donc subir des perturbations extérieures qu'il est important de prendre en compte.
-Dans ce projet, nous allons prendre l'exemple de manifestants bloquant les routes d'une ville, qui entraîne naturellement des perturbations dans le réseau routier.
-Il est donc important de pouvoir savoir comment ces blocages vont impacter le trafic.
-Nous proposons de modéliser ce réseau perturbé par un graphe évoluant dans le temps dont les perturbations retirent des liens, que nous appellerons $GT$
+Dans notre projet, nous cherchons à modéliser et évaluer l'impact d'une manifestation sur 
+une ville. Pour modéliser ce problème nous utiliserons une variante des graphes, les graphes dynamiques.
+Le but de ce projet est de trouver un moyen de modéliser et évaluer l'impact d'une manifestation 
+sur le trafic routier dans une ville. Les manifestations sont l'une des formes les plus communes
+de protestation. Il est cependant difficile de mesurer l'impact d'une manifestation sur le réseau routier. 
+En effet, les manifestations sont généralement mobiles, il est donc plus difficile de les 
+modéliser comme un problème de congestion classique. 
 
-\bigskip
-Nous regarderons cette évolution de manière discrète avec des pas de temps ${t_{i}}$ allant de 0 à ${t_{\max}}$, avec $GT_{t_{i}}$ l'état du graphe temporel à l'instant $t$.
-${t_{\max}}$ étant calculé en fonction du diamètre de la ville 
+En plus de cela, les études existantes sur les réseaux dynamiques se font généralement sur des réseaux 
+dont la structure est très différente des réseaux routiers. Par exemple des réseaux d'appels téléphoniques 
+qui sont des réseaux extrèmement clairsemés où très peu de noeuds sont connectés entre eux.
+
+Le but de notre projet était alors de modéliser l'évolution d'un réseau urbain pendant une manifestation comme 
+un graphe, d'implémenter un programme efficace permettant de simuler l'évolution du réseau pendant une manifestation et 
+de mesurer l'impact de cette manifestation sur le réseau.
+
+Pour modéliser un réseau urbain comme un graphe, nous représenterons les rues de la ville comme les arrêtes du graphes
+et les intersections des rues comme ses sommets.
+
+Un graphe est un objet informatique constitué de sommets reliés par des arrêtes. 
+Les graphes permettent de modéliser de nombreux problèmes, notamment en informatique, en biologigie, en sociologie,
+physique,... 
+Un graphe peut être décrit comme un couple G=(V,E) où V est l'ensemble des sommets et E l'ensemble des arrêtes.
+C'est un couple G=(V,E) où V est l'ensemble des sommets et E l'ensemble des arrêtes.
+avec V=\{v1, v2, ..., vn\} et E=\{(v1, v2), (v2, v3), ...\}.
+
+Un graphe dynamique est alors un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
+Afin de tenir compte de l'évolution du réseau au cours de la manifestation, nous transformerons le graphe du réseau urbain 
+en un graphe dynamique\cite{dynamic_graphs}, où les liens supprimées représentent les rues bloquées par la manifestation.
+
+Un graphe dynamique est un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
+Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
+où T={(t1,v1), (t1,v2), ... (tn,vn)} est l'ensemble des instants auxquelles des liens 
+entre les sommets sont supprimés.
+\todo{référence pour graphe dynamique}
+
+La mesure classique pour déterminer à quel point il est facile de se déplacer dans un réseau est l'efficacité.
+Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité\cite{efficiency}.
+L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
+\begin{equation}
+    E(G) = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
+    \varepsilon = \frac{1}{N(N-1)} \sum_{i \neq j} \frac{1}{d(vi, vj)}
+\end{equation}
+avec d(vi, vj) la distance entre deux sommets vi et vj, N le nombre de sommets du graphe.
+
+\todo{référence pour efficacité}  
+
+Notre travail est alors de déterminer une mesure de l'efficacité dans un graphe dynamique et de 
+trouver des stratégies pour attaquer ce graphe et réduire cette efficacité en prenant en compte
+que le graphe est dynamique et va évoluer dans le temps.
+
+
+
+Nous définissons alors une mesure de l'efficacité dans un graphe dynamique :
 \begin{equation*}
-    {diametre = \max_{\forall u \forall v \in V} \{\text{longueur}(PlusCourtChemin(u,v))\}}
-\footnote{Cette formule ne marche que si le graphe est connexe, sinon il faut prendre le maximum des diamètres des composantes connexes.}
+    \varepsilon = \frac{1}{T \times N(N-1)} \sum_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
 \end{equation*}
-Nous appelerons le blocage d'un lien \link{u}{w}{v} à un temps $t_{i}$ par un obstacle le fait de rendre inaccessible le lien \link{u}{w}{v} de $GT_{t_{i}}$,
-et une attaque $A$ l'ensemble des blocages de liens à chaque pas de temps.
-Nous avons donc
-\begin{equation*}
-    GT = \{GT_{i}, \forall i \in [0, {t_{\max}}]\} 
-    \equiv (G, A)
-\end{equation*}\label{sec:explication_attaques}
-Le but du projet est de mesurer l'évolution d'une mesure proposée pour savoir si un graphe est robuste face à une attaque appelée l'efficacité\footnote{L'équation présente la version continue de la mesure, notre version discrète utilisera une somme à la place de l'intégrale.}
-\begin{equation*}
-    \varepsilon = \int_{t,t'} \sum_{u,v \in V} \frac{1}{distance_{u,v}(t,t')}, \text{ avec } t' > t
-\end{equation*}
-\bigskip
 
-Nous importerons les villes attaquées depuis une bibliothèque de données de rues nommées OpenStreetMap\footnote{\url{https://www.openstreetmap.org}}, puis le paquet python OSMnx\footnote{\url{https://osmnx.readthedocs.io/en/stable/}} pour les convertir en graphes que nous pourrons manipuler.
-Nous simulerons ensuite des attaques sur ces villes, avec différentes stratégies, et avec un nombre de liens attaqués variable, que nous appellerons le budget de l'attaque, où chaque lien a un prix.
-Pour finir, nous calculerons l'impact de ces attaques sur l'efficacité de la ville, afin de pouvoir les comparer.
+Notre travail est alors de générer des graphes à partir de données de réseaux urbains, 
+créer des fonctions d'attaques de réseau urbain permettant de transformer ces graphes en graphes dynamiques,
+coder un programme de calcul de l'efficacité sur ces graphes dynamiques et de classer et comparer les 
+différentes stratégies d'attaques de réseau urbain.
+Footer
