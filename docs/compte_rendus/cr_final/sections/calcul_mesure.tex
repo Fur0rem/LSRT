@@ -1,7 +1,6 @@
 \section{Calcul de la mesure}\label{sec:calcul_mesure}
 
 \subsection{Premier algorithme}
-\todo{Le problème des calculs de chemin dans les graphes temporels}
 
 Le problème des plus courts chemins est déjà assez complexe dans un graphe classique, mais il devient encore plus difficile dans un graphe temporel,
 où les arêtes peuvent être bloquées à certains moments.
@@ -14,9 +13,9 @@ et à mettre à jour la distance si elle est plus courte. Cet algorithme est en 
 
 Pour adapter cet algorithme à un graphe temporel, nous avons créé une matrice de distances pour 
 chaque pas de temps, et nous avons mis à jour la matrice de distance à chaque pas de temps 
-en prenant en compte qand chaque lien était bloqué (cf pseudocode ci-dessous).
+en prenant en compte quand chaque lien était bloqué~ref{algo:temp_floyd_warshall}.
 
-Nous avons implementé un programme basé sur ce "Floyd-Warshall temporel" en C pour effectuer nos premières mesures. 
+Nous avons implémenté un programme basé sur ce "Floyd-Warshall temporel" en C pour effectuer nos premières mesures. 
 
 Nous nous sommes cependant rendu compte que le programme de simulation n'était 
 pas assez efficace, notamment à cause de la complexité de l'algorithme de "Floyd-Warshall temporel" qui est 
@@ -24,7 +23,7 @@ en $O(n^3 \times t)$
 avec $n$ le nombre de noeuds et $t$ le nombre de pas de temps dans le graphe temporel.
 Nous avons donc décidé de changer d'approche et de chercher un algorithme plus efficace.
 
-\begin{algorithm}[H]
+\begin{algorithm}[H] \label{algo:temp_floyd_warshall}
     TemporalFloydWarshall(graphe temporel \ GT, DistanceMatrixes \ dma)
 \begin{algorithmic}
 	\State $InitTFW(GT, dma)$
@@ -54,7 +53,7 @@ Nous avons donc décidé de changer d'approche et de chercher un algorithme plus
 Le problème des autres algorithmes classiques de graphes est qu'ils assument que le graphe est statique, et donc ne peuvent pas prendre en compte les liens bloqués puis débloqués.
 Dans la plupart de la littérature, les algorithmes de plus courts chemins dans les graphes temporels sont adaptés pour des changements en temps réel.\cite{lks_metrics}
 Cependant, nous avons connaissance du graphe à tout instant, et nous avons donc pensé à créer des liens qui remplacent les liens supprimés,
-équivalents à la distance du lien d'origine plus l'attente nécessaire pour que le lien soit à nouveau disponible, que nous appelerons liens fantômes.
+équivalents à la distance du lien d'origine plus l'attente nécessaire pour que le lien soit à nouveau disponible, que nous appelkerons liens fantômes.
 Un lien fantôme est donc un triplet ($u$,~$v$,~$w$) avec $u, v \in V$, $w$ une liste de poids où $w_{i}$ est le temps pour aller de $u$ à $v$ en passant par ce lien si on part du temps $i$. 
 
 Cela va permettre aux algorithmes de ne pas avoir à prendre en compte l'évolution du graphe pour calculer les chemins, tout en calculant quand même la vraie distance minimale,
@@ -91,7 +90,7 @@ Nous avons ensuite définit un deuxième impact, haut cette fois, où pour trave
 
 Comme dit précédemment, nous avons adapté l'algorithme de Dijkstra~\cite{dijkstra} pour les graphes temporels.
 L'algorithme de Dijkstra est un algorithme qui permet de déterminer le plus court chemin entre 2 noeuds dans un graphe sans poids négatifs.
-Cet algorithme consiste à classer les noeuds selon leur distance à la source, et explorer les voisins des noeuds les plus proches itérativement, jusqu'à arriver à la destination. \todo{ref dijkstra}
+Cet algorithme consiste à classer les noeuds selon leur distance à la source, et à explorer les voisins des noeuds les plus proches itérativement, jusqu'à arriver à la destination.
 Avec la nouvelle structure de données, la seule différence avec le dijkstra classique est qu'au lieu de regarder la distance avec le noeud actuel, on regarde la distance avec le noeud voisin au temps déjà parcouru.
 
 \begin{algorithm}[H]
@@ -133,7 +132,7 @@ Pour tout noeud $u$, $v$, ayant pour poids au cours du temps $p_{u,v}(t)$,
 Nous avons donc mit en place cette adaptation temporelle de l'algorithme de Dijkstra, mais nous pouvons encore l'optimiser.
 
 Pour le projet, nous avons accès à des clusters de calculs fait pour travailler sur des graphes bien plus grands que nos graphes de villes.
-De plus, dans un but de recherche expérimentalle, nous devons faire beaucoup de simulations séparées pour voir l'évolution de l'efficacité.
+De plus, dans un but de recherche expérimentale, nous devons faire beaucoup de simulations séparées pour voir l'évolution de l'efficacité.
 Nous avons donc prit parti d'optimiser pour le temps, la mémoire n'étant virtuellement pas une contrainte.
 
 L'algorithme de Dijkstra est souvent utilisé pour calculer le plus court chemin entre deux noeuds, mais il calcule en réalité beaucoup plus de plus courts chemins.
@@ -148,7 +147,7 @@ Cela permet d'éviter de calculer des chemins qui ont déjà été utilisés pou
 
 Soit un chemin calculé 0 \weightedlinkright{1} 1 \weightedlinkright{1} 2 \weightedlinkright{1} 3.
 Nous avons un chemin trivial à noter entre 0 et 3, mais on a aussi beaucoup de sous-chemins qui sont calculés.
-Ici, on a les chemins 0~\weightedlinkright{1}~1~\weightedlinkright{1}~2, 1~\weightedlinkright{1}~2~\weightedlinkright{1}~3, 0~\weightedlinkright{1}~1, 1~\weightedlinkright{1}~2, et 2~\weightedlinkright{1}~3. \todo{Mettre au propre le chemin}
+Ici, on a les chemins 0~\weightedlinkright{1}~1~\weightedlinkright{1}~2, 1~\weightedlinkright{1}~2~\weightedlinkright{1}~3, 0~\weightedlinkright{1}~1, 1~\weightedlinkright{1}~2, et 2~\weightedlinkright{1}~3.
 
 Et en général, pour un chemin de taille $n$, on a $n(n-1)/2$ sous-chemins qu'on peut noter dans la matrice de distances.
 
@@ -196,24 +195,23 @@ Ensuite, nous prenons le minimum de toutes ces distances ($u$\linkright$k$ + $k$
 C'est très utile pour les noeuds qu'on ne peut atteindre que par un seul autre noeud, car ça évite de refaire un parcours avec juste un noeud en plus.
 
 \subsubsubsection*{Se rapporter à un parcours de graphe classique quand c'est possible}
-Certaines stratégies d'attaque sont statiques, et ne dépendent pas du temps.
+Certaines stratégies d'attaque sont statiques, et ne dépendent pas du temps.\ref{sec:attaques}
 Cela implique que toutes les matrices de distances sont les mêmes, et donc que les calculer pour chaque matrice est inutile.
 Ainsi, on a divisé le format d'attaque en deux, un format statique et un format dynamique, 
 et lorsque l'algorithme détecte que l'attaque est statique, il va se rapporter à un parcours de graphe classique avec une seule matrice de distances, 
 puis calculer l'efficacité de l'attaque comme s'il y en avait plusieurs.
-\todo{Ref vers attaques}
 
 \subsubsubsection*{Calcul du non-attqué}
 Nous nous sommes rendus compte que les matrices de distances plus loin dans le temps étaient beaucoup plus vides que les premières,
-dû à la nature de la mesure, qui va ignoré tous les chemins impossible à compléter dans notre lapse de temps.
-Par exemple, si notre tick max est de 100, notre tick courant est de 70, alors on ne peut pas calculer un chemin de plus de 30 ticks.
-Surtout que ne pas pouvoir le calculer signifie qu'on ne peut pas écrire plusieures valeurs dans la matrice de distances car il n'y a pas de chemin complet.
-Donc, on commence par calculer les distances sur le graphe non-attaqué, grâce à la méthode précédante, puis on dit au programme de ne calculer des chemins qui ont une chance de finir dans le temps imparti.
+dû à la nature de la mesure, qui va ignorer tous les chemins impossibles à compléter dans notre lapse de temps.
+Par exemple, si notre pas de temps max est de 100, notre pas de temps courant est de 70, alors on ne peut pas calculer un chemin de plus de 30 pas de temps.
+Surtout que ne pas pouvoir le calculer signifie qu'on ne peut pas écrire plusieurs valeurs dans la matrice de distances car il n'y a pas de chemin complet.
+Donc, on commence par calculer les distances sur le graphe non-attaqué, grâce à la méthode précédente, puis on dit au programme de ne pas calculer des chemins qui ont une chance de finir dans le temps imparti.
 
 \subsubsection{Complexité de l'algorithme}
 
-Même si la compléxité pire cas de faire des Dijkstra pour chaque noeud est en $O(n^3 \log n \times t)$, la complexité amortie est bien meilleure.
-La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur nos graphes de villes, nous avons mesurer l'évolution du temps de calcul en fonction du nombre de liens, et en fonction du nombre de liens supprimés, et nous avons obtenu cette courbe :
+Même si la complexité pire cas de faire des Dijkstra pour chaque noeud est en $O(n^3 \log n \times t)$, la complexité amortie est bien meilleure.
+La calculer réellement serait extrêmement complexe et dépend beaucoup de la topologie du graphe, mais sur nos graphes de villes, nous avons mesuré l'évolution du temps de calcul en fonction du nombre de liens, et en fonction du nombre de liens supprimés, et nous avons obtenu cette courbe :
 \newline
 \begin{figure}[ht]
     \includegraphics[width=1.0\linewidth]{Complexite.pdf}
@@ -228,7 +226,7 @@ Par ailleurs, sur toutes les villes de Saints à Melun, l'algorithme de Floyd-Wa
 Afin de réduire le nombre de chemins à calculer, nous avons tenté de calculer une première fois les plus courts chemins, puis à chercher à invalider les chemins comportant un lien attaqué, aux temps où celui-ci est attaqué et réutiliser les résultats non impactés. Nous avons déterminé que si un lien $(u,v)$ est attaqué au temps $t$, alors
 \begin{itemize}
 	\item Tout chemin commençant par le lien attaqué est invalidé au temps $t$
-	\item Les chemins de la forme $(x, ..., u, v, ..., y)$n avec $(x, ..., u)$ un sous chemins de distance $w$, sont invalidés au temps $t-w$
+	\item Les chemins de la forme $(x, ..., u, v, ..., y)$n avec $(x, ..., u)$ un sous-chemin de distance $w$, sont invalidés au temps $t-w$
 \end{itemize}
 
 \subsubsection*{Première invalidation}
@@ -244,5 +242,5 @@ Cette première méthode s'est avérée peu efficace. En effet, dans le cas où 
 Notre deuxième méthode~\ref{annexes:deuxieme_invalidation} reprends l'algorithme de l'invalidation précédente, à la différence que l'on utilise une file contenant initialement que les liens du graphe au lieu d'itérer sur un tableau, et que l'on ne traite un chemin qu'une seule fois, puis on ajoute les chemins à traiter dans la file.
 
 Cependant, cette méthode ne s'est pas non plus avérée efficace, malgré devoir calculer environ ${\frac{1}{4}}$ des distances à la place de ${\frac{3}{4}}$ des distances.
-Cela est dû au fait que l'algorithme de Dijkstra~\ref{sec:calcul_mesure} optimisé écrit beaucoup de distances en même temps, et que devoir réécrire ${\frac{1}{4}}$ ou ${\frac{3}{4}}$ des distances ne change pas grand chose en terme de temps de calcul.
-Donc, même si l'algorithme d'invalidation en lui même est efficace, la différence sur la partie de recalcule des distances est trop faible pour que l'invaldation en vaille la peine.
+Cela est dû au fait que l'algorithme de Dijkstra~\ref{sec:calcul_mesure} optimisé écrit beaucoup de distances en même temps, et que devoir réécrire ${\frac{1}{4}}$ ou ${\frac{3}{4}}$ des distances ne change pas grand-chose en terme de temps de calcul.
+Donc, même si l'algorithme d'invalidation en lui-même est efficace, la différence sur la partie de recalcul des distances est trop faible pour que l'invalidation en vaille la peine.
