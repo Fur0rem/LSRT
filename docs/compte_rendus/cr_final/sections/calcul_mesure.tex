@@ -283,7 +283,7 @@ Nous avons dans un premier temps invalidé les chemins en utilisant les pyramide
 
 \subsubsection*{Deuxième invalidation}
 
-Cette première méthode c'est avérée peu efficace. En effet, dans le cas où deux chemins partagent un même sous-chemin, le calcul et la propagation des temps où le sous-chemin sera invalidé sera fait deux fois. Nous avons donc choisis d'utiliser un tableau en 2 dimensions indexé par un couple $(u,v)$, correspondant au chemin allant de $u$ à $v$. Chaque case de ce tableau contient la distance de $u$ à $v$, les sommets sources et de destinations, ainsi que les sommets $x$ tels que $(x, u, ..., v)$ soit le plus court chemin de $x$ à $v$ et $y$ tels que $(u, ..., v, y)$ soit le plus court chemin de $u$ à $y$.
+Cette première méthode s'est avérée peu efficace. En effet, dans le cas où deux chemins partagent un même sous-chemin, le calcul et la propagation des temps où le sous-chemin sera invalidé sera fait deux fois. Nous avons donc choisis d'utiliser un tableau en 2 dimensions indexé par un couple $(u,v)$, correspondant au chemin allant de $u$ à $v$. Chaque case de ce tableau contient la distance de $u$ à $v$, les sommets sources et de destinations, ainsi que les sommets $x$ tels que $(x, u, ..., v)$ soit le plus court chemin de $x$ à $v$ et $y$ tels que $(u, ..., v, y)$ soit le plus court chemin de $u$ à $y$.
 
 L'invalidation \todo{mettre algo ?} reprends l'algorithme de l'invalidation précédente, à la différence que l'on utilise une file contenant initialement que les liens du graphe au lieu d'itérer sur un tableau, et que l'on ne traite un chemin qu'une seule fois, puis on ajoute les chemins à traiter dans la file.
 
