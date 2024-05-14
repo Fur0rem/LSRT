@@ -27,8 +27,9 @@ en un graphe dynamique\cite{dynamic_graphs}, où les liens supprimées représen
 
 Un graphe dynamique est un graphe dont les sommets et les arrêtes peuvent évoluer dans le temps.
 Le modèle de graphe dynamique que nous utilisons peut être décrit comme un triplet G=(V, E, T) 
-où T={(t1,v1), (t1,v2), ... (tn,vn)} est l'ensemble des instants auxquelles des liens 
-entre les sommets sont supprimés.
+où T={($t_1$,$e_1$), ($t1$,$e_2$), ... ($t_n$,$e_n$)} est l'ensemble des instants auxquelles des liens 
+entre les sommets sont supprimés, avec $t_i$ l'indice de temps et
+$e_i$ une arrête du graphe supprimée à cet indice de temps.
 
 Une mesure classique pour déterminer à quel point un réseau est robuste est l'efficacité\cite{efficiency}.
 L'efficacité d'un graphe est définie comme la moyenne des inverses des distances entre chaque paire de sommets.
