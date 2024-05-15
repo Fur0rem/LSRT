@@ -23,7 +23,7 @@ en $O(n^3 \times t)$
 avec $n$ le nombre de noeuds et $t$ le nombre de pas de temps dans le graphe temporel.
 Nous avons donc décidé de changer d'approche et de chercher un algorithme plus efficace.
 
-\begin{algorithm}[H] \label{algo:temp_floyd_warshall}
+\begin{algorithm}[H]
     TemporalFloydWarshall(graphe temporel \ GT, DistanceMatrixes \ dma)
 \begin{algorithmic}
 	\State $InitTFW(GT, dma)$
@@ -45,7 +45,7 @@ Nous avons donc décidé de changer d'approche et de chercher un algorithme plus
 		\EndFor
 	\EndFor 
 \end{algorithmic}
-\end{algorithm}
+\end{algorithm}\label{algo:temp_floyd_warshall}
 
 \subsection{Algorithme amélioré}
 

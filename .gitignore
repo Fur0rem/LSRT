@@ -9,8 +9,6 @@ cache/
 target/
 tstex_modules/*
 tstex_modules
-data/*
-data
 nohup.out
 plots/*
 plots
