@@ -105,6 +105,34 @@ impl Graph {
 		Ok(Self { edges })
 	}
 
+	/// Creates a graph from a file in a csv format
+	/// The format should be node_from,node_to,weight for each line
+	pub fn from_csv_format(filename: &str) -> Result<Self, Box<dyn Error>> {
+		let file = File::open(filename)?;
+		let mut reader = BufReader::new(file);
+
+		let mut buffer = String::new();
+		let mut nodes = Vec::new();
+
+		while reader.read_line(&mut buffer)? > 0 {
+			buffer.pop(); // remove the last \n
+			let mut parts = buffer.split(',');
+			let from: Node = parts.next().ok_or("Node from missing")?.parse()?;
+			let to: Node = parts.next().ok_or("Node to missing")?.parse()?;
+			let weight: Tick = parts.next().ok_or("Weight missing")?.parse()?;
+
+			// Extend the nodes if necessary
+			let length = nodes.len();
+			if from >= length as Node {
+				nodes.resize(from as usize + 1, vec![]);
+			}
+			nodes[from as usize].push(Neighbour { node: to, weight });
+			buffer.clear();
+		}
+
+		return Ok(Self { edges: nodes });
+	}
+
 	/// Prints the graph
 	pub fn print(&self) {
 		for (i, row) in self.edges.iter().enumerate() {
